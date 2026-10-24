@@ -1,5 +1,11 @@
 # Changelog
 
+## v2026.10.24.2
+
+- **Vertical setpoint bar**: the bar can now sit to the left or right of the temperature as well as above or below it. It has an adjustable height, flags beside the handles, and ticks and labels down the side. Drag, tap and arrow keys work in both directions.
+- **Looks**: a new Look panel with five built-in starting points: Modern (the default), Solid, Outline, Compact and Minimal. Applying one replaces the card's button, text and card styling and keeps your button sets and setpoint control. You're asked first if the card already has custom styling.
+- Outlined buttons have a lighter border, ghost buttons get a soft background on hover, and buttons with the icon on the left are tighter.
+
 ## v2026.10.24.1
 
 First build.

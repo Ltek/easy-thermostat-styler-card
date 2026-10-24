@@ -319,6 +319,30 @@ export const cardStyles = css`
     font-variant-numeric: tabular-nums;
   }
 
+  /* ---- vertical bar (beside the core; bottom = cold) ---- */
+  .bar.vertical {
+    display: flex;
+    align-items: stretch;
+    height: var(--etc-bar-len, 200px);
+    padding: 12px 0 12px 46px;
+    flex: none;
+  }
+  .bar.vertical.no-flags { padding-left: 4px; }
+  .bar.vertical .track { width: var(--etc-bar-h, 14px); height: 100%; flex: none; }
+  .bar.vertical .seg { left: 0; right: 0; top: auto; bottom: auto; }
+  .bar.vertical .seg.heat { bottom: 0; }
+  .seg.full { inset: 0; }
+  .bar.vertical .handle { top: auto; left: 50%; transform: translate(-50%, 50%); }
+  .bar.vertical .handle.s-diamond { transform: translate(-50%, 50%) rotate(45deg); }
+  .bar.vertical .handle.s-line { width: calc(var(--etc-bar-h, 14px) + 14px); height: 6px; }
+  .bar.vertical .flag { bottom: auto; right: calc(100% + 14px); transform: translateY(50%); }
+  .bar.vertical .flag::after { left: 100%; top: 50%; transform: translateY(-50%); border-top-color: transparent; border-left-color: var(--c); }
+  .bar.vertical .marker { top: auto; left: -4px; right: -4px; width: auto; height: 2px; transform: translateY(50%); }
+  .bar.vertical .ticks { height: 100%; width: 30px; margin: 0 0 0 6px; }
+  .bar.vertical .tick { top: auto; left: 0; width: 4px; height: 1px; transform: translateY(50%); }
+  .bar.vertical .tick.lbl { width: 7px; height: 1px; }
+  .bar.vertical .tick-l { top: auto; left: 10px; transform: translateY(50%); }
+
   /* ---- button sets ---- */
   .set { min-width: 0; gap: var(--etc-b-gap, 8px); }
   .set.grid { display: grid; }
@@ -353,7 +377,7 @@ export const cardStyles = css`
   }
   .btn:active { transform: scale(0.97); }
   .btn:hover { color: var(--etc-b-fg, var(--etc-fg)); }
-  .ip-left .btn { flex-direction: row; }
+  .ip-left .btn { flex-direction: row; gap: 5px; padding: 6px 8px; }
   .btn .lbl { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
   .v-tonal .btn.active {
     background: var(--etc-b-abg, color-mix(in srgb, var(--c) 22%, transparent));
@@ -365,9 +389,10 @@ export const cardStyles = css`
     color: var(--etc-b-afg, #fff);
     border-color: var(--etc-b-abc, var(--c));
   }
-  .v-outlined .btn { background: var(--etc-b-bg, transparent); border: max(var(--etc-b-bw, 1px), 1px) solid var(--etc-b-bc, var(--divider-color, #555)); }
+  .v-outlined .btn { background: var(--etc-b-bg, transparent); border: max(var(--etc-b-bw, 1px), 1px) solid var(--etc-b-bc, color-mix(in srgb, var(--divider-color, #555) 70%, transparent)); }
   .v-outlined .btn.active { color: var(--etc-b-afg, var(--c)); border-color: var(--etc-b-abc, var(--c)); background: var(--etc-b-abg, transparent); }
   .v-ghost .btn { background: var(--etc-b-bg, transparent); }
+  .v-ghost .btn:hover, .v-ghost .btn:focus-visible { background: var(--etc-b-bg, var(--etc-surface)); }
   .v-ghost .btn.active { color: var(--etc-b-afg, var(--c)); background: var(--etc-b-abg, transparent); }
 
   /* ---- toggles (compact) ---- */

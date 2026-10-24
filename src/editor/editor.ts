@@ -20,6 +20,7 @@ import {
 import { availableOptions, MODE_ICONS, orderOptions, prettify, SET_TITLES } from '../model/sets';
 import { resolveButtonStyle, BUTTON_DEFAULTS } from '../model/style';
 import { EDITOR_CSS } from './editor-css';
+import { LOOKS, applyLook, hasLookKeys } from '../model/looks';
 
 // Visual editor in the Ltek panel idiom (CARD_DESIGN_SYSTEM §2): top-level
 // panels with accent border when open, flat sub-panels, content-width labels,
@@ -277,6 +278,7 @@ export class EasyThermostatStylerCardEditor extends LitElement {
     if (!this._config) return nothing;
     return html`<div class="etce">
       ${this._panel('thermostat', 'mdi:thermostat', 'Thermostat', this._thermostatBody())}
+      ${this._panel('look', 'mdi:palette-outline', 'Look', this._lookBody())}
       ${this._panel('setpoint', 'mdi:knob', 'Setpoint control', this._setpointBody())}
       ${this._panel('sets', 'mdi:gesture-tap-button', 'Button sets', this._setsBody())}
       ${this._panel('buttons', 'mdi:palette-swatch-outline', 'Button style', this._buttonsBody())}
@@ -309,6 +311,31 @@ export class EasyThermostatStylerCardEditor extends LitElement {
       </div>
       ${this._group('Layout')}
       ${this._select('core_align', 'Align', [['left', 'Left'], ['center', 'Center'], ['right', 'Right']], DEFAULTS.core_align)}
+    `;
+  }
+
+  private _lookBody(): TemplateResult {
+    const apply = (id: string) => {
+      const look = LOOKS.find((l) => l.id === id)!;
+      if (
+        hasLookKeys(this._config!) &&
+        !window.confirm(`Apply the ${look.name} look? It replaces this card's button, text and card styling.`)
+      )
+        return;
+      this._emit(applyLook(this._config!, look));
+    };
+    return html`
+      ${this._hint('Start from a built-in look, then fine-tune under Button style, Text and Card. Your button sets and setpoint control are kept.')}
+      <div class="etce-blist">
+        ${LOOKS.map(
+          (l) => html`<div class="etce-brow">
+            <ha-icon class="etce-sicon" icon=${l.icon}></ha-icon>
+            <span class="etce-sname">${l.name}</span>
+            <span class="etce-stag">${l.hint}</span>
+            <button class="etce-preset" @click=${() => apply(l.id)}>Apply</button>
+          </div>`,
+        )}
+      </div>
     `;
   }
 
@@ -347,7 +374,15 @@ export class EasyThermostatStylerCardEditor extends LitElement {
     const look = (this._get('setpoint.bar.look') as string) ?? b.look;
     const stops = (this._get('setpoint.bar.stops') as string[] | undefined) ?? ['#2b9af9', '#7ccf8a', '#ff8100'];
     return html`
-      ${this._select('setpoint.bar.position', 'Position', [['below', 'Below'], ['above', 'Above']], b.position)}
+      ${this._select(
+        'setpoint.bar.position',
+        'Position',
+        [['below', 'Below (horizontal)'], ['above', 'Above (horizontal)'], ['left', 'Left (vertical)'], ['right', 'Right (vertical)']],
+        b.position,
+      )}
+      ${['left', 'right'].includes(String(this._get('setpoint.bar.position') ?? ''))
+        ? this._slider('setpoint.bar.length', 'Height', 100, 400, 10, 200)
+        : nothing}
       ${this._select('setpoint.bar.look', 'Look', [['zones', 'Heat / comfort / cool zones'], ['gradient', 'Gradient']], b.look)}
       ${look === 'gradient'
         ? html`<div class="etce-row">

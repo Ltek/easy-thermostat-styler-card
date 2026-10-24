@@ -7,7 +7,7 @@
 // untouched card never rewrites its YAML. Rendering defaults live in code
 // (`DEFAULTS` below), never in the stored config.
 
-export const CARD_VERSION = '2026.10.24.1';
+export const CARD_VERSION = '2026.10.24.2';
 export const CARD_TYPE = 'easy-thermostat-styler-card';
 export const EDITOR_TYPE = 'easy-thermostat-styler-card-editor';
 
@@ -133,7 +133,8 @@ export interface ButtonSetConfig {
 export type SetpointControl = 'wheel' | 'stepper' | 'bar' | 'none';
 
 export interface BarConfig {
-  position?: 'below' | 'above';
+  position?: 'below' | 'above' | 'left' | 'right';
+  length?: number; // vertical bar height (px)
   look?: 'zones' | 'gradient';
   height?: number;
   ticks?: number; // degrees between minor ticks, 0 = none

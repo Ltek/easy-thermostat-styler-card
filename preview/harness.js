@@ -61,6 +61,8 @@ const EXAMPLES = [
   ['Modes down the right side, icon-only, filled', { entity: 'climate.office', core_align: 'left', setpoint: { control: 'stepper', position: 'center', scale: 80 }, buttons: { variant: 'filled', content: 'icon', radius: 999 }, sets: [{ type: 'hvac', zone: 'right' }, { type: 'preset', zone: 'bottom', style: { variant: 'outlined', icon_position: 'left' } }] }],
   ['Gradient bar, ticks every 2°, custom text', { entity: 'climate.hall', show_humidity: false, text: { current: { size: 56, weight: 300 }, name: { transform: 'uppercase', letter_spacing: 8, size: 13, color: 'var(--secondary-text-color)' } }, setpoint: { control: 'bar', bar: { look: 'gradient', ticks: 2, labels: 10, handle_shape: 'diamond', range_min: 55, range_max: 90 } }, sets: [{ type: 'hvac', style: { content: 'label', variant: 'ghost' } }] }],
   ['Off', { entity: 'climate.den' }],
+  ['Vertical bar on the right, Heat', { entity: 'climate.office', core_align: 'left', setpoint: { control: 'bar', bar: { position: 'right', range_min: 55, range_max: 85, labels: 10, ticks: 2.5, length: 230 } } }],
+  ['Look: Outline', { entity: 'climate.bed', buttons: { variant: 'outlined', radius: 999, icon_position: 'left', height: 40 }, text: { current: { weight: 100 }, status: { letter_spacing: 12 } } }],
 ];
 
 await import('../dist/easy-thermostat-styler-card.js');

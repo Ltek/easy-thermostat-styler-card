@@ -201,6 +201,7 @@ export class EasyThermostatStylerCard extends LitElement {
     const b = this._config?.setpoint?.bar ?? {};
     const out: Record<string, string> = {};
     if (b.height) out['--etc-bar-h'] = `${b.height}px`;
+    if (b.length) out['--etc-bar-len'] = `${b.length}px`;
     if (b.heat_color) out['--bar-heat'] = b.heat_color;
     if (b.cool_color) out['--bar-cool'] = b.cool_color;
     if (b.comfort_color) out['--bar-comfort'] = b.comfort_color;
@@ -220,7 +221,9 @@ export class EasyThermostatStylerCard extends LitElement {
     const editable = !!edit?.available;
     const ctl = editable && (control === 'wheel' || control === 'stepper') ? this._renderControl(edit!, control) : null;
     const bar = editable && control === 'bar' ? this._renderBar(edit!, view) : null;
-    const barAbove = (sp.bar?.position ?? DEFAULTS.bar.position) === 'above';
+    const barPos = sp.bar?.position ?? DEFAULTS.bar.position;
+    const barAbove = barPos === 'above';
+    const barSide = barPos === 'left' || barPos === 'right';
     const eq = view.equipment ? `eq-${view.equipment}` : '';
 
     if (!view.available) {
@@ -253,10 +256,11 @@ export class EasyThermostatStylerCard extends LitElement {
     return html`<div class="core al-${align} pos-${position}">
       ${bar && barAbove ? bar : nothing}
       <div class="core-row">
-        ${ctl && position === 'left' ? ctl : nothing} ${main} ${ctl && position === 'right' ? ctl : nothing}
+        ${bar && barPos === 'left' ? bar : nothing} ${ctl && position === 'left' ? ctl : nothing} ${main}
+        ${ctl && position === 'right' ? ctl : nothing} ${bar && barPos === 'right' ? bar : nothing}
       </div>
       ${ctl && position === 'center' ? html`<div class="ctl-center">${ctl}</div>` : nothing}
-      ${bar && !barAbove ? bar : nothing}
+      ${bar && !barAbove && !barSide ? bar : nothing}
     </div>`;
   }
 
@@ -403,6 +407,11 @@ export class EasyThermostatStylerCard extends LitElement {
     const b = { ...DEFAULTS.bar, ...(this._config?.setpoint?.bar ?? {}) };
     const r = barRange(edit, b);
     const pct = (v: number) => `${(toFraction(v, r) * 100).toFixed(3)}%`;
+    const vertical = b.position === 'left' || b.position === 'right';
+    // Along-axis property: horizontal grows left→right, vertical bottom→top.
+    const at = (v: string): Record<string, string> => (vertical ? { bottom: v } : { left: v });
+    const along = vertical ? 'height' : 'width';
+    const far = vertical ? 'top' : 'right';
     const heat = edit.heat;
     const cool = edit.cool;
     const ticks = barTicks(r, b.ticks ?? 0, b.labels ?? 0);
@@ -410,22 +419,23 @@ export class EasyThermostatStylerCard extends LitElement {
     if (b.look === 'gradient') {
       // Gradient stops are hex-only by design (they're blended in CSS space).
       const stops = b.stops?.length ? b.stops : ['#2b9af9', '#7ccf8a', '#ff8100'];
-      segs.push(html`<div class="seg" style=${styleMap({ left: '0', right: '0', background: `linear-gradient(to right, ${stops.join(', ')})` })}></div>`);
+      segs.push(html`<div class="seg full" style=${styleMap({ background: `linear-gradient(to ${vertical ? 'top' : 'right'}, ${stops.join(', ')})` })}></div>`);
     } else {
-      if (heat) segs.push(html`<div class="seg heat" style=${styleMap({ width: pct(heat.value) })}></div>`);
-      if (cool) segs.push(html`<div class="seg cool" style=${styleMap({ left: pct(cool.value) })}></div>`);
+      if (heat) segs.push(html`<div class="seg heat" style=${styleMap({ [along]: pct(heat.value) })}></div>`);
+      if (cool) segs.push(html`<div class="seg cool" style=${styleMap({ ...at(pct(cool.value)), [far]: '0' })}></div>`);
       if (heat && cool)
-        segs.push(html`<div class="seg comfort" style=${styleMap({ left: pct(heat.value), right: `calc(100% - ${pct(cool.value)})` })}></div>`);
+        segs.push(html`<div class="seg comfort" style=${styleMap({ ...at(pct(heat.value)), [far]: `calc(100% - ${pct(cool.value)})` })}></div>`);
     }
     const handle = (sp: Setpoint) => {
       const e = edit[sp];
       if (!e) return nothing;
       return html`
-        ${b.flags ? html`<div class="flag ${sp}" style=${styleMap({ left: pct(e.value) })}>${formatTemp(e.value, edit.unit)}°</div>` : nothing}
+        ${b.flags ? html`<div class="flag ${sp}" style=${styleMap(at(pct(e.value)))}>${formatTemp(e.value, edit.unit)}°</div>` : nothing}
         <div
           class="handle ${sp} s-${b.handle_shape ?? 'round'} ${edit.active === sp && heat && cool ? 'active' : ''}"
-          style=${styleMap({ left: pct(e.value) })}
+          style=${styleMap(at(pct(e.value)))}
           role="slider"
+          aria-orientation=${vertical ? 'vertical' : 'horizontal'}
           tabindex="0"
           aria-label=${`${sp === 'heat' ? 'Heat' : 'Cool'} setpoint`}
           aria-valuenow=${e.value}
@@ -437,7 +447,7 @@ export class EasyThermostatStylerCard extends LitElement {
       `;
     };
     const cur = view.currentTemp;
-    return html`<div class="bar ${b.flags ? '' : 'no-flags'}">
+    return html`<div class="bar ${vertical ? `vertical side-${b.position}` : ''} ${b.flags ? '' : 'no-flags'}">
       <div
         class="track"
         @pointerdown=${this._barDown}
@@ -447,25 +457,37 @@ export class EasyThermostatStylerCard extends LitElement {
       >
         ${segs}
         ${b.show_current && cur !== null && cur >= r.min && cur <= r.max
-          ? html`<div class="marker" style=${styleMap({ left: pct(cur) })} title="Current"></div>`
+          ? html`<div class="marker" style=${styleMap(at(pct(cur)))} title="Current"></div>`
           : nothing}
         ${handle('heat')} ${handle('cool')}
       </div>
       ${ticks.length
         ? html`<div class="ticks">
             ${ticks.map(
-              (t) => html`<div class="tick ${t.label ? 'lbl' : ''}" style=${styleMap({ left: `${t.fraction * 100}%` })}></div>
-                ${t.label ? html`<div class="tick-l" style=${styleMap({ left: `${t.fraction * 100}%` })}>${t.value}</div>` : nothing}`,
+              (t) => html`<div class="tick ${t.label ? 'lbl' : ''}" style=${styleMap(at(`${t.fraction * 100}%`))}></div>
+                ${t.label ? html`<div class="tick-l" style=${styleMap(at(`${t.fraction * 100}%`))}>${t.value}</div>` : nothing}`,
             )}
           </div>`
         : nothing}
     </div>`;
   }
 
+  private _barVertical(): boolean {
+    const p = this._config?.setpoint?.bar?.position;
+    return p === 'left' || p === 'right';
+  }
+
+  /** Pointer position as a 0–1 fraction along the bar (vertical: bottom = 0). */
+  private _barFraction(ev: PointerEvent, rect: DOMRect): number {
+    return this._barVertical()
+      ? (rect.bottom - ev.clientY) / Math.max(1, rect.height)
+      : (ev.clientX - rect.left) / Math.max(1, rect.width);
+  }
+
   private _barValueAt(ev: PointerEvent, rect: DOMRect): number {
     const edit = this._sp.edit!;
     const r = barRange(edit, this._config?.setpoint?.bar);
-    return fromFraction((ev.clientX - rect.left) / Math.max(1, rect.width), r);
+    return fromFraction(this._barFraction(ev, rect), r);
   }
 
   private _barDown = (ev: PointerEvent): void => {
@@ -474,7 +496,7 @@ export class EasyThermostatStylerCard extends LitElement {
     const el = ev.currentTarget as HTMLElement;
     const rect = el.getBoundingClientRect();
     const r = barRange(edit, this._config?.setpoint?.bar);
-    const f = (ev.clientX - rect.left) / Math.max(1, rect.width);
+    const f = this._barFraction(ev, rect);
     const handle = nearestHandle(edit, f, r);
     this._barDrag = { handle, rect };
     this._sp.dragging = true;

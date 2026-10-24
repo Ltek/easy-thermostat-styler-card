@@ -8,6 +8,7 @@ import { toTempAdjustModel, nudge } from '../src/model/setpoint';
 import { SetpointController, WRITE_DEBOUNCE_MS, RECONCILE_MS } from '../src/model/setpoint-controller';
 import { toClimateView } from '../src/model/climate';
 import { climate, fakeHass, RICH, rfFan } from './helpers';
+import { LOOKS, applyLook, hasLookKeys } from '../src/model/looks';
 
 const base = { type: 'custom:easy-thermostat-styler-card', entity: 'climate.t' };
 
@@ -211,5 +212,27 @@ describe('climate view', () => {
   it('degrades when unavailable', () => {
     const { hass } = fakeHass([climate('unavailable')]);
     expect(toClimateView(hass, base)).toMatchObject({ available: false, setpoints: null });
+  });
+});
+
+describe('looks', () => {
+  const cfg = { ...base, sets: [{ type: 'hvac' as const }], setpoint: { control: 'bar' as const }, buttons: { radius: 3 }, show_pills: false };
+  it('replace style keys, keep sets/setpoint, survive normalize', () => {
+    for (const look of LOOKS) {
+      const out = normalizeConfig(applyLook(cfg, look));
+      expect(out.sets).toEqual(cfg.sets);
+      expect(out.setpoint).toEqual(cfg.setpoint);
+      expect(normalizeConfig(out)).toEqual(out);
+    }
+    expect(normalizeConfig(applyLook(cfg, LOOKS[0]!))).toEqual({ ...base, sets: cfg.sets, setpoint: cfg.setpoint });
+  });
+  it('detects existing style keys', () => {
+    expect(hasLookKeys(base)).toBe(false);
+    expect(hasLookKeys(cfg)).toBe(true);
+  });
+  it('applying does not alias the look definition', () => {
+    const out = applyLook(base, LOOKS[1]!);
+    (out.buttons as { radius?: number }).radius = 1;
+    expect(LOOKS[1]!.values.buttons!.radius).toBe(10);
   });
 });

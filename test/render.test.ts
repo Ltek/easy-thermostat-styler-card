@@ -84,6 +84,25 @@ describe('card render', () => {
     expect(calls[0]!.data).toEqual({ entity_id: 'climate.t', target_temp_low: 71, target_temp_high: 74 });
   });
 
+  it('vertical bar beside the core: bottom-anchored handles, drag uses Y', async () => {
+    vi.useFakeTimers();
+    const h = fakeHass([climate('heat', { ...RICH, temperature: 70 })]);
+    const { root, el, calls } = await mount({ setpoint: { control: 'bar', bar: { position: 'right', range_min: 60, range_max: 80 } } }, h);
+    const bar = root.querySelector('.core-row > .bar.vertical')!;
+    expect(bar).not.toBeNull();
+    const handle = root.querySelector<HTMLElement>('.handle.heat')!;
+    expect(handle.style.bottom).toBe('50.000%');
+    expect(handle.style.left).toBe('');
+    const track = root.querySelector<HTMLElement>('.track')!;
+    track.getBoundingClientRect = () => ({ left: 0, right: 14, top: 0, bottom: 200, width: 14, height: 200, x: 0, y: 0, toJSON() {} }) as DOMRect;
+    // 25% up from the bottom = 65°
+    track.dispatchEvent(new PointerEvent('pointerdown', { clientX: 7, clientY: 150, pointerId: 1 }));
+    track.dispatchEvent(new PointerEvent('pointerup', { clientX: 7, clientY: 150, pointerId: 1 }));
+    await el.updateComplete;
+    vi.advanceTimersByTime(WRITE_DEBOUNCE_MS + 5);
+    expect(calls.at(-1)!.data).toEqual({ entity_id: 'climate.t', temperature: 65 });
+  });
+
   it('hvac set full-time; preset/fan behind toggles that remember state', async () => {
     const { root, calls, el } = await mount({});
     expect(root.querySelectorAll('.set.t-hvac .btn')).toHaveLength(4);
@@ -171,7 +190,7 @@ describe('editor', () => {
   it('renders panels with the token block root', async () => {
     const { root } = await editor({});
     expect(root.querySelector('.etce')).not.toBeNull();
-    expect(root.querySelectorAll('details.etce-sec').length).toBe(6);
+    expect(root.querySelectorAll('details.etce-sec').length).toBe(7);
   });
 
   it('a checkbox writes only when it differs from the default', async () => {
@@ -189,8 +208,8 @@ describe('editor', () => {
 
   it('adding a set materializes the defaults first', async () => {
     const { root, events, el } = await editor({});
-    (root.querySelector('details.etce-sec:nth-of-type(3)') as HTMLDetailsElement).open = true;
-    root.querySelectorAll('details.etce-sec')[2]!.dispatchEvent(new Event('toggle'));
+    (root.querySelectorAll('details.etce-sec')[3] as HTMLDetailsElement).open = true;
+    root.querySelectorAll('details.etce-sec')[3]!.dispatchEvent(new Event('toggle'));
     await el.updateComplete;
     const add = [...root.querySelectorAll<HTMLButtonElement>('.etce-add')].find((b) => b.textContent!.includes('Devices'))!;
     add.click();
