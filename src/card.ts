@@ -1,0 +1,710 @@
+import { LitElement, html, nothing, type PropertyValues, type TemplateResult } from 'lit';
+import { property, state } from 'lit/decorators.js';
+import { styleMap } from 'lit/directives/style-map.js';
+import { classMap } from 'lit/directives/class-map.js';
+
+import type { HomeAssistant } from './model/hass';
+import {
+  CARD_TYPE,
+  CARD_VERSION,
+  DEFAULTS,
+  EDITOR_TYPE,
+  normalizeConfig,
+  type CardConfig,
+  type Zone,
+} from './model/config';
+import { EQUIPMENT_LABEL, formatTemp, toClimateView, type ClimateView } from './model/climate';
+import {
+  nudge,
+  scrub,
+  scrubberWindow,
+  selectSetpoint,
+  setValue,
+  toTempAdjustModel,
+  type Setpoint,
+  type TempAdjustModel,
+} from './model/setpoint';
+import { SetpointController } from './model/setpoint-controller';
+import { MODE_ICONS, optionCall, toSetViews, type SetView } from './model/sets';
+import { buttonVars, resolveButtonStyle, surfaceVars, textVars } from './model/style';
+import { barRange, barTicks, fromFraction, nearestHandle, toFraction } from './model/bar';
+import {
+  chipToggleCall,
+  defaultPopupCard,
+  formatRemaining,
+  toChipView,
+  type ChipView,
+} from './model/chips';
+import type { ServiceCall } from './model/service-call';
+import { cardStyles } from './styles';
+
+const PX_PER_STEP = 18;
+const HOLD_MS = 500;
+
+type CardHelpers = { createCardElement(c: Record<string, unknown>): HTMLElement & { hass?: unknown } };
+
+export class EasyThermostatStylerCard extends LitElement {
+  static override styles = cardStyles;
+
+  @property({ attribute: false }) hass?: HomeAssistant;
+  @state() private _config?: CardConfig;
+  @state() private _open = new Set<string>();
+  @state() private _tick = 0;
+  @state() private _popupOpen = false;
+
+  private _sp = new SetpointController(
+    () => this._config?.entity ?? '',
+    (call) => this._call(call),
+    () => (this._tick += 1),
+  );
+  private _drag: { startY: number; startValue: number } | null = null;
+  private _barDrag: { handle: Setpoint; rect: DOMRect } | null = null;
+  private _hold: { timer: ReturnType<typeof setTimeout>; fired: boolean } | null = null;
+  private _popupEl?: HTMLElement & { hass?: unknown };
+
+  // ---- Lovelace contract ----------------------------------------------------
+
+  setConfig(config: unknown): void {
+    this._config = normalizeConfig(config);
+    this._open = this._loadOpen();
+  }
+
+  static getConfigElement(): HTMLElement {
+    return document.createElement(EDITOR_TYPE);
+  }
+
+  static getStubConfig(hass: HomeAssistant): Record<string, unknown> {
+    const entity = Object.keys(hass?.states ?? {}).find((id) => id.startsWith('climate.'));
+    return { entity: entity ?? 'climate.thermostat' };
+  }
+
+  getCardSize(): number {
+    return 5;
+  }
+
+  getGridOptions(): Record<string, unknown> {
+    return { columns: 6, min_columns: 4, rows: 'auto' };
+  }
+
+  override disconnectedCallback(): void {
+    super.disconnectedCallback();
+    this._sp.dispose();
+  }
+
+  protected override willUpdate(changed: PropertyValues<this>): void {
+    if ((changed.has('hass') || changed.has('_config' as keyof EasyThermostatStylerCard)) && this.hass && this._config) {
+      this._sp.sync(toTempAdjustModel(this.hass, this._config));
+    }
+    if (changed.has('hass') && this._popupEl && this.hass) this._popupEl.hass = this.hass;
+  }
+
+  /** Only re-render for state that this card reads (not every hass push). */
+  protected override shouldUpdate(changed: PropertyValues<this>): boolean {
+    if (!changed.has('hass') || changed.size > 1) return true;
+    const prev = changed.get('hass') as HomeAssistant | undefined;
+    if (!prev || !this.hass || !this._config) return true;
+    return this._watched().some((id) => prev.states[id] !== this.hass!.states[id]);
+  }
+
+  private _watched(): string[] {
+    const c = this._config!;
+    const ids = [c.entity];
+    for (const s of c.sets ?? []) for (const ch of s.chips ?? []) ids.push(ch.entity);
+    if (this.hass) {
+      for (const s of c.sets ?? [])
+        for (const ch of s.chips ?? []) {
+          if (ch.type !== 'rf_fan') continue;
+          const v = toChipView(this.hass, ch, 0);
+          if (v.lightEntity) ids.push(v.lightEntity);
+        }
+    }
+    return ids;
+  }
+
+  // ---- helpers --------------------------------------------------------------
+
+  private _call(call: ServiceCall): void {
+    this.hass?.callService(call.domain, call.service, call.data).catch((err: unknown) => {
+      console.error(`[easy-thermostat-styler-card] ${call.domain}.${call.service} failed`, err);
+    });
+  }
+
+  private _fire(type: string, detail: unknown): void {
+    this.dispatchEvent(new CustomEvent(type, { detail, bubbles: true, composed: true }));
+  }
+
+  private _openKey(): string {
+    return `easy-thermostat-styler-card:open:${this._config?.entity ?? ''}`;
+  }
+
+  private _loadOpen(): Set<string> {
+    try {
+      const raw = window.localStorage?.getItem(this._openKey());
+      return new Set(raw ? (JSON.parse(raw) as string[]) : []);
+    } catch {
+      return new Set();
+    }
+  }
+
+  private _toggleSet(key: string): void {
+    const next = new Set(this._open);
+    if (next.has(key)) next.delete(key);
+    else next.add(key);
+    this._open = next;
+    try {
+      window.localStorage?.setItem(this._openKey(), JSON.stringify([...next]));
+    } catch {
+      /* private mode */
+    }
+  }
+
+  // ---- render ---------------------------------------------------------------
+
+  protected override render(): TemplateResult | typeof nothing {
+    if (!this._config || !this.hass) return nothing;
+    const c = this._config;
+    const view = toClimateView(this.hass, c);
+    const sets = toSetViews(this.hass, c);
+    const glow = (c.card?.glow ?? DEFAULTS.glow) && view.equipment;
+    const cls = {
+      glow: !!glow,
+      [`eq-${view.equipment ?? 'none'}`]: true,
+      [`mode-${view.mode}`]: true,
+    };
+    const vars = { ...surfaceVars(c), ...textVars(c.text), ...this._barVars() };
+    const zones: Record<Zone, TemplateResult[]> = { top: [], bottom: [], left: [], right: [] };
+    const toggles = sets.filter((s) => s.display === 'toggle');
+    for (const s of sets) {
+      if (s.display === 'toggle' && !this._open.has(s.key)) continue;
+      zones[s.zone].push(this._renderSet(s));
+    }
+    const tz = c.toggles_zone ?? DEFAULTS.toggles_zone;
+    if (toggles.length) zones[tz].push(this._renderToggles(toggles));
+
+    return html`
+      <ha-card class=${classMap(cls)} style=${styleMap(vars)}>
+        <div class="grid">
+          ${(['top', 'left'] as Zone[]).map((z) => this._zone(z, zones[z]))}
+          ${this._renderCore(view)}
+          ${(['right', 'bottom'] as Zone[]).map((z) => this._zone(z, zones[z]))}
+        </div>
+        ${this._renderPopup()}
+      </ha-card>
+    `;
+  }
+
+  private _zone(z: Zone, items: TemplateResult[]): TemplateResult | typeof nothing {
+    return items.length ? html`<div class="zone ${z}">${items}</div>` : nothing;
+  }
+
+  private _barVars(): Record<string, string> {
+    const b = this._config?.setpoint?.bar ?? {};
+    const out: Record<string, string> = {};
+    if (b.height) out['--etc-bar-h'] = `${b.height}px`;
+    if (b.heat_color) out['--bar-heat'] = b.heat_color;
+    if (b.cool_color) out['--bar-cool'] = b.cool_color;
+    if (b.comfort_color) out['--bar-comfort'] = b.comfort_color;
+    if (b.handle_color) out['--bar-handle'] = b.handle_color;
+    return out;
+  }
+
+  // ---- core -----------------------------------------------------------------
+
+  private _renderCore(view: ClimateView): TemplateResult {
+    const c = this._config!;
+    const sp = c.setpoint ?? {};
+    const control = sp.control ?? DEFAULTS.control;
+    const position = sp.position ?? DEFAULTS.position;
+    const align = c.core_align ?? DEFAULTS.core_align;
+    const edit = this._sp.edit;
+    const editable = !!edit?.available;
+    const ctl = editable && (control === 'wheel' || control === 'stepper') ? this._renderControl(edit!, control) : null;
+    const bar = editable && control === 'bar' ? this._renderBar(edit!, view) : null;
+    const barAbove = (sp.bar?.position ?? DEFAULTS.bar.position) === 'above';
+    const eq = view.equipment ? `eq-${view.equipment}` : '';
+
+    if (!view.available) {
+      return html`<div class="core al-${align}">
+        <div class="main">
+          ${c.show_name ?? DEFAULTS.show_name ? html`<div class="name">${view.name}</div>` : nothing}
+          <div class="unavailable-msg">Unavailable</div>
+        </div>
+      </div>`;
+    }
+
+    const main = html`<div class="main">
+      ${c.show_name ?? DEFAULTS.show_name ? html`<div class="name">${view.name}</div>` : nothing}
+      ${(c.show_status ?? DEFAULTS.show_status) && view.equipment
+        ? html`<div class="status ${eq}">
+            <ha-icon icon=${MODE_ICONS[view.state] ?? 'mdi:thermostat'}></ha-icon>${EQUIPMENT_LABEL[view.equipment]}
+          </div>`
+        : nothing}
+      ${(c.show_humidity ?? DEFAULTS.show_humidity) && view.humidity !== null
+        ? html`<div class="humidity"><ha-icon icon="mdi:water-outline"></ha-icon>${Math.round(view.humidity)}%</div>`
+        : nothing}
+      ${c.show_current ?? DEFAULTS.show_current
+        ? html`<div class="current ${eq}">
+            ${formatTemp(view.currentTemp, view.unit)}<span class="unit">${view.unit}</span>
+          </div>`
+        : nothing}
+      ${(c.show_pills ?? DEFAULTS.show_pills) && edit?.available ? this._renderPills(edit) : nothing}
+    </div>`;
+
+    return html`<div class="core al-${align} pos-${position}">
+      ${bar && barAbove ? bar : nothing}
+      <div class="core-row">
+        ${ctl && position === 'left' ? ctl : nothing} ${main} ${ctl && position === 'right' ? ctl : nothing}
+      </div>
+      ${ctl && position === 'center' ? html`<div class="ctl-center">${ctl}</div>` : nothing}
+      ${bar && !barAbove ? bar : nothing}
+    </div>`;
+  }
+
+  private _renderPills(edit: TempAdjustModel): TemplateResult {
+    const dual = !!(edit.heat && edit.cool);
+    const pill = (sp: Setpoint) => {
+      const e = edit[sp];
+      if (!e) return nothing;
+      const body = html`<ha-icon icon=${sp === 'heat' ? 'mdi:fire' : 'mdi:snowflake'}></ha-icon>${formatTemp(
+          e.value,
+          edit.unit,
+        )}`;
+      const dim = dual && edit.active !== sp && this._usesActive();
+      return dual
+        ? html`<button
+            class="pill ${sp} ${dim ? 'dim' : ''}"
+            aria-pressed=${edit.active === sp}
+            aria-label=${`${sp === 'heat' ? 'Heat' : 'Cool'} setpoint`}
+            @click=${() => this._sp.select(selectSetpoint(edit, sp))}
+          >
+            ${body}
+          </button>`
+        : html`<div class="pill ${sp}">${body}</div>`;
+    };
+    return html`<div class="pills">${pill('heat')} ${pill('cool')}</div>`;
+  }
+
+  /** Wheel and stepper edit one setpoint at a time; the pills pick which. */
+  private _usesActive(): boolean {
+    const control = this._config?.setpoint?.control ?? DEFAULTS.control;
+    return control === 'wheel' || control === 'stepper';
+  }
+
+  private _renderControl(edit: TempAdjustModel, control: 'wheel' | 'stepper'): TemplateResult | typeof nothing {
+    const e = edit[edit.active];
+    if (!e) return nothing;
+    const side = edit.active;
+    const plus = html`<button
+      class="round ${side}"
+      aria-label="Increase"
+      ?disabled=${e.max !== null && e.value >= e.max}
+      @click=${() => this._sp.commit(nudge(edit, 1))}
+    >
+      <ha-icon icon="mdi:plus"></ha-icon>
+    </button>`;
+    const minus = html`<button
+      class="round ${side}"
+      aria-label="Decrease"
+      ?disabled=${e.min !== null && e.value <= e.min}
+      @click=${() => this._sp.commit(nudge(edit, -1))}
+    >
+      <ha-icon icon="mdi:minus"></ha-icon>
+    </button>`;
+
+    if (control === 'stepper') {
+      return html`<div class="stepper ${side}">
+        ${minus}<span class="sv">${formatTemp(e.value, edit.unit)}</span>${plus}
+      </div>`;
+    }
+
+    const sp = this._config?.setpoint ?? {};
+    const radius = sp.neighbors ?? DEFAULTS.neighbors;
+    const nudgeMode = sp.nudge ?? DEFAULTS.nudge;
+    const values = scrubberWindow(e, radius);
+    const above = values.filter((v) => v > e.value).reverse();
+    const below = values.filter((v) => v < e.value).reverse();
+    const nb = (v: number) =>
+      html`<div class="nb ${Math.abs(v - e.value) > e.step * 1.5 ? 'far' : ''}">${formatTemp(v, edit.unit)}</div>`;
+    const col = html`<div
+      class="wheel-col"
+      role="slider"
+      tabindex="0"
+      aria-label=${`${side === 'cool' ? 'Cool' : 'Heat'} setpoint`}
+      aria-valuenow=${e.value}
+      aria-valuemin=${e.min ?? nothing}
+      aria-valuemax=${e.max ?? nothing}
+      aria-valuetext=${formatTemp(e.value, edit.unit)}
+      @pointerdown=${this._wheelDown}
+      @pointermove=${this._wheelMove}
+      @pointerup=${this._wheelUp}
+      @pointercancel=${this._wheelUp}
+      @keydown=${this._wheelKey}
+      @wheel=${this._wheelScroll}
+    >
+      ${above.map(nb)}
+      <div class="bubble ${side}">${formatTemp(e.value, edit.unit)}</div>
+      ${below.map(nb)}
+    </div>`;
+    if (nudgeMode === 'hidden') return html`<div class="wheel">${col}</div>`;
+    if (nudgeMode === 'stacked') return html`<div class="wheel nudge-stacked">${plus}${col}${minus}</div>`;
+    return html`<div class="wheel">${col}<div class="nudges">${plus}${minus}</div></div>`;
+  }
+
+  private _wheelDown = (ev: PointerEvent): void => {
+    const edit = this._sp.edit;
+    const e = edit?.[edit.active];
+    if (!e) return;
+    const el = ev.currentTarget as HTMLElement;
+    el.focus({ preventScroll: true });
+    this._drag = { startY: ev.clientY, startValue: e.value };
+    this._sp.dragging = true;
+    el.setPointerCapture?.(ev.pointerId);
+  };
+
+  private _wheelMove = (ev: PointerEvent): void => {
+    if (!this._drag || !this._sp.edit) return;
+    // ecosee's inverted wheel: drag DOWN raises (values above slide down).
+    this._sp.preview(scrub(this._sp.edit, this._drag.startValue, ev.clientY - this._drag.startY, PX_PER_STEP));
+  };
+
+  private _wheelUp = (ev: PointerEvent): void => {
+    const drag = this._drag;
+    if (!drag) return;
+    this._drag = null;
+    this._sp.dragging = false;
+    const el = ev.currentTarget as HTMLElement;
+    if (el.hasPointerCapture?.(ev.pointerId)) el.releasePointerCapture(ev.pointerId);
+    const edit = this._sp.edit;
+    if (edit && edit[edit.active]?.value !== drag.startValue) this._sp.commit(edit);
+  };
+
+  private _wheelKey = (ev: KeyboardEvent): void => {
+    const edit = this._sp.edit;
+    if (!edit) return;
+    if (ev.key === 'ArrowUp' || ev.key === 'ArrowRight') {
+      ev.preventDefault();
+      this._sp.commit(nudge(edit, 1));
+    } else if (ev.key === 'ArrowDown' || ev.key === 'ArrowLeft') {
+      ev.preventDefault();
+      this._sp.commit(nudge(edit, -1));
+    }
+  };
+
+  private _wheelScroll = (ev: WheelEvent): void => {
+    const edit = this._sp.edit;
+    if (!edit || Math.abs(ev.deltaY) < 4) return;
+    ev.preventDefault();
+    this._sp.commit(nudge(edit, ev.deltaY < 0 ? 1 : -1));
+  };
+
+  // ---- bar ------------------------------------------------------------------
+
+  private _renderBar(edit: TempAdjustModel, view: ClimateView): TemplateResult {
+    const b = { ...DEFAULTS.bar, ...(this._config?.setpoint?.bar ?? {}) };
+    const r = barRange(edit, b);
+    const pct = (v: number) => `${(toFraction(v, r) * 100).toFixed(3)}%`;
+    const heat = edit.heat;
+    const cool = edit.cool;
+    const ticks = barTicks(r, b.ticks ?? 0, b.labels ?? 0);
+    const segs: TemplateResult[] = [];
+    if (b.look === 'gradient') {
+      // Gradient stops are hex-only by design (they're blended in CSS space).
+      const stops = b.stops?.length ? b.stops : ['#2b9af9', '#7ccf8a', '#ff8100'];
+      segs.push(html`<div class="seg" style=${styleMap({ left: '0', right: '0', background: `linear-gradient(to right, ${stops.join(', ')})` })}></div>`);
+    } else {
+      if (heat) segs.push(html`<div class="seg heat" style=${styleMap({ width: pct(heat.value) })}></div>`);
+      if (cool) segs.push(html`<div class="seg cool" style=${styleMap({ left: pct(cool.value) })}></div>`);
+      if (heat && cool)
+        segs.push(html`<div class="seg comfort" style=${styleMap({ left: pct(heat.value), right: `calc(100% - ${pct(cool.value)})` })}></div>`);
+    }
+    const handle = (sp: Setpoint) => {
+      const e = edit[sp];
+      if (!e) return nothing;
+      return html`
+        ${b.flags ? html`<div class="flag ${sp}" style=${styleMap({ left: pct(e.value) })}>${formatTemp(e.value, edit.unit)}°</div>` : nothing}
+        <div
+          class="handle ${sp} s-${b.handle_shape ?? 'round'} ${edit.active === sp && heat && cool ? 'active' : ''}"
+          style=${styleMap({ left: pct(e.value) })}
+          role="slider"
+          tabindex="0"
+          aria-label=${`${sp === 'heat' ? 'Heat' : 'Cool'} setpoint`}
+          aria-valuenow=${e.value}
+          aria-valuemin=${r.min}
+          aria-valuemax=${r.max}
+          @focus=${() => this._sp.select(selectSetpoint(this._sp.edit!, sp))}
+          @keydown=${(ev: KeyboardEvent) => this._barKey(ev, sp)}
+        ></div>
+      `;
+    };
+    const cur = view.currentTemp;
+    return html`<div class="bar ${b.flags ? '' : 'no-flags'}">
+      <div
+        class="track"
+        @pointerdown=${this._barDown}
+        @pointermove=${this._barMove}
+        @pointerup=${this._barUp}
+        @pointercancel=${this._barUp}
+      >
+        ${segs}
+        ${b.show_current && cur !== null && cur >= r.min && cur <= r.max
+          ? html`<div class="marker" style=${styleMap({ left: pct(cur) })} title="Current"></div>`
+          : nothing}
+        ${handle('heat')} ${handle('cool')}
+      </div>
+      ${ticks.length
+        ? html`<div class="ticks">
+            ${ticks.map(
+              (t) => html`<div class="tick ${t.label ? 'lbl' : ''}" style=${styleMap({ left: `${t.fraction * 100}%` })}></div>
+                ${t.label ? html`<div class="tick-l" style=${styleMap({ left: `${t.fraction * 100}%` })}>${t.value}</div>` : nothing}`,
+            )}
+          </div>`
+        : nothing}
+    </div>`;
+  }
+
+  private _barValueAt(ev: PointerEvent, rect: DOMRect): number {
+    const edit = this._sp.edit!;
+    const r = barRange(edit, this._config?.setpoint?.bar);
+    return fromFraction((ev.clientX - rect.left) / Math.max(1, rect.width), r);
+  }
+
+  private _barDown = (ev: PointerEvent): void => {
+    const edit = this._sp.edit;
+    if (!edit?.available) return;
+    const el = ev.currentTarget as HTMLElement;
+    const rect = el.getBoundingClientRect();
+    const r = barRange(edit, this._config?.setpoint?.bar);
+    const f = (ev.clientX - rect.left) / Math.max(1, rect.width);
+    const handle = nearestHandle(edit, f, r);
+    this._barDrag = { handle, rect };
+    this._sp.dragging = true;
+    el.setPointerCapture?.(ev.pointerId);
+    this._sp.preview(setValue(selectSetpoint(edit, handle), this._barValueAt(ev, rect)));
+  };
+
+  private _barMove = (ev: PointerEvent): void => {
+    if (!this._barDrag || !this._sp.edit) return;
+    this._sp.preview(setValue(this._sp.edit, this._barValueAt(ev, this._barDrag.rect)));
+  };
+
+  private _barUp = (ev: PointerEvent): void => {
+    if (!this._barDrag) return;
+    this._barDrag = null;
+    this._sp.dragging = false;
+    const el = ev.currentTarget as HTMLElement;
+    if (el.hasPointerCapture?.(ev.pointerId)) el.releasePointerCapture(ev.pointerId);
+    if (this._sp.edit) this._sp.commit(this._sp.edit);
+  };
+
+  private _barKey(ev: KeyboardEvent, sp: Setpoint): void {
+    const edit = this._sp.edit;
+    if (!edit) return;
+    const dir = ev.key === 'ArrowUp' || ev.key === 'ArrowRight' ? 1 : ev.key === 'ArrowDown' || ev.key === 'ArrowLeft' ? -1 : 0;
+    if (!dir) return;
+    ev.preventDefault();
+    this._sp.commit(nudge(selectSetpoint(edit, sp), dir));
+  }
+
+  // ---- button sets ------------------------------------------------------------
+
+  private _renderSet(s: SetView): TemplateResult {
+    const style = resolveButtonStyle(this._config?.buttons, s.config.style);
+    const grid = s.type !== 'chips' && s.orientation === 'row' && s.align === 'stretch';
+    const layout: Record<string, string> = { ...buttonVars(style) };
+    if (grid) {
+      layout['grid-template-columns'] = s.columns
+        ? `repeat(${s.columns}, minmax(0, 1fr))`
+        : `repeat(auto-fit, minmax(var(--etc-b-minw, 52px), 1fr))`;
+    }
+    const cls = {
+      set: true,
+      grid,
+      flex: !grid,
+      [`t-${s.type}`]: true,
+      [`o-${s.orientation}`]: true,
+      [`a-${s.align}`]: true,
+      [`v-${style.variant}`]: true,
+      [`ip-${style.icon_position}`]: true,
+    };
+    if (s.type === 'chips') {
+      const chips = (s.config.chips ?? []).map((ch, i) => toChipView(this.hass!, ch, i));
+      return html`<div class=${classMap(cls)} style=${styleMap(layout)} role="group" aria-label=${s.title}>
+        ${chips.map((v) => this._renderChip(v, style.content))}
+      </div>`;
+    }
+    const showIcon = style.content !== 'label';
+    const showLabel = style.content !== 'icon';
+    return html`<div class=${classMap(cls)} style=${styleMap(layout)} role="group" aria-label=${s.title}>
+      ${s.options.map(
+        (o) => html`<button
+          class="btn ${o.active ? 'active' : ''}"
+          style=${styleMap({ '--c': o.color })}
+          aria-pressed=${o.active}
+          title=${o.label}
+          @click=${() => {
+            const call = optionCall(s.type, this._config!.entity, o.value);
+            if (call) this._call(call);
+          }}
+        >
+          ${showIcon ? html`<ha-icon icon=${o.icon}></ha-icon>` : nothing}
+          ${showLabel ? html`<span class="lbl">${o.label}</span>` : nothing}
+        </button>`,
+      )}
+    </div>`;
+  }
+
+  private _renderToggles(sets: SetView[]): TemplateResult {
+    return html`<div class="toggles">
+      ${sets.map((s) => {
+        const open = this._open.has(s.key);
+        return html`<button class="tgl ${open ? 'open' : ''}" aria-expanded=${open} @click=${() => this._toggleSet(s.key)}>
+          <ha-icon icon=${s.toggleIcon}></ha-icon><span>${s.title}</span>
+          <ha-icon class="chev" icon="mdi:chevron-down"></ha-icon>
+        </button>`;
+      })}
+    </div>`;
+  }
+
+  // ---- chips --------------------------------------------------------------------
+
+  private _renderChip(v: ChipView, content: string): TemplateResult {
+    const showName = v.config.show_name ?? content !== 'icon';
+    const showState = v.config.show_state ?? true;
+    const rf = v.type === 'rf_fan';
+    return html`<button
+      class="chip ${v.on ? 'on' : ''} ${v.available ? '' : 'unavailable'} ${v.direction === 'reverse' ? 'rev' : ''}"
+      aria-label=${`${v.name}: ${v.state}`}
+      title=${`${v.name}: ${v.state}`}
+      @pointerdown=${(ev: PointerEvent) => this._chipDown(ev, v)}
+      @pointerup=${this._chipCancelHold}
+      @pointerleave=${this._chipCancelHold}
+      @pointercancel=${this._chipCancelHold}
+      @click=${() => this._chipTap(v)}
+      @contextmenu=${(ev: Event) => ev.preventDefault()}
+    >
+      <ha-icon class=${v.spin ? 'spin' : ''} style=${styleMap(v.spin ? { '--spin': `${v.spin}s` } : {})} icon=${v.icon}></ha-icon>
+      ${showName ? html`<span>${v.name}</span>` : nothing}
+      ${showState && (!rf || v.speed !== null || !v.on) ? html`<span class="badge">${v.state}</span>` : nothing}
+      ${rf && v.natural ? html`<span class="extra"><ha-icon icon="mdi:leaf"></ha-icon></span>` : nothing}
+      ${rf && v.lightOn ? html`<span class="extra light"><ha-icon icon="mdi:lightbulb"></ha-icon></span>` : nothing}
+      ${rf && v.timerEnds
+        ? html`<span class="extra"><ha-icon icon="mdi:timer-outline"></ha-icon>${formatRemaining(v.timerEnds)}</span>`
+        : nothing}
+    </button>`;
+  }
+
+  private _chipDown(ev: PointerEvent, v: ChipView): void {
+    if (ev.pointerType === 'mouse' && ev.button !== 0) return;
+    this._chipCancelHold();
+    if (v.hold === 'none') return;
+    const hold = { fired: false, timer: setTimeout(() => {
+      hold.fired = true;
+      this._chipAction(v, v.hold);
+      this._fire('haptic', 'medium');
+    }, HOLD_MS) };
+    this._hold = hold;
+  }
+
+  private _chipCancelHold = (): void => {
+    if (this._hold && !this._hold.fired) clearTimeout(this._hold.timer);
+  };
+
+  private _chipTap(v: ChipView): void {
+    if (this._hold?.fired) {
+      this._hold = null;
+      return;
+    }
+    this._hold = null;
+    this._chipAction(v, v.tap);
+  }
+
+  private _chipAction(v: ChipView, action: string): void {
+    switch (action) {
+      case 'popup': {
+        const card = defaultPopupCard(v.config);
+        if (card && this._canCreate(card)) void this._showPopup(card);
+        else this._fire('hass-more-info', { entityId: v.entity });
+        break;
+      }
+      case 'more-info':
+        this._fire('hass-more-info', { entityId: v.entity });
+        break;
+      case 'toggle':
+      case 'toggle_light': {
+        const call = chipToggleCall(v, action);
+        if (call) this._call(call);
+        break;
+      }
+    }
+  }
+
+  // ---- pop-up ------------------------------------------------------------------
+
+  private _canCreate(card: Record<string, unknown>): boolean {
+    const t = String(card.type ?? '');
+    return !t.startsWith('custom:') || !!customElements.get(t.slice(7));
+  }
+
+  private async _showPopup(cardConfig: Record<string, unknown>): Promise<void> {
+    let el: (HTMLElement & { hass?: unknown; setConfig?: (c: unknown) => void }) | undefined;
+    try {
+      const loader = (window as unknown as { loadCardHelpers?: () => Promise<CardHelpers> }).loadCardHelpers;
+      if (loader) el = (await loader()).createCardElement(cardConfig);
+      else {
+        const t = String(cardConfig.type);
+        el = document.createElement(t.startsWith('custom:') ? t.slice(7) : `hui-${t}-card`);
+        el.setConfig?.(cardConfig);
+      }
+    } catch (err) {
+      console.error('[easy-thermostat-styler-card] pop-up card failed', err);
+      return;
+    }
+    el.hass = this.hass;
+    this._popupEl = el;
+    this._popupOpen = true;
+    await this.updateComplete;
+    const dialog = this.renderRoot.querySelector<HTMLDialogElement>('dialog.popup');
+    const host = this.renderRoot.querySelector('.popup-body');
+    if (!dialog || !host) return;
+    host.replaceChildren(el);
+    if (!dialog.open) dialog.showModal?.();
+  }
+
+  private _closePopup = (): void => {
+    const dialog = this.renderRoot.querySelector<HTMLDialogElement>('dialog.popup');
+    if (dialog?.open) dialog.close();
+    this._popupOpen = false;
+    this._popupEl = undefined;
+  };
+
+  private _renderPopup(): TemplateResult | typeof nothing {
+    if (!this._popupOpen) return nothing;
+    return html`<dialog
+      class="popup"
+      @cancel=${this._closePopup}
+      @click=${(ev: MouseEvent) => {
+        if (ev.target === ev.currentTarget) this._closePopup();
+      }}
+    >
+      <div class="popup-inner">
+        <button class="popup-close" aria-label="Close" @click=${this._closePopup}><ha-icon icon="mdi:close"></ha-icon></button>
+        <div class="popup-body"></div>
+      </div>
+    </dialog>`;
+  }
+}
+
+if (!customElements.get(CARD_TYPE)) customElements.define(CARD_TYPE, EasyThermostatStylerCard);
+
+const w = window as unknown as { customCards?: unknown[] };
+w.customCards = w.customCards ?? [];
+if (!w.customCards.some((c) => (c as { type?: string }).type === CARD_TYPE)) {
+  w.customCards.push({
+    type: CARD_TYPE,
+    name: 'Easy Thermostat Styler Card (Ltek)',
+    description: 'A modern thermostat card with a setpoint wheel or bar, movable button sets and device chips.',
+    preview: true,
+  });
+}
+
+console.info(`%c EASY-THERMOSTAT-STYLER-CARD %c v${CARD_VERSION} `, 'background:#ff8100;color:#fff', 'background:#333;color:#fff');

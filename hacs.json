@@ -1,5 +1,6 @@
 {
-  "name": "ecosee",
-  "filename": "ecosee.js",
+  "name": "Easy Thermostat Styler Card (Ltek)",
+  "filename": "easy-thermostat-styler-card.js",
+  "content_in_root": false,
   "render_readme": true
 }

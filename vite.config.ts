@@ -1,31 +1,22 @@
 import { configDefaults, defineConfig } from 'vitest/config';
 
-// Single self-contained ES module for HACS (Lit is bundled in, not externalized,
-// so the card is self-sufficient inside Home Assistant). The dev server serves the
-// preview harness under dev/ — see dev/index.html.
+// One self-contained ES module for HACS (Lit bundled in).
 export default defineConfig({
   build: {
     lib: {
-      entry: 'src/ecosee-card.ts',
+      entry: 'src/easy-thermostat-styler-card.ts',
       formats: ['es'],
-      fileName: () => 'ecosee.js',
+      fileName: () => 'easy-thermostat-styler-card.js',
     },
-    rollupOptions: {
-      output: { inlineDynamicImports: true },
-    },
+    rollupOptions: { output: { inlineDynamicImports: true } },
     outDir: 'dist',
     emptyOutDir: true,
     target: 'es2021',
     minify: 'esbuild',
   },
-  server: {
-    open: '/dev/',
-  },
   test: {
     include: ['test/**/*.test.ts'],
-    // test/browser/** runs in real headless Firefox via vitest.browser.config.ts
-    // (issue #85) — it asserts on rendered boxes/pixels, which need a real engine.
-    exclude: [...configDefaults.exclude, 'test/browser/**'],
+    exclude: [...configDefaults.exclude],
     environment: 'node',
   },
 });

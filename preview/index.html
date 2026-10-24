@@ -1,0 +1,29 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Easy Thermostat Styler Card — preview</title>
+    <style>
+      :root {
+        --primary-color: #03a9f4;
+        --rgb-primary-color: 3, 169, 244;
+        --accent-color: #ff9800;
+        --primary-text-color: #e1e1e1;
+        --secondary-text-color: #9b9b9b;
+        --card-background-color: #1c1c1c;
+        --secondary-background-color: #282828;
+        --divider-color: #3a3a3a;
+        --ha-card-border-radius: 16px;
+        color-scheme: dark;
+      }
+      body { background: #111; color: #e1e1e1; font-family: Roboto, 'Segoe UI', sans-serif; margin: 0; padding: 20px; }
+      .wall { display: grid; grid-template-columns: repeat(3, 400px); gap: 24px; align-items: start; }
+      .cap { font-size: 12px; color: #888; margin: 6px 0 0; text-align: center; }
+      .ed { width: 520px; }
+    </style>
+    <script type="module" src="./harness.js"></script>
+  </head>
+  <body>
+    <div class="wall" id="wall"></div>
+  </body>
+</html>

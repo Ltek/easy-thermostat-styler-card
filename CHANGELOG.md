@@ -1,0 +1,26 @@
+# Changelog
+
+## v2026.10.24.1
+
+First build.
+
+- Core display: name, heating/cooling status, humidity, a big current temperature and heat/cool setpoint pills. The card glows while heating or cooling.
+- Setpoint controls:
+  - **wheel:** placement, size, 0–3 next values, ± position
+  - **stepper**
+  - **setpoint bar:** zones or gradient, heat and cool handles, value flags, ticks and labels, current marker, handle shapes, custom range
+  - **none**
+- Heat / Cool keeps a minimum gap between the setpoints and pushes the other one along. Edits are debounced and held optimistically so the display doesn't jump back.
+- Button sets (modes, presets, fan modes, chips) can go on any side of the card. Each has an orientation, column count and alignment, and its buttons can be reordered, hidden, renamed and re-iconed.
+- Compact mode: any set (or all of them) can sit behind a toggle button. Open/closed is remembered per browser.
+- Built-in ceiling fan chip for ha-rf-fan:
+  - It finds the fan's light and sleep timer by itself.
+  - It shows speed, direction, natural mode, light and time left.
+  - Tap opens the RF Fan card in a pop-up; hold toggles the fan or its light.
+- Entity chips for any entity.
+- Styling:
+  - a card-wide button style, overridable per set with the same options
+  - nine text elements
+  - card surface settings
+  - four-mode colours everywhere
+- Visual editor in the Ltek panel style. Only the settings you change are saved.

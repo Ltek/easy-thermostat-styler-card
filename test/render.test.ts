@@ -1,0 +1,199 @@
+// @vitest-environment happy-dom
+import { describe, it, expect, vi, afterEach } from 'vitest';
+import '../src/easy-thermostat-styler-card';
+import type { EasyThermostatStylerCard } from '../src/card';
+import type { EasyThermostatStylerCardEditor } from '../src/editor/editor';
+import { WRITE_DEBOUNCE_MS } from '../src/model/setpoint-controller';
+import { climate, fakeHass, RICH, rfFan } from './helpers';
+
+const base = { type: 'custom:easy-thermostat-styler-card', entity: 'climate.t' };
+
+async function mount(config: Record<string, unknown>, hass = fakeHass([climate('heat', { ...RICH, temperature: 68, hvac_action: 'heating' })])) {
+  const el = document.createElement('easy-thermostat-styler-card') as EasyThermostatStylerCard;
+  el.setConfig({ ...base, ...config });
+  el.hass = hass.hass;
+  document.body.appendChild(el);
+  await el.updateComplete;
+  return { el, root: el.shadowRoot!, calls: hass.calls, hass: hass.hass };
+}
+
+afterEach(() => {
+  document.body.innerHTML = '';
+  localStorage.clear();
+  vi.useRealTimers();
+});
+
+describe('card render', () => {
+  it('core: name, status, current, pills, wheel; glow while heating', async () => {
+    const { root } = await mount({});
+    expect(root.querySelector('.name')!.textContent).toContain('Hallway');
+    expect(root.querySelector('.status')!.textContent).toContain('Heating');
+    expect(root.querySelector('.current')!.textContent).toContain('72');
+    expect(root.querySelector('.pill.heat')!.textContent).toContain('68');
+    expect(root.querySelector('.wheel .bubble')!.textContent).toContain('68');
+    expect(root.querySelectorAll('.wheel .nb')).toHaveLength(2);
+    expect(root.querySelector('ha-card')!.classList.contains('glow')).toBe(true);
+  });
+
+  it('wheel neighbours 0–3 and ± hidden', async () => {
+    const { root } = await mount({ setpoint: { neighbors: 3, nudge: 'hidden' } });
+    expect(root.querySelectorAll('.wheel .nb')).toHaveLength(6);
+    expect(root.querySelector('.wheel .round')).toBeNull();
+  });
+
+  it('+ coalesces into one set_temperature', async () => {
+    vi.useFakeTimers();
+    const { root, calls, el } = await mount({});
+    const plus = () => root.querySelector<HTMLButtonElement>('.wheel [aria-label="Increase"]')!;
+    plus().click();
+    await el.updateComplete;
+    plus().click();
+    await el.updateComplete;
+    expect(root.querySelector('.bubble')!.textContent).toContain('70');
+    vi.advanceTimersByTime(WRITE_DEBOUNCE_MS + 5);
+    expect(calls).toEqual([{ domain: 'climate', service: 'set_temperature', data: { entity_id: 'climate.t', temperature: 70 } }]);
+  });
+
+  it('stepper and none controls', async () => {
+    const s = await mount({ setpoint: { control: 'stepper', position: 'center' } });
+    expect(s.root.querySelector('.ctl-center .stepper .sv')!.textContent).toContain('68');
+    document.body.innerHTML = '';
+    const n = await mount({ setpoint: { control: 'none' } });
+    expect(n.root.querySelector('.wheel, .stepper, .bar')).toBeNull();
+  });
+
+  it('bar: zones, both handles, flags, ticks, current marker in heat/cool', async () => {
+    const h = fakeHass([climate('heat_cool', { ...RICH, target_temp_low: 68, target_temp_high: 75 })]);
+    const { root } = await mount({ setpoint: { control: 'bar', bar: { range_min: 60, range_max: 80 } } }, h);
+    expect(root.querySelectorAll('.bar .handle')).toHaveLength(2);
+    expect(root.querySelectorAll('.bar .flag')).toHaveLength(2);
+    expect(root.querySelector('.seg.comfort')).not.toBeNull();
+    expect(root.querySelectorAll('.tick-l').length).toBe(5); // 60 65 70 75 80
+    expect((root.querySelector('.marker') as HTMLElement).style.left).toBe('60.000%'); // 72 in 60..80
+    expect((root.querySelector('.handle.heat') as HTMLElement).style.left).toBe('40.000%');
+  });
+
+  it('bar keyboard nudges respect the min gap (pushes the other setpoint)', async () => {
+    vi.useFakeTimers();
+    const h = fakeHass([climate('heat_cool', { ...RICH, target_temp_low: 70, target_temp_high: 73 })]);
+    const { root, calls, el } = await mount({ setpoint: { control: 'bar' } }, h);
+    const heat = root.querySelector<HTMLElement>('.handle.heat')!;
+    heat.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight' }));
+    await el.updateComplete;
+    vi.advanceTimersByTime(WRITE_DEBOUNCE_MS + 5);
+    expect(calls[0]!.data).toEqual({ entity_id: 'climate.t', target_temp_low: 71, target_temp_high: 74 });
+  });
+
+  it('hvac set full-time; preset/fan behind toggles that remember state', async () => {
+    const { root, calls, el } = await mount({});
+    expect(root.querySelectorAll('.set.t-hvac .btn')).toHaveLength(4);
+    expect(root.querySelector('.set.t-preset')).toBeNull();
+    const tgl = [...root.querySelectorAll<HTMLButtonElement>('.tgl')];
+    expect(tgl.map((t) => t.textContent!.trim())).toEqual(['Preset', 'Fan']);
+    tgl[0]!.click();
+    await el.updateComplete;
+    expect(root.querySelectorAll('.set.t-preset .btn')).toHaveLength(3);
+    expect(localStorage.getItem('easy-thermostat-styler-card:open:climate.t')).toContain('preset-1');
+    root.querySelector<HTMLButtonElement>('.set.t-hvac .btn[title="Cool"]')!.click();
+    expect(calls.at(-1)).toEqual({ domain: 'climate', service: 'set_hvac_mode', data: { entity_id: 'climate.t', hvac_mode: 'cool' } });
+  });
+
+  it('sets go to their zone with orientation + columns', async () => {
+    const { root } = await mount({ sets: [{ type: 'hvac', zone: 'right' }, { type: 'preset', zone: 'top', columns: 2 }] });
+    expect(root.querySelector('.zone.right .set.t-hvac.o-column')).not.toBeNull();
+    const top = root.querySelector<HTMLElement>('.zone.top .set.t-preset')!;
+    expect(top.style.gridTemplateColumns).toBe('repeat(2, minmax(0, 1fr))');
+  });
+
+  it('per-set button style overrides the card default via custom properties', async () => {
+    const { root } = await mount({ buttons: { radius: 4, variant: 'filled' }, sets: [{ type: 'hvac', style: { radius: 22 } }] });
+    const set = root.querySelector<HTMLElement>('.set.t-hvac')!;
+    expect(set.classList.contains('v-filled')).toBe(true);
+    expect(set.style.getPropertyValue('--etc-b-radius')).toBe('22px');
+  });
+
+  it('text styles land as custom properties on ha-card', async () => {
+    const { root } = await mount({ text: { current: { size: 96, color: 'var(--primary-color)' } } });
+    const card = root.querySelector<HTMLElement>('ha-card')!;
+    expect(card.style.getPropertyValue('--etc-t-cur-fs')).toBe('96px');
+    expect(card.style.getPropertyValue('--etc-t-cur-c')).toBe('var(--primary-color)');
+  });
+
+  it('RF fan chip: state, tap → more-info fallback, hold → toggle', async () => {
+    vi.useFakeTimers();
+    const f = rfFan({ on: true, pct: 100, light: true });
+    const h = fakeHass([climate('heat', { ...RICH, temperature: 68 }), ...f.entities], { registry: f.registry });
+    const { root, calls, el } = await mount({ sets: [{ type: 'chips', zone: 'top', chips: [{ type: 'rf_fan', entity: 'fan.bedroom' }] }] }, h);
+    const chip = root.querySelector<HTMLButtonElement>('.chip')!;
+    expect(chip.classList.contains('on')).toBe(true);
+    expect(chip.querySelector('.badge')!.textContent).toBe('6');
+    expect(chip.querySelector('.extra.light')).not.toBeNull();
+    // rf-fan-ltek is not registered in the test → tap falls back to more-info
+    const info = vi.fn();
+    el.addEventListener('hass-more-info', info);
+    chip.click();
+    expect(info).toHaveBeenCalledOnce();
+    // hold
+    chip.dispatchEvent(new PointerEvent('pointerdown', { button: 0, pointerType: 'touch' }));
+    vi.advanceTimersByTime(600);
+    expect(calls.at(-1)).toEqual({ domain: 'homeassistant', service: 'toggle', data: { entity_id: 'fan.bedroom' } });
+  });
+
+  it('every card instance shares one stylesheet (no per-config CSS)', async () => {
+    const a = await mount({ text: { current: { size: 40 } } });
+    const b = await mount({ buttons: { radius: 2 }, setpoint: { control: 'bar' } });
+    const css = (r: ShadowRoot) =>
+      r.adoptedStyleSheets?.length
+        ? r.adoptedStyleSheets.map((s) => [...s.cssRules].map((x) => x.cssText).join('\n'))
+        : [...r.querySelectorAll('style')].map((s) => s.textContent);
+    expect(css(a.root)).toEqual(css(b.root));
+    expect(css(a.root).join('')).not.toContain('40px');
+  });
+
+  it('unavailable entity renders a quiet shell', async () => {
+    const { root } = await mount({}, fakeHass([climate('unavailable')]));
+    expect(root.querySelector('.unavailable-msg')).not.toBeNull();
+  });
+});
+
+describe('editor', () => {
+  async function editor(config: Record<string, unknown>) {
+    const el = document.createElement('easy-thermostat-styler-card-editor') as EasyThermostatStylerCardEditor;
+    el.hass = fakeHass([climate('heat', { ...RICH, temperature: 68 })]).hass;
+    el.setConfig({ ...base, ...config } as never);
+    document.body.appendChild(el);
+    await el.updateComplete;
+    const events: Record<string, unknown>[] = [];
+    el.addEventListener('config-changed', (e) => events.push((e as CustomEvent).detail.config));
+    return { el, root: el.shadowRoot!, events };
+  }
+
+  it('renders panels with the token block root', async () => {
+    const { root } = await editor({});
+    expect(root.querySelector('.etce')).not.toBeNull();
+    expect(root.querySelectorAll('details.etce-sec').length).toBe(6);
+  });
+
+  it('a checkbox writes only when it differs from the default', async () => {
+    const { root, events, el } = await editor({});
+    const cb = [...root.querySelectorAll<HTMLInputElement>('.etce-check input')].find((i) => i.parentElement!.textContent!.includes('Humidity'))!;
+    cb.checked = false;
+    cb.dispatchEvent(new Event('change'));
+    expect(events.at(-1)).toEqual({ ...base, show_humidity: false });
+    el.setConfig(events.at(-1) as never);
+    await el.updateComplete;
+    cb.checked = true;
+    cb.dispatchEvent(new Event('change'));
+    expect(events.at(-1)).toEqual(base);
+  });
+
+  it('adding a set materializes the defaults first', async () => {
+    const { root, events, el } = await editor({});
+    (root.querySelector('details.etce-sec:nth-of-type(3)') as HTMLDetailsElement).open = true;
+    root.querySelectorAll('details.etce-sec')[2]!.dispatchEvent(new Event('toggle'));
+    await el.updateComplete;
+    const add = [...root.querySelectorAll<HTMLButtonElement>('.etce-add')].find((b) => b.textContent!.includes('Devices'))!;
+    add.click();
+    expect((events.at(-1)!.sets as unknown[]).map((s) => (s as { type: string }).type)).toEqual(['hvac', 'preset', 'fan_mode', 'chips']);
+  });
+});
