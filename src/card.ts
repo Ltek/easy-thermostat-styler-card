@@ -221,6 +221,10 @@ export class EasyThermostatStylerCard extends LitElement {
     if (b.cool_color) out['--bar-cool'] = b.cool_color;
     if (b.comfort_color) out['--bar-comfort'] = b.comfort_color;
     if (b.handle_color) out['--bar-handle'] = b.handle_color;
+    if (b.handle_border_color === 'none') out['--bar-hbw'] = '0px';
+    else if (b.handle_border_color) out['--bar-hbc'] = b.handle_border_color;
+    if (b.flag_color) out['--bar-flag'] = b.flag_color;
+    if (b.flag_text_color) out['--bar-flag-fg'] = b.flag_text_color;
     return out;
   }
 
@@ -621,7 +625,14 @@ export class EasyThermostatStylerCard extends LitElement {
         >
           ${segs}${marker}${handle('heat')} ${handle('cool')}
         </div>`;
-    return html`<div class="bar ${vertical ? `vertical side-${b.position}` : ''} ${b.flags ? '' : 'no-flags'}">
+    // Flag side follows the orientation; a side that doesn't fit falls back.
+    const flagPos = vertical
+      ? b.flag_position === 'right' ? 'right' : 'left'
+      : b.flag_position === 'below' ? 'below' : 'above';
+    const tickPos = vertical
+      ? b.tick_position === 'left' ? 'left' : 'right'
+      : b.tick_position === 'above' ? 'above' : 'below';
+    return html`<div class="bar ${vertical ? `vertical side-${b.position}` : 'horizontal'} ${b.flags ? `flags-${flagPos}` : 'no-flags'} ticks-${tickPos}">
       ${track}
       ${ticks.length
         ? html`<div class="ticks">

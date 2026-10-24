@@ -7,7 +7,7 @@
 // untouched card never rewrites its YAML. Rendering defaults live in code
 // (`DEFAULTS` below), never in the stored config.
 
-export const CARD_VERSION = '2026.10.24.8';
+export const CARD_VERSION = '2026.10.24.9';
 export const CARD_TYPE = 'easy-thermostat-styler-card';
 export const EDITOR_TYPE = 'easy-thermostat-styler-card-editor';
 
@@ -151,6 +151,15 @@ export interface BarConfig {
   flags?: boolean;
   handle_shape?: 'round' | 'square' | 'line' | 'diamond';
   handle_color?: string;
+  /** Handle outline: a colour, or 'none' for no border. Unset = heat / cool colour. */
+  handle_border_color?: string;
+  /** Value flags: background and text colour (unset = heat / cool colour, white). */
+  flag_color?: string;
+  flag_text_color?: string;
+  /** Where the flags sit: above / below a horizontal bar, left / right of a vertical one. */
+  flag_position?: 'above' | 'below' | 'left' | 'right';
+  /** Where tick marks and labels sit: below / above a horizontal bar, right / left of a vertical one. */
+  tick_position?: 'above' | 'below' | 'left' | 'right';
   range_min?: number;
   range_max?: number;
   heat_color?: string;

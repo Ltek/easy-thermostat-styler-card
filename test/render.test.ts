@@ -274,6 +274,36 @@ describe('card render', () => {
     });
   });
 
+  it('bar: flag placement follows the orientation; handle border and flag colours are custom properties', async () => {
+    const h = fakeHass([climate('heat', { ...RICH, temperature: 70 })]);
+    const a = await mount({ setpoint: { control: 'bar', bar: { flag_position: 'below', handle_border_color: 'none', flag_color: '#123456', flag_text_color: 'var(--primary-text-color)' } } }, h);
+    expect(a.root.querySelector('.bar.flags-below')).not.toBeNull();
+    const card = a.root.querySelector<HTMLElement>('ha-card')!;
+    expect(card.style.getPropertyValue('--bar-hbw')).toBe('0px');
+    expect(card.style.getPropertyValue('--bar-flag')).toBe('#123456');
+    expect(card.style.getPropertyValue('--bar-flag-fg')).toBe('var(--primary-text-color)');
+    document.body.innerHTML = '';
+    // 'below' on a vertical bar falls back to the left; 'right' is honoured
+    const b = await mount({ setpoint: { control: 'bar', bar: { position: 'right', flag_position: 'below' } } }, h);
+    expect(b.root.querySelector('.bar.vertical.flags-left')).not.toBeNull();
+    document.body.innerHTML = '';
+    const c = await mount({ setpoint: { control: 'bar', bar: { position: 'right', flag_position: 'right', handle_border_color: '#00ff00' } } }, h);
+    expect(c.root.querySelector('.bar.vertical.flags-right')).not.toBeNull();
+    expect(c.root.querySelector<HTMLElement>('ha-card')!.style.getPropertyValue('--bar-hbc')).toBe('#00ff00');
+  });
+
+  it('bar: tick side is independent of the flag side and follows the orientation', async () => {
+    const h = fakeHass([climate('heat', { ...RICH, temperature: 70 })]);
+    const a = await mount({ setpoint: { control: 'bar' } }, h);
+    expect(a.root.querySelector('.bar.horizontal.flags-above.ticks-below')).not.toBeNull();
+    document.body.innerHTML = '';
+    const b = await mount({ setpoint: { control: 'bar', bar: { tick_position: 'above', flag_position: 'above' } } }, h);
+    expect(b.root.querySelector('.bar.horizontal.flags-above.ticks-above')).not.toBeNull();
+    document.body.innerHTML = '';
+    const c = await mount({ setpoint: { control: 'bar', bar: { position: 'left', tick_position: 'left', flag_position: 'above' } } }, h);
+    expect(c.root.querySelector('.bar.vertical.flags-left.ticks-left')).not.toBeNull();
+  });
+
   it('hvac set full-time; preset/fan behind toggles that remember state', async () => {
     const { root, calls, el } = await mount({});
     expect(root.querySelectorAll('.set.t-hvac .btn')).toHaveLength(4);

@@ -37,6 +37,11 @@ const FEATURES = [
     setpoint: { wheel_style: 'pill' },
     effects: { card: 'both', setpoint: 'glow', pill: 'glow', mode_button: 'glow', mode_icon: 'glow', size: 22 },
   }),
+  card('feature-vertical-gradient', 'Vertical gradient bar, flags on the right, no handle border', {
+    entity: 'climate.hall',
+    core_align: 'left',
+    setpoint: { control: 'bar', bar: { position: 'right', look: 'gradient', flag_position: 'right', handle_border_color: 'none', handle_color: '#ffffff', range_min: 55, range_max: 90, labels: 10, ticks: 2.5, length: 230 } },
+  }),
   card('feature-fan-chips', 'RF fan chips: Breeze level, light, timer, speed 4/10', {
     entity: 'climate.bed',
     sets: [fans, { type: 'hvac' }],

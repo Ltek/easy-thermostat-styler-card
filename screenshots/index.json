@@ -14,5 +14,6 @@
   "feature-bar": "Setpoint bar with flags, ticks and current marker",
   "feature-vertical-bar": "Vertical setpoint bar",
   "feature-effects": "Effects while heating: card, setpoint value, pill, mode button and icon glow",
+  "feature-vertical-gradient": "Vertical gradient bar, flags on the right, no handle border",
   "feature-fan-chips": "RF fan chips: Breeze level, light, timer, speed 4/10"
 }

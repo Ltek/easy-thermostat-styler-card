@@ -1,5 +1,13 @@
 # Changelog
 
+## v2026.10.24.9
+
+- **Fixed**: the gradient didn't show on a vertical setpoint bar.
+- **Handle border**: on or off. When on, it has a colour (four-mode; unset follows the heat / cool colour).
+- **Value flags**: flag colour and flag text colour, plus **flag placement**: above or below a horizontal bar, left or right of a vertical one.
+- **Ticks & labels placement**: below or above a horizontal bar, right or left of a vertical one. This is independent of the flags. If both are on the same side, the flags sit outside the labels so nothing overlaps.
+- New README screenshot: vertical gradient bar with the flags on the right.
+
 ## v2026.10.24.8
 
 - **Effects** panel: choose Off, Glow, Pulse or Glow + pulse for each of:

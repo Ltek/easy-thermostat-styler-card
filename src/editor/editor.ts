@@ -422,6 +422,16 @@ export class EasyThermostatStylerCardEditor extends LitElement {
     `;
   }
 
+  /** A bar-side choice: above / below for a horizontal bar, left / right for a vertical one. */
+  private _sidePlacement(key: string, label: string, defH: string, defV: string): TemplateResult {
+    const pos = String(this._get('setpoint.bar.position') ?? DEFAULTS.bar.position);
+    const vertical = pos === 'left' || pos === 'right';
+    const opts: Opt[] = vertical ? [['left', 'Left of the bar'], ['right', 'Right of the bar']] : [['above', 'Above the bar'], ['below', 'Below the bar']];
+    const def = vertical ? defV : defH;
+    const cur = String(this._get(`setpoint.bar.${key}`) ?? def);
+    return this._selectRow(label, opts.some(([v]) => v === cur) ? cur : def, opts, (v) => this._put(`setpoint.bar.${key}`, v, def));
+  }
+
   private _defaultGap(): number {
     return (this.hass?.config?.unit_system?.temperature ?? '').includes('C') ? 1.5 : 3;
   }
@@ -469,11 +479,26 @@ export class EasyThermostatStylerCardEditor extends LitElement {
         b.handle_shape,
       )}
       ${this._color('setpoint.bar.handle_color', 'Handle fill', 'White', '#ffffff')}
+      ${this._check('Handle border', this._get('setpoint.bar.handle_border_color') !== 'none', (on) =>
+        this._put('setpoint.bar.handle_border_color', on ? undefined : 'none'),
+      )}
+      ${this._get('setpoint.bar.handle_border_color') !== 'none'
+        ? this._color('setpoint.bar.handle_border_color', 'Handle border colour', 'Heat / cool colour', '#ffffff')
+        : nothing}
+      ${this._group('Value flags')}
+      ${this._bool('setpoint.bar.flags', 'Show value flags on the handles', b.flags)}
+      ${(this._get('setpoint.bar.flags') ?? b.flags)
+        ? html`${this._sidePlacement('flag_position', 'Flag placement', 'above', 'left')}
+          ${this._color('setpoint.bar.flag_color', 'Flag colour', 'Heat / cool colour', '#ff8100')}
+          ${this._color('setpoint.bar.flag_text_color', 'Flag text colour', 'White', '#ffffff')}`
+        : nothing}
       ${this._group('Markers')}
-      ${this._bool('setpoint.bar.flags', 'Value flags above handles', b.flags)}
       ${this._bool('setpoint.bar.show_current', 'Current temperature marker', b.show_current)}
       ${this._slider('setpoint.bar.ticks', 'Tick every', 0, 10, 0.5, b.ticks, (n) => (n ? `${n}°` : 'Off'))}
       ${this._slider('setpoint.bar.labels', 'Label every', 0, 20, 1, b.labels, (n) => (n ? `${n}°` : 'Off'))}
+      ${(this._get('setpoint.bar.ticks') ?? b.ticks) || (this._get('setpoint.bar.labels') ?? b.labels)
+        ? this._sidePlacement('tick_position', 'Ticks & labels', 'below', 'right')
+        : nothing}
       ${this._group('Range')}
       ${this._hint('Leave empty to use the thermostat’s own limits.')}
       ${(['range_min', 'range_max'] as const).map(

@@ -378,7 +378,7 @@ export const cardStyles = css`
     transform: translate(-50%, -50%);
     border-radius: 50%;
     background: var(--bar-handle, #fff);
-    border: 3px solid var(--c);
+    border: var(--bar-hbw, 3px) solid var(--bar-hbc, var(--c));
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.45);
     box-sizing: border-box;
     outline: none;
@@ -393,8 +393,8 @@ export const cardStyles = css`
     position: absolute;
     bottom: calc(100% + 10px);
     transform: translateX(-50%);
-    background: var(--c);
-    color: #fff;
+    background: var(--bar-flag, var(--c));
+    color: var(--bar-flag-fg, #fff);
     border-radius: 6px;
     padding: 1px 7px;
     font-size: var(--etc-t-bar-fs, 12px);
@@ -409,7 +409,7 @@ export const cardStyles = css`
     top: 100%;
     transform: translateX(-50%);
     border: 5px solid transparent;
-    border-top-color: var(--c);
+    border-top-color: var(--bar-flag, var(--c));
   }
   .flag.cool { --c: var(--etc-cool); }
   .marker {
@@ -448,12 +448,34 @@ export const cardStyles = css`
   .bar.vertical .track { width: var(--etc-bar-h, 14px); height: 100%; flex: none; }
   .bar.vertical .seg { left: 0; right: 0; top: auto; bottom: auto; }
   .bar.vertical .seg.heat { bottom: 0; }
-  .seg.full { inset: 0; }
+  .seg.full, .bar.vertical .seg.full { inset: 0; }
   .bar.vertical .handle { top: auto; left: 50%; transform: translate(-50%, 50%); }
   .bar.vertical .handle.s-diamond { transform: translate(-50%, 50%) rotate(45deg); }
   .bar.vertical .handle.s-line { width: calc(var(--etc-bar-h, 14px) + 14px); height: 6px; }
   .bar.vertical .flag { bottom: auto; right: calc(100% + 14px); transform: translateY(50%); }
-  .bar.vertical .flag::after { left: 100%; top: 50%; transform: translateY(-50%); border-top-color: transparent; border-left-color: var(--c); }
+  .bar.vertical .flag::after { left: 100%; top: 50%; transform: translateY(-50%); border-top-color: transparent; border-left-color: var(--bar-flag, var(--c)); }
+  /* ---- flag and tick sides (independent; same side → flags go outside the labels) ---- */
+  .bar.horizontal { display: flex; flex-direction: column; }
+  .bar.horizontal.ticks-above .ticks { order: -1; margin: 0 0 4px; }
+  .bar.horizontal.ticks-above .tick { top: auto; bottom: 0; }
+  .bar.horizontal.ticks-above .tick-l { top: auto; bottom: 8px; }
+  .bar.horizontal.flags-above.ticks-above .flag { bottom: calc(100% + 36px); }
+  .bar.horizontal.flags-below { padding-top: 6px; }
+  .bar.horizontal.flags-below .flag { bottom: auto; top: calc(100% + 10px); }
+  .bar.horizontal.flags-below .flag::after { top: auto; bottom: 100%; border-top-color: transparent; border-bottom-color: var(--bar-flag, var(--c)); }
+  .bar.horizontal.flags-below.ticks-below .ticks { margin-top: 34px; }
+  .bar.horizontal.flags-below.ticks-above { padding-bottom: 32px; }
+
+  .bar.vertical.ticks-left .ticks { order: -1; margin: 0 6px 0 0; }
+  .bar.vertical.ticks-left .tick { left: auto; right: 0; }
+  .bar.vertical.ticks-left .tick-l { left: auto; right: 10px; }
+  .bar.vertical.flags-left.ticks-left { padding-left: 56px; }
+  .bar.vertical.flags-left.ticks-left .flag { right: calc(100% + 50px); }
+  .bar.vertical.flags-right { padding: 12px 46px 12px 4px; }
+  .bar.vertical.flags-right .flag { right: auto; left: calc(100% + 14px); }
+  .bar.vertical.flags-right .flag::after { left: auto; right: 100%; border-left-color: transparent; border-right-color: var(--bar-flag, var(--c)); }
+  .bar.vertical.flags-right.ticks-right { padding-right: 56px; }
+  .bar.vertical.flags-right.ticks-right .flag { left: calc(100% + 50px); }
   .bar.vertical .marker { top: auto; left: -4px; right: -4px; width: auto; height: 2px; transform: translateY(50%); }
   .bar.vertical .ticks { height: 100%; width: 30px; margin: 0 0 0 6px; }
   .bar.vertical .tick { top: auto; left: 0; width: 4px; height: 1px; transform: translateY(50%); }
