@@ -515,6 +515,7 @@ export const cardStyles = css`
   .chip .spin { animation: etc-spin var(--spin, 1.5s) linear infinite; }
   .chip.rev .spin { animation-direction: reverse; }
   .chip .badge { font-weight: 700; font-variant-numeric: tabular-nums; }
+  .chip .badge.natural { display: inline-flex; align-items: center; gap: 1px; color: #7ccf8a; --mdc-icon-size: 15px; }
   .chip .extra { display: inline-flex; align-items: center; gap: 2px; --mdc-icon-size: 14px; opacity: 0.85; font-size: 11px; }
   .chip .extra.light { color: #ffc107; }
   @keyframes etc-spin { to { transform: rotate(360deg); } }

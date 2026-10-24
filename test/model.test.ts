@@ -3,7 +3,7 @@ import { normalizeConfig, setPath, getPath } from '../src/model/config';
 import { toSetViews, orderOptions, optionCall, configuredSets } from '../src/model/sets';
 import { resolveButtonStyle, buttonVars, textVars, BUTTON_DEFAULTS } from '../src/model/style';
 import { barRange, barTicks, toFraction, fromFraction, nearestHandle } from '../src/model/bar';
-import { toChipView, chipToggleCall, defaultPopupCard, formatRemaining, spinSeconds } from '../src/model/chips';
+import { toChipView, chipToggleCall, defaultPopupCard, formatRemaining, spinSeconds, speedCount, naturalLevelOf } from '../src/model/chips';
 import { toTempAdjustModel, nudge } from '../src/model/setpoint';
 import { SetpointController, WRITE_DEBOUNCE_MS, RECONCILE_MS } from '../src/model/setpoint-controller';
 import { toClimateView } from '../src/model/climate';
@@ -252,5 +252,36 @@ describe('looks', () => {
     const out = applyLook(base, LOOKS[1]!);
     (out.buttons as { radius?: number }).radius = 1;
     expect(LOOKS[1]!.values.buttons!.radius).toBe(10);
+  });
+});
+
+describe('RF fan speeds — auto-detected', () => {
+  const tenSpeed = (attrs: Record<string, unknown>) => {
+    const f = rfFan({ on: true });
+    f.entities[0]!.attributes = { ...f.entities[0]!.attributes, percentage_step: 10, preset_modes: ['normal', 'natural 1', 'natural 2', 'natural 3'], ...attrs };
+    return fakeHass(f.entities, { registry: f.registry }).hass;
+  };
+  it('speed count from percentage_step', () => {
+    expect(speedCount({ percentage_step: 10 })).toBe(10);
+    expect(speedCount({ percentage_step: 100 / 6 })).toBe(6);
+    expect(speedCount({ percentage_step: 100 / 3 })).toBe(3);
+    expect(speedCount({ speed_count: 8, percentage_step: 10 })).toBe(8);
+    expect(speedCount({})).toBeNull();
+  });
+  it('10 speeds: 40% is speed 4; formats', () => {
+    const hass = tenSpeed({ percentage: 40 });
+    expect(toChipView(hass, { type: 'rf_fan', entity: 'fan.bedroom' }, 0)).toMatchObject({ speed: 4, speedCount: 10, state: '4', naturalLevels: 3 });
+    expect(toChipView(hass, { type: 'rf_fan', entity: 'fan.bedroom', speed_format: 'fraction' }, 0).state).toBe('4/10');
+    expect(toChipView(hass, { type: 'rf_fan', entity: 'fan.bedroom', speed_format: 'percent' }, 0).state).toBe('40%');
+    expect(toChipView(tenSpeed({ percentage: 100 }), { type: 'rf_fan', entity: 'fan.bedroom' }, 0).speed).toBe(10);
+  });
+  it('Breeze level replaces the speed', () => {
+    const v = toChipView(tenSpeed({ percentage: 70, preset_mode: 'natural 2' }), { type: 'rf_fan', entity: 'fan.bedroom' }, 0);
+    expect(v).toMatchObject({ natural: true, naturalLevel: 2, state: '2' });
+  });
+  it('single natural mode has no level', () => {
+    expect(naturalLevelOf('natural')).toBeNull();
+    expect(naturalLevelOf('natural 3')).toBe(3);
+    expect(naturalLevelOf('normal')).toBeNull();
   });
 });

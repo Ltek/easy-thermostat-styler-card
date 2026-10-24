@@ -1,5 +1,12 @@
 # Changelog
 
+## v2026.10.24.4
+
+- **RF fan chips detect the fan's speeds** from the fan entity: 10 speeds, 6, 3 and so on. Speed 4 of 10 reads as 4 rather than a rounded guess, and 100% is speed 10.
+- **Breeze / natural levels**: in a numbered Breeze level (ha-rf-fan's `natural 1`–`natural 3`), the chip shows a green leaf with the level instead of the fan speed. A single natural mode shows just the leaf.
+- New per-chip option **Speed shows as**: number (`4`), fraction (`4/10`) or percent (`40%`).
+- The chip editor shows what it detected, e.g. "Detected: 10 speeds · Breeze 3 levels · light light.bedroom_fan".
+
 ## v2026.10.24.3
 
 - **Expandable menus**: a new "Expandable menu" display for mode, preset and fan sets.

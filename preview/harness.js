@@ -44,14 +44,15 @@ add('climate.hall', 'heat_cool', { ...RICH, friendly_name: 'Hallway', target_tem
 add('climate.office', 'heat', { ...RICH, friendly_name: 'Office', temperature: 70, hvac_action: 'heating', current_temperature: 66 });
 add('climate.bed', 'cool', { ...RICH, friendly_name: 'Bedroom', temperature: 71, hvac_action: 'idle', current_temperature: 71 });
 add('climate.den', 'off', { ...RICH, friendly_name: 'Den', current_temperature: 69 });
-add('fan.bedroom', 'on', { friendly_name: 'Bedroom fan', percentage: 66, percentage_step: 100 / 6, direction: 'forward', preset_mode: 'natural' });
+add('fan.bedroom', 'on', { friendly_name: 'Bedroom fan', percentage: 70, percentage_step: 10, direction: 'forward', preset_mode: 'natural 2', preset_modes: ['normal', 'natural 1', 'natural 2', 'natural 3'] });
+add('fan.living', 'on', { friendly_name: 'Living fan', percentage: 40, percentage_step: 10, direction: 'reverse', preset_mode: 'normal', preset_modes: ['normal', 'natural 1', 'natural 2', 'natural 3'] });
 add('light.bedroom_fan', 'on', {});
 add('sensor.bedroom_fan_sleep_timer', new Date(Date.now() + 95 * 60000).toISOString(), { device_class: 'timestamp' });
 add('fan.office', 'off', { friendly_name: 'Office fan', percentage: 0, percentage_step: 100 / 6, direction: 'reverse' });
-for (const [id, dev] of [['fan.bedroom', 'd1'], ['light.bedroom_fan', 'd1'], ['sensor.bedroom_fan_sleep_timer', 'd1'], ['fan.office', 'd2']])
+for (const [id, dev] of [['fan.bedroom', 'd1'], ['light.bedroom_fan', 'd1'], ['sensor.bedroom_fan_sleep_timer', 'd1'], ['fan.office', 'd2'], ['fan.living', 'd3']])
   hass.entities[id] = { entity_id: id, device_id: dev, platform: 'esphome_rf_fan', translation_key: id.includes('sleep') ? 'sleep_timer' : undefined };
 
-const fans = { type: 'chips', zone: 'top', chips: [{ type: 'rf_fan', entity: 'fan.bedroom', name: 'Bedroom' }, { type: 'rf_fan', entity: 'fan.office', name: 'Office' }] };
+const fans = { type: 'chips', zone: 'top', chips: [{ type: 'rf_fan', entity: 'fan.bedroom', name: 'Bedroom' }, { type: 'rf_fan', entity: 'fan.living', name: 'Living', speed_format: 'fraction' }, { type: 'rf_fan', entity: 'fan.office', name: 'Office' }] };
 
 const EXAMPLES = [
   ['Defaults — wheel right, Heat/Cool, cooling glow', { entity: 'climate.hall' }],

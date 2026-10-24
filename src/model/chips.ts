@@ -22,10 +22,16 @@ export interface ChipView {
   /** Short state text (e.g. "2", "On", "21.5 °C"). */
   state: string;
   /** rf_fan extras */
-  speed: number | null; // 1..speed_count
+  speed: number | null; // 1..speedCount
+  /** Auto-detected from percentage_step (100 ÷ speeds). */
+  speedCount: number | null;
   percentage: number | null;
   direction: 'forward' | 'reverse' | null;
   natural: boolean;
+  /** Breeze/natural level when the remote has numbered levels (`natural 2` → 2). */
+  naturalLevel: number | null;
+  /** How many numbered natural levels the fan offers (0 = a single natural mode). */
+  naturalLevels: number;
   lightEntity: string | null;
   lightOn: boolean;
   timerEnds: Date | null;
@@ -94,6 +100,9 @@ export function toChipView(hass: HomeAssistant, chip: ChipConfig, index: number)
     available,
     state: available ? stateText(hass, e!) : 'Unavailable',
     speed: null,
+    speedCount: null,
+    naturalLevel: null,
+    naturalLevels: 0,
     percentage: null,
     direction: null,
     natural: false,
@@ -109,26 +118,50 @@ export function toChipView(hass: HomeAssistant, chip: ChipConfig, index: number)
 
   const a = e.attributes;
   const pct = num(a.percentage);
-  const count = num(a.speed_count) ?? (num(a.percentage_step) ? Math.round(100 / num(a.percentage_step)!) : null);
-  const speed = on && pct !== null && count ? Math.max(1, Math.round((pct * count) / 100)) : null;
+  const count = speedCount(a);
+  const speed = on && pct !== null && count ? Math.max(1, Math.min(count, Math.round((pct * count) / 100))) : null;
   const light = findRfFanLight(hass, chip.entity);
   const timer = findRfFanTimer(hass, chip.entity);
   const timerState = timer ? hass.states[timer]?.state : undefined;
   const ends = timerState && !UNAVAILABLE.has(timerState) ? new Date(timerState) : null;
   const preset = typeof a.preset_mode === 'string' ? a.preset_mode : '';
+  const natural = on && !!preset && preset !== 'normal';
+  const naturalLevel = natural ? naturalLevelOf(preset) : null;
+  const levels = Array.isArray(a.preset_modes) ? a.preset_modes.filter((p) => naturalLevelOf(String(p)) !== null).length : 0;
+  const fmt = chip.speed_format ?? 'number';
+  const speedText =
+    speed === null ? 'On' : fmt === 'fraction' && count ? `${speed}/${count}` : fmt === 'percent' && pct !== null ? `${Math.round(pct)}%` : String(speed);
   return {
     ...base,
     icon: chip.icon ?? 'mdi:ceiling-fan',
-    state: !available ? 'Unavailable' : on ? (speed !== null ? String(speed) : 'On') : 'Off',
+    // In Breeze/natural mode the level is what matters, not the underlying speed.
+    state: !available ? 'Unavailable' : !on ? 'Off' : naturalLevel !== null ? String(naturalLevel) : speedText,
     speed,
+    speedCount: count,
+    naturalLevel,
+    naturalLevels: levels,
     percentage: pct,
     direction: a.direction === 'reverse' ? 'reverse' : a.direction === 'forward' ? 'forward' : null,
-    natural: !!preset && preset !== 'normal',
+    natural,
     lightEntity: light,
     lightOn: !!light && hass.states[light]?.state === 'on',
     timerEnds: ends && !Number.isNaN(ends.getTime()) && ends.getTime() > Date.now() ? ends : null,
     spin: on ? spinSeconds(pct) : null,
   };
+}
+
+/** Speed count: HA publishes `percentage_step` = 100 ÷ speeds (6 speeds → 16.67). */
+export function speedCount(attrs: Record<string, unknown>): number | null {
+  const explicit = num(attrs.speed_count);
+  if (explicit && explicit > 0) return Math.round(explicit);
+  const step = num(attrs.percentage_step);
+  return step && step > 0 && step < 100 ? Math.round(100 / step) : null;
+}
+
+/** `natural 2` → 2; `natural` / `normal` / anything else → null. */
+export function naturalLevelOf(preset: string): number | null {
+  const m = /^natural[ _]?(\d+)$/i.exec(preset.trim());
+  return m ? Number(m[1]) : null;
 }
 
 /** Faster spin at higher speed: 3.0 s at 1 % → 0.6 s at 100 %. */

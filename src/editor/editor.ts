@@ -20,6 +20,7 @@ import {
 import { availableOptions, defaultMenuDirection, MODE_ICONS, orderOptions, prettify, SET_TITLES } from '../model/sets';
 import { resolveButtonStyle, BUTTON_DEFAULTS } from '../model/style';
 import { EDITOR_CSS } from './editor-css';
+import { toChipView } from '../model/chips';
 import { LOOKS, applyLook, hasLookKeys } from '../model/looks';
 
 // Visual editor in the Ltek panel idiom (CARD_DESIGN_SYSTEM §2): top-level
@@ -651,6 +652,12 @@ export class EasyThermostatStylerCardEditor extends LitElement {
                     ${this._check('Show name', ch.show_name ?? true, (v) => upd('show_name', v, true))}
                     ${this._check('Show state', ch.show_state ?? true, (v) => upd('show_state', v, true))}
                   </div>
+                  ${ch.type === 'rf_fan' ? this._rfFanInfo(ch) : nothing}
+                  ${ch.type === 'rf_fan'
+                    ? this._selectRow('Speed shows as', ch.speed_format ?? 'number', [['number', 'Number (4)'], ['fraction', 'Fraction (4/10)'], ['percent', 'Percent (40%)']], (v) =>
+                        upd('speed_format', v, 'number'),
+                      )
+                    : nothing}
                   ${this._selectRow(
                     'Tap',
                     ch.tap ?? (ch.type === 'rf_fan' ? 'popup' : 'more-info'),
@@ -676,6 +683,18 @@ export class EasyThermostatStylerCardEditor extends LitElement {
         })}
       </div>
     `;
+  }
+
+  /** What was detected for this fan (read-only hint). */
+  private _rfFanInfo(ch: ChipConfig): TemplateResult | typeof nothing {
+    if (!this.hass?.states[ch.entity]) return nothing;
+    const v = toChipView(this.hass, ch, 0);
+    const parts = [
+      v.speedCount ? `${v.speedCount} speeds` : 'speed count unknown',
+      v.naturalLevels ? `Breeze ${v.naturalLevels} levels` : Array.isArray(this.hass.states[ch.entity]!.attributes.preset_modes) ? 'Breeze' : '',
+      v.lightEntity ? `light ${v.lightEntity}` : 'no light found',
+    ].filter(Boolean);
+    return this._hint(`Detected: ${parts.join(' · ')}.`);
   }
 
   private _firstRfFan(): string | undefined {

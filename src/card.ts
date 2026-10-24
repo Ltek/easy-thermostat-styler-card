@@ -738,8 +738,13 @@ export class EasyThermostatStylerCard extends LitElement {
     >
       <ha-icon class=${v.spin ? 'spin' : ''} style=${styleMap(v.spin ? { '--spin': `${v.spin}s` } : {})} icon=${v.icon}></ha-icon>
       ${showName ? html`<span>${v.name}</span>` : nothing}
-      ${showState && (!rf || v.speed !== null || !v.on) ? html`<span class="badge">${v.state}</span>` : nothing}
-      ${rf && v.natural ? html`<span class="extra"><ha-icon icon="mdi:leaf"></ha-icon></span>` : nothing}
+      ${rf && v.natural
+        ? html`<span class="badge natural" title=${v.naturalLevel !== null ? `Breeze ${v.naturalLevel}` : 'Breeze'}
+            ><ha-icon icon="mdi:leaf"></ha-icon>${showState && v.naturalLevel !== null ? v.naturalLevel : nothing}</span
+          >`
+        : showState && (!rf || v.speed !== null || !v.on)
+          ? html`<span class="badge">${v.state}</span>`
+          : nothing}
       ${rf && v.lightOn ? html`<span class="extra light"><ha-icon icon="mdi:lightbulb"></ha-icon></span>` : nothing}
       ${rf && v.timerEnds
         ? html`<span class="extra"><ha-icon icon="mdi:timer-outline"></ha-icon>${formatRemaining(v.timerEnds)}</span>`

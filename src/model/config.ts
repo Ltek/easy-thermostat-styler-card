@@ -7,7 +7,7 @@
 // untouched card never rewrites its YAML. Rendering defaults live in code
 // (`DEFAULTS` below), never in the stored config.
 
-export const CARD_VERSION = '2026.10.24.3';
+export const CARD_VERSION = '2026.10.24.4';
 export const CARD_TYPE = 'easy-thermostat-styler-card';
 export const EDITOR_TYPE = 'easy-thermostat-styler-card-editor';
 
@@ -107,6 +107,8 @@ export interface ChipConfig {
   icon?: string;
   show_name?: boolean;
   show_state?: boolean;
+  /** rf_fan: how the speed reads — `4`, `4/10` or `40%`. */
+  speed_format?: 'number' | 'fraction' | 'percent';
   tap?: ChipTap;
   hold?: ChipHold;
   /** Card config shown in the pop-up (tap: popup). Default for rf_fan:
