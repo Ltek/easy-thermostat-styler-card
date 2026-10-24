@@ -559,7 +559,7 @@ function Vt(o) {
 function C(o) {
   return Vt({ ...o, state: !0, attribute: !1 });
 }
-const Me = "2026.10.24.12", _t = "easy-thermostat-styler-card", Mt = "easy-thermostat-styler-card-editor", Re = [
+const Me = "2026.10.24.13", _t = "easy-thermostat-styler-card", Mt = "easy-thermostat-styler-card-editor", Re = [
   "name",
   "status",
   "current",

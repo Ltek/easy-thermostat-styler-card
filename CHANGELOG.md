@@ -1,5 +1,14 @@
 # Changelog
 
+## v2026.10.24.13
+
+- **Test mode** (top of the editor): Off, Heating, Cooling, Idle, Fan / air movement, System off, or Cycle through all (6 s each).
+  - The card acts as if it were in that state: effects, moving background, status and colours. The temperature and setpoints shown stay real.
+  - A small **TEST** badge shows which state is being simulated.
+  - Like the AlertTicker card's, it only runs while you edit the dashboard. The live card ignores it, so saving with it on is harmless.
+- **Editor**: opening a panel now closes the others (sub-panels keep their own state).
+- Panels renamed: **Effects** → **Heating & Cooling Effects**, **Card** → **Card Shape**.
+
 ## v2026.10.24.12
 
 - **Hide the setpoint once the room reaches it** (Setpoint control → Show controls → "Shown when tapped").
