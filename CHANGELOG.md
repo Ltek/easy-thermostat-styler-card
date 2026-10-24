@@ -1,5 +1,13 @@
 # Changelog
 
+## v2026.10.24.6
+
+- **Screenshots in the README**: every Quick Preset Template plus six feature shots (open menu, tap to reveal closed and open, setpoint bar, vertical bar, fan chips). They're rendered from the built card in a real browser on every publish (`npm run screenshots`), so the gallery always matches the current build.
+- **New template "Signature"** replaces "Ecosee" so the name doesn't clash with another card. The thermostat name is hidden, the status (Idle / Heating / Cooling) sits beside the current temperature, and the wheel's centre value is a pill like the setpoint pills.
+- **Slim Strip** is now centred.
+- New option **Status** (Thermostat → Layout): above, beside or below the current temperature.
+- New option **Centre value** for the wheel (Setpoint control): bubble or pill.
+
 ## v2026.10.24.5
 
 - **Centering fixed**: with Align set to Center, the temperature and the wheel or stepper beside it are now centred together as one group. Before, the temperature block stretched and pushed the control to the edge.

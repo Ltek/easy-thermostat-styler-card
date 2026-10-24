@@ -21,6 +21,7 @@ export const TEMPLATE_KEYS = [
   'show_current',
   'core_align',
   'toggles_zone',
+  'status_position',
   'setpoint',
   'sets',
 ] as const;
@@ -43,12 +44,17 @@ const fan = (extra: Partial<ButtonSetConfig> = {}): ButtonSetConfig => ({ type: 
 
 export const TEMPLATES: Template[] = [
   {
-    id: 'ecosee',
-    name: 'Ecosee',
-    hint: 'The built-in look: big light number, scroll wheel on the right, tinted mode buttons.',
+    id: 'signature',
+    name: 'Signature',
+    hint: 'Big light number with the status beside it, a pill-centred wheel on the right, tinted mode buttons.',
     icon: 'mdi:thermostat',
-    tags: ['wheel', 'tonal', 'presets behind toggles'],
-    values: { sets: [hvac(), preset({ display: 'toggle' }), fan({ display: 'toggle' })] },
+    tags: ['pill wheel', 'status beside', 'tonal'],
+    values: {
+      show_name: false,
+      status_position: 'beside',
+      setpoint: { control: 'wheel', wheel_style: 'pill' },
+      sets: [hvac(), preset({ display: 'toggle' }), fan({ display: 'toggle' })],
+    },
   },
   {
     id: 'mission',
@@ -83,11 +89,11 @@ export const TEMPLATES: Template[] = [
   {
     id: 'slim',
     name: 'Slim Strip',
-    hint: 'One short row: name and number on the left, a small stepper on the right, every set as a menu.',
+    hint: 'One short centred row: name and number with a small stepper beside them, every set as a menu.',
     icon: 'mdi:view-sequential-outline',
-    tags: ['stepper', 'menus', 'left aligned'],
+    tags: ['stepper', 'menus', 'centred'],
     values: {
-      core_align: 'left',
+      core_align: 'center',
       show_status: false,
       show_humidity: false,
       show_pills: false,

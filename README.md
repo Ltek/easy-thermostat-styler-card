@@ -6,7 +6,7 @@ https://github.com/Ltek/easy-thermostat-styler-card
 
 [![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=Ltek&repository=easy-thermostat-styler-card&category=plugin)
 
-Current build: **v2026.10.24.5** · full history in [CHANGELOG.md](CHANGELOG.md)
+Current build: **v2026.10.24.6** · full history in [CHANGELOG.md](CHANGELOG.md)
 
 ---
 
@@ -27,7 +27,7 @@ Current build: **v2026.10.24.5** · full history in [CHANGELOG.md](CHANGELOG.md)
 - **Compact mode:** any set can sit behind a toggle button, or one switch puts them all there. Each browser remembers which ones are open.
 - **Expandable menus:** a set can collapse to one button showing the current value (for example "Mode · Heat"). Tap it and the full list opens up, down, left or right, floating over the card. Tap outside or press Escape to close it.
 - **Tap to reveal:** keep the card calm. The controls stay folded away (showing just the pill, or the control's own value) until you tap the temperature or a setpoint pill. They can open in place of the big number and fold away again after a number of seconds you choose.
-- **Quick Preset Templates:** nine starting points, each with its own setpoint control, button style and layout: Ecosee, Mission Control, Tap & Go, Slim Strip, Side Rail, Wall Tablet, Minimal Glass, Neon and Pocket.
+- **Quick Preset Templates:** nine starting points, each with its own setpoint control, button style and layout: Signature, Mission Control, Tap & Go, Slim Strip, Side Rail, Wall Tablet, Minimal Glass, Neon and Pocket.
 - **Ceiling fan chips:** built in for the [ha-rf-fan](https://github.com/dasimon135/ha-rf-fan) integration.
   - Pick the fan and its light and sleep timer are found automatically.
   - The chip shows on/off, speed, direction, natural mode, light and time left.
@@ -39,6 +39,23 @@ Current build: **v2026.10.24.5** · full history in [CHANGELOG.md](CHANGELOG.md)
   - The card's background, border, corners, padding, and a glow while heating or cooling.
   - Every colour can follow your theme, be a custom colour, or any CSS.
 - **Visual editor:** everything is set in the editor, and YAML is optional. Only the settings you change are saved.
+
+<!-- gallery:start (generated from screenshots/index.json by the publish step; do not edit by hand) -->
+## Quick Preset Templates
+
+<table>
+<tr><td align="center" width="33%"><img src="screenshots/template-signature.png" width="260" alt="Signature" /><br /><sub><b>Signature</b>: Big light number with the status beside it, a pill-centred wheel on the right, tinted mode buttons.</sub></td><td align="center" width="33%"><img src="screenshots/template-mission.png" width="260" alt="Mission Control" /><br /><sub><b>Mission Control</b>: Setpoint bar with flags and ticks under the number. Round icon-only modes up top, preset and fan as menus below.</sub></td><td align="center" width="33%"><img src="screenshots/template-tap.png" width="260" alt="Tap & Go" /><br /><sub><b>Tap & Go</b>: Calm until you need it: tap the temperature or a pill and the wheel takes the number’s place, then folds away after 6 s.</sub></td></tr>
+<tr><td align="center" width="33%"><img src="screenshots/template-slim.png" width="260" alt="Slim Strip" /><br /><sub><b>Slim Strip</b>: One short centred row: name and number with a small stepper beside them, every set as a menu.</sub></td><td align="center" width="33%"><img src="screenshots/template-rail.png" width="260" alt="Side Rail" /><br /><sub><b>Side Rail</b>: Modes stacked down the left as outlined circles, a vertical setpoint bar on the right, preset and fan menus below.</sub></td><td align="center" width="33%"><img src="screenshots/template-wall.png" width="260" alt="Wall Tablet" /><br /><sub><b>Wall Tablet</b>: Big and finger-friendly: huge number, large wheel under it with three next values, chunky filled mode tiles.</sub></td></tr>
+<tr><td align="center" width="33%"><img src="screenshots/template-glass.png" width="260" alt="Minimal Glass" /><br /><sub><b>Minimal Glass</b>: No card background or border, no labels: just the number, a stepper and text-only mode buttons.</sub></td><td align="center" width="33%"><img src="screenshots/template-neon.png" width="260" alt="Neon" /><br /><sub><b>Neon</b>: A cyan-to-pink gradient bar above the number with diamond handles, square filled buttons and an accent border.</sub></td><td align="center" width="33%"><img src="screenshots/template-pocket.png" width="260" alt="Pocket" /><br /><sub><b>Pocket</b>: Phone-sized: small number, tiny stepper on the left, everything else behind round toggles along the top.</sub></td></tr>
+</table>
+
+## Features
+
+<table>
+<tr><td align="center" width="33%"><img src="screenshots/feature-menu-open.png" width="260" alt="Expandable menu, open" /><br /><sub><b>Expandable menu, open</b></sub></td><td align="center" width="33%"><img src="screenshots/feature-reveal-closed.png" width="260" alt="Tap to reveal" /><br /><sub><b>Tap to reveal</b>: closed</sub></td><td align="center" width="33%"><img src="screenshots/feature-reveal-open.png" width="260" alt="Tap to reveal" /><br /><sub><b>Tap to reveal</b>: open in place of the temperature</sub></td></tr>
+<tr><td align="center" width="33%"><img src="screenshots/feature-bar.png" width="260" alt="Setpoint bar with flags, ticks and current marker" /><br /><sub><b>Setpoint bar with flags, ticks and current marker</b></sub></td><td align="center" width="33%"><img src="screenshots/feature-vertical-bar.png" width="260" alt="Vertical setpoint bar" /><br /><sub><b>Vertical setpoint bar</b></sub></td><td align="center" width="33%"><img src="screenshots/feature-fan-chips.png" width="260" alt="RF fan chips" /><br /><sub><b>RF fan chips</b>: Breeze level, light, timer, speed 4/10</sub></td></tr>
+</table>
+<!-- gallery:end -->
 
 ## Install
 

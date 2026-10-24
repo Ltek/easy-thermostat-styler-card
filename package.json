@@ -7,14 +7,18 @@
   "scripts": {
     "build": "tsc --noEmit && vite build",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "screenshots": "node scripts/screenshots.mjs && node scripts/gallery.mjs",
+    "release": "npm run build && npm run screenshots"
   },
   "dependencies": {
     "lit": "3.3.3"
   },
   "devDependencies": {
     "@mdi/js": "7.4.47",
+    "esbuild": "0.24.0",
     "happy-dom": "20.10.6",
+    "playwright-core": "1.48.2",
     "typescript": "5.7.2",
     "vite": "6.0.7",
     "vitest": "2.1.8"

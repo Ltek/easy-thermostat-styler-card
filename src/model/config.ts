@@ -7,7 +7,7 @@
 // untouched card never rewrites its YAML. Rendering defaults live in code
 // (`DEFAULTS` below), never in the stored config.
 
-export const CARD_VERSION = '2026.10.24.5';
+export const CARD_VERSION = '2026.10.24.6';
 export const CARD_TYPE = 'easy-thermostat-styler-card';
 export const EDITOR_TYPE = 'easy-thermostat-styler-card-editor';
 
@@ -146,6 +146,8 @@ export interface BarConfig {
   ticks?: number; // degrees between minor ticks, 0 = none
   labels?: number; // degrees between labels, 0 = none
   show_current?: boolean;
+  /** Where Heating / Cooling / Idle sits: above the temperature, beside it, or below it. */
+  status_position?: 'above' | 'beside' | 'below';
   flags?: boolean;
   handle_shape?: 'round' | 'square' | 'line' | 'diamond';
   handle_color?: string;
@@ -163,6 +165,8 @@ export interface SetpointConfig {
   scale?: number; // %
   neighbors?: number; // 0–3
   nudge?: 'beside' | 'stacked' | 'hidden';
+  /** Wheel centre: the gradient bubble, or the same pill as the setpoint pills. */
+  wheel_style?: 'bubble' | 'pill';
   min_gap?: number;
   bar?: BarConfig;
   /** `tap`: the control stays closed until you tap the pills / current temperature. */
@@ -215,6 +219,8 @@ export const DEFAULTS = {
   show_current: true,
   core_align: 'center' as const,
   toggles_zone: 'bottom' as Zone,
+  status_position: 'above' as const,
+  wheel_style: 'bubble' as const,
   control: 'wheel' as SetpointControl,
   position: 'right' as const,
   scale: 100,

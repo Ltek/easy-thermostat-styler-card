@@ -299,6 +299,13 @@ export class EasyThermostatStylerCard extends LitElement {
     }
 
     const temp = html`${formatTemp(view.currentTemp, view.unit)}<span class="unit">${view.unit}</span>`;
+    const statusPos = c.status_position ?? DEFAULTS.status_position;
+    const status =
+      (c.show_status ?? DEFAULTS.show_status) && view.equipment
+        ? html`<div class="status ${eq} sp-${statusPos}">
+            <ha-icon icon=${MODE_ICONS[view.state] ?? 'mdi:thermostat'}></ha-icon>${EQUIPMENT_LABEL[view.equipment]}
+          </div>`
+        : nothing;
     const currentTpl = inCurrent
       ? html`<div class="in-current">${full}</div>`
       : (c.show_current ?? DEFAULTS.show_current)
@@ -316,15 +323,12 @@ export class EasyThermostatStylerCard extends LitElement {
 
     const main = html`<div class="main">
       ${c.show_name ?? DEFAULTS.show_name ? html`<div class="name">${view.name}</div>` : nothing}
-      ${(c.show_status ?? DEFAULTS.show_status) && view.equipment
-        ? html`<div class="status ${eq}">
-            <ha-icon icon=${MODE_ICONS[view.state] ?? 'mdi:thermostat'}></ha-icon>${EQUIPMENT_LABEL[view.equipment]}
-          </div>`
-        : nothing}
+      ${statusPos === 'above' ? status : nothing}
       ${(c.show_humidity ?? DEFAULTS.show_humidity) && view.humidity !== null
         ? html`<div class="humidity"><ha-icon icon="mdi:water-outline"></ha-icon>${Math.round(view.humidity)}%</div>`
         : nothing}
-      ${currentTpl}
+      ${statusPos === 'beside' && status !== nothing ? html`<div class="cur-row">${currentTpl}${status}</div>` : currentTpl}
+      ${statusPos === 'below' ? status : nothing}
       ${(c.show_pills ?? DEFAULTS.show_pills) && edit?.available ? this._renderPills(edit, fromPills, open) : nothing}
     </div>`;
 
@@ -364,7 +368,7 @@ export class EasyThermostatStylerCard extends LitElement {
     const value = formatTemp(e.value, edit.unit);
     return html`<button class="collapsed" aria-label="Show temperature controls" @click=${openIt}>
       ${control === 'wheel'
-        ? html`<div class="bubble ${edit.active}">${value}</div>`
+        ? this._wheelCentre(edit.active, value)
         : html`<span class="sv" style=${styleMap({ '--c': edit.active === 'cool' ? 'var(--etc-cool)' : 'var(--etc-heat)' })}
             >${value}</span
           >`}
@@ -465,12 +469,21 @@ export class EasyThermostatStylerCard extends LitElement {
       @wheel=${this._wheelScroll}
     >
       ${above.map(nb)}
-      <div class="bubble ${side}">${formatTemp(e.value, edit.unit)}</div>
+      ${this._wheelCentre(side, formatTemp(e.value, edit.unit))}
       ${below.map(nb)}
     </div>`;
     if (nudgeMode === 'hidden') return html`<div class="wheel">${col}</div>`;
     if (nudgeMode === 'stacked') return html`<div class="wheel nudge-stacked">${plus}${col}${minus}</div>`;
     return html`<div class="wheel">${col}<div class="nudges">${plus}${minus}</div></div>`;
+  }
+
+  private _wheelCentre(side: Setpoint, value: string): TemplateResult {
+    if ((this._config?.setpoint?.wheel_style ?? DEFAULTS.wheel_style) === 'pill') {
+      return html`<div class="pill wheel-pill ${side}">
+        <ha-icon icon=${side === 'heat' ? 'mdi:fire' : 'mdi:snowflake'}></ha-icon>${value}
+      </div>`;
+    }
+    return html`<div class="bubble ${side}">${value}</div>`;
   }
 
   private _wheelDown = (ev: PointerEvent): void => {

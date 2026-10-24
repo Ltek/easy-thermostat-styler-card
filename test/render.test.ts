@@ -185,6 +185,25 @@ describe('card render', () => {
     expect(root.querySelector('.core.al-center')).not.toBeNull();
   });
 
+  it('status position: beside / below the current temperature', async () => {
+    const a = await mount({ status_position: 'beside' });
+    expect(a.root.querySelector('.cur-row > .current + .status.sp-beside')).not.toBeNull();
+    document.body.innerHTML = '';
+    const b = await mount({ status_position: 'below' });
+    const main = b.root.querySelector('.main')!;
+    const kids = [...main.children].map((k) => k.className.split(' ')[0]);
+    expect(kids.indexOf('status')).toBeGreaterThan(kids.indexOf('current'));
+  });
+
+  it('wheel centre can be a pill (live and collapsed)', async () => {
+    const { root, el } = await mount({ setpoint: { wheel_style: 'pill' } });
+    expect(root.querySelector('.wheel .wheel-pill.heat')!.textContent).toContain('68');
+    expect(root.querySelector('.wheel .bubble')).toBeNull();
+    el.setConfig({ ...base, setpoint: { wheel_style: 'pill', reveal: 'tap' } });
+    await el.updateComplete;
+    expect(root.querySelector('.collapsed .wheel-pill')).not.toBeNull();
+  });
+
   it('hvac set full-time; preset/fan behind toggles that remember state', async () => {
     const { root, calls, el } = await mount({});
     expect(root.querySelectorAll('.set.t-hvac .btn')).toHaveLength(4);

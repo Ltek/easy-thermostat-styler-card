@@ -149,6 +149,13 @@ export const cardStyles = css`
   .core.al-right .in-current { justify-content: flex-end; }
   .in-current > .bar { width: 100%; min-width: 220px; }
 
+  /* ---- status beside the temperature ---- */
+  .cur-row { display: flex; align-items: center; gap: 12px; }
+  .core.al-center .cur-row { justify-content: center; }
+  .core.al-right .cur-row { justify-content: flex-end; }
+  .status.sp-beside { flex-direction: column; gap: 2px; --mdc-icon-size: 22px; }
+  .status.sp-below { margin-top: 2px; }
+
   /* ---- setpoint pills ---- */
   .pills { display: flex; gap: 8px; flex-wrap: wrap; justify-content: inherit; }
   .core.al-center .pills { justify-content: center; }
@@ -221,6 +228,13 @@ export const cardStyles = css`
     line-height: 1.1;
   }
   .bubble.cool, .stepper.cool .sv { --c: var(--etc-cool); }
+  /* Wheel centre as a pill (same look as the setpoint pills, scaled with the wheel). */
+  .wheel-pill {
+    font-size: calc(var(--etc-t-wv-fs, 28px) * var(--etc-scale, 1));
+    padding: calc(6px * var(--etc-scale, 1)) calc(18px * var(--etc-scale, 1));
+    --mdc-icon-size: calc(22px * var(--etc-scale, 1));
+    line-height: 1.15;
+  }
   .nudges { display: flex; flex-direction: column; gap: calc(12px * var(--etc-scale, 1)); }
   .round {
     --c: var(--etc-heat);

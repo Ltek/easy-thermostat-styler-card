@@ -313,6 +313,12 @@ export class EasyThermostatStylerCardEditor extends LitElement {
       </div>
       ${this._group('Layout')}
       ${this._select('core_align', 'Align', [['left', 'Left'], ['center', 'Center'], ['right', 'Right']], DEFAULTS.core_align)}
+      ${this._select(
+        'status_position',
+        'Status',
+        [['above', 'Above the temperature'], ['beside', 'Beside the temperature'], ['below', 'Below the temperature']],
+        DEFAULTS.status_position,
+      )}
     `;
   }
 
@@ -362,7 +368,8 @@ export class EasyThermostatStylerCardEditor extends LitElement {
             ${this._slider('setpoint.scale', 'Size', 40, 250, 5, DEFAULTS.scale, (n) => `${n}%`)}
             ${control === 'wheel'
               ? html`${this._slider('setpoint.neighbors', 'Next values shown', 0, 3, 1, DEFAULTS.neighbors, (n) => String(n))}
-                ${this._select('setpoint.nudge', '− / + buttons', [['beside', 'Beside'], ['stacked', 'Above & below'], ['hidden', 'Hidden']], DEFAULTS.nudge)}`
+                ${this._select('setpoint.nudge', '− / + buttons', [['beside', 'Beside'], ['stacked', 'Above & below'], ['hidden', 'Hidden']], DEFAULTS.nudge)}
+                ${this._select('setpoint.wheel_style', 'Centre value', [['bubble', 'Bubble'], ['pill', 'Pill (like the setpoint pills)']], DEFAULTS.wheel_style)}`
               : nothing}
           `
         : nothing}
