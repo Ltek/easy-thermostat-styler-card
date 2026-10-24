@@ -43,6 +43,19 @@ import { renderBackground } from './components/background';
 import { backgroundStyles } from './background-styles';
 
 const PX_PER_STEP = 18;
+
+/** The room is at the setpoint(s) it is working towards (within half a step). */
+export function reached(view: ClimateView, edit: TempAdjustModel | null): boolean {
+  const t = view.currentTemp;
+  if (t === null || !edit?.available) return false;
+  const tol = (edit.heat ?? edit.cool)!.step / 2;
+  const h = edit.heat?.value;
+  const c = edit.cool?.value;
+  if (h !== undefined && c !== undefined) return t >= h - tol && t <= c + tol;
+  if (h !== undefined) return t >= h - tol;
+  if (c !== undefined) return t <= c + tol;
+  return false;
+}
 const HOLD_MS = 500;
 
 type CardHelpers = { createCardElement(c: Record<string, unknown>): HTMLElement & { hass?: unknown } };
@@ -312,6 +325,9 @@ export class EasyThermostatStylerCard extends LitElement {
     const fromCurrent = tap && (from === 'both' || from === 'current');
     const fromPills = tap && (from === 'both' || from === 'pills');
     const inCurrent = tap && open && (sp.open_in ?? DEFAULTS.open_in) === 'current';
+    // Closed and at target: show only the current temperature (tap it to open).
+    const atTarget = tap && !open && !!sp.hide_at_target && reached(view, edit);
+    const fromCurrentNow = fromCurrent || atTarget;
     const full = editable
       ? control === 'bar'
         ? this._renderBar(edit!, view)
@@ -321,7 +337,7 @@ export class EasyThermostatStylerCard extends LitElement {
     if (editable) {
       if (!tap) atPlace = full;
       else if (open) atPlace = inCurrent ? null : full;
-      else if ((sp.collapsed ?? DEFAULTS.collapsed) === 'visual') atPlace = this._renderCollapsed(edit!, view, control);
+      else if (!atTarget && (sp.collapsed ?? DEFAULTS.collapsed) === 'visual') atPlace = this._renderCollapsed(edit!, view, control);
     }
     const ctl = control !== 'bar' ? atPlace : null;
     const bar = control === 'bar' ? atPlace : null;
@@ -346,7 +362,7 @@ export class EasyThermostatStylerCard extends LitElement {
     const currentTpl = inCurrent
       ? html`<div class="in-current">${full}</div>`
       : (c.show_current ?? DEFAULTS.show_current)
-        ? fromCurrent
+        ? fromCurrentNow
           ? html`<button
               class="current tappable ${eq}"
               aria-expanded=${open}
@@ -366,7 +382,7 @@ export class EasyThermostatStylerCard extends LitElement {
         : nothing}
       ${statusPos === 'beside' && status !== nothing ? html`<div class="cur-row">${currentTpl}${status}</div>` : currentTpl}
       ${statusPos === 'below' ? status : nothing}
-      ${(c.show_pills ?? DEFAULTS.show_pills) && edit?.available ? this._renderPills(edit, fromPills, open) : nothing}
+      ${(c.show_pills ?? DEFAULTS.show_pills) && edit?.available && !atTarget ? this._renderPills(edit, fromPills, open) : nothing}
     </div>`;
 
     return html`<div class="core al-${align} pos-${position}">
@@ -497,15 +513,29 @@ export class EasyThermostatStylerCard extends LitElement {
           </div>`
         : nothing;
 
+    const raw = this._config?.setpoint?.nudge;
+    const mode = raw === 'beside' ? 'right' : (raw ?? (control === 'stepper' ? 'around' : 'right'));
+    const lay = (cls: string, value: TemplateResult) => {
+      const col = html`<div class="nudges">${plus}${minus}</div>`;
+      const row = html`<div class="nudges row">${minus}${plus}</div>`;
+      const inner =
+        mode === 'hidden' ? value
+        : mode === 'left' ? html`${col}${value}`
+        : mode === 'above' ? html`${row}${value}`
+        : mode === 'below' ? html`${value}${row}`
+        : mode === 'stacked' ? html`${plus}${value}${minus}`
+        : mode === 'around' ? html`${minus}${value}${plus}`
+        : html`${value}${col}`;
+      const out = html`<div class="${cls} nud-${mode}">${inner}</div>`;
+      return sw === nothing ? out : html`<div class="ctl-wrap">${sw}${out}</div>`;
+    };
+
     if (control === 'stepper') {
-      return html`<div class="ctl-wrap">${sw}<div class="stepper ${side}">
-        ${minus}<span class="sv">${formatTemp(e.value, edit.unit)}</span>${plus}
-      </div></div>`;
+      return lay(`stepper ${side}`, html`<span class="sv">${formatTemp(e.value, edit.unit)}</span>`);
     }
 
     const sp = this._config?.setpoint ?? {};
     const radius = sp.neighbors ?? DEFAULTS.neighbors;
-    const nudgeMode = sp.nudge ?? DEFAULTS.nudge;
     const values = scrubberWindow(e, radius);
     const above = values.filter((v) => v > e.value).reverse();
     const below = values.filter((v) => v < e.value).reverse();
@@ -531,13 +561,7 @@ export class EasyThermostatStylerCard extends LitElement {
       ${this._wheelCentre(side, formatTemp(e.value, edit.unit))}
       ${below.map(nb)}
     </div>`;
-    const wheel =
-      nudgeMode === 'hidden'
-        ? html`<div class="wheel">${col}</div>`
-        : nudgeMode === 'stacked'
-          ? html`<div class="wheel nudge-stacked">${plus}${col}${minus}</div>`
-          : html`<div class="wheel">${col}<div class="nudges">${plus}${minus}</div></div>`;
-    return sw === nothing ? wheel : html`<div class="ctl-wrap">${sw}${wheel}</div>`;
+    return lay('wheel', col);
   }
 
   private _wheelCentre(side: Setpoint, value: string): TemplateResult {

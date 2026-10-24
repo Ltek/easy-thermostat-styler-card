@@ -181,7 +181,7 @@ export const cardStyles = css`
   }
   .current {
     line-height: 1;
-    font-size: calc(var(--etc-t-cur-fs, 72px) * var(--etc-scale, 1));
+    font-size: var(--etc-t-cur-fs, 72px);
     font-weight: var(--etc-t-cur-fw, 200);
     color: var(--etc-t-cur-c, var(--etc-fg));
     text-transform: var(--etc-t-cur-tt, none);
@@ -259,6 +259,9 @@ export const cardStyles = css`
   /* ---- wheel (ecosee scrubber, inline) ---- */
   .wheel { display: flex; align-items: center; gap: calc(10px * var(--etc-scale, 1)); }
   .wheel.nudge-stacked { flex-direction: column; }
+  /* − / + placement: left, right, both above, both below, above & below, either side */
+  :is(.wheel, .stepper).nud-above, :is(.wheel, .stepper).nud-below, :is(.wheel, .stepper).nud-stacked { flex-direction: column; }
+  .nudges.row { flex-direction: row; }
   .wheel-col {
     display: flex;
     flex-direction: column;

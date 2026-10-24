@@ -405,6 +405,53 @@ describe('card render', () => {
     expect(css).toMatch(/ha-card\.frosted \.bubble\s*\{/);
   });
 
+  it('Size scales the controls, not the current temperature', async () => {
+    const css = (root: ShadowRoot) => (root.host.constructor as unknown as { styles: { cssText: string }[] }).styles.map((s) => s.cssText).join('');
+    const { root } = await mount({ setpoint: { scale: 200 } });
+    expect(css(root)).toMatch(/\.current \{[^}]*font-size: var\(--etc-t-cur-fs, 72px\);/);
+    expect(root.querySelector<HTMLElement>('ha-card')!.style.getPropertyValue('--etc-scale')).toBe('2');
+  });
+
+  it('− / + placement for wheel and stepper', async () => {
+    const order = (root: ShadowRoot, sel: string) =>
+      [...root.querySelector(sel)!.children].map((k) => (k.classList.contains('nudges') ? `nudges${k.classList.contains('row') ? '-row' : ''}` : k.className.split(' ')[0] || k.getAttribute('aria-label')));
+    const cases: [Record<string, unknown>, string, string[]][] = [
+      [{}, '.wheel.nud-right', ['wheel-col', 'nudges']],
+      [{ nudge: 'beside' }, '.wheel.nud-right', ['wheel-col', 'nudges']],
+      [{ nudge: 'left' }, '.wheel.nud-left', ['nudges', 'wheel-col']],
+      [{ nudge: 'above' }, '.wheel.nud-above', ['nudges-row', 'wheel-col']],
+      [{ nudge: 'below' }, '.wheel.nud-below', ['wheel-col', 'nudges-row']],
+      [{ control: 'stepper' }, '.stepper.nud-around', ['round', 'sv', 'round']],
+      [{ control: 'stepper', nudge: 'above' }, '.stepper.nud-above', ['nudges-row', 'sv']],
+    ];
+    for (const [sp, sel, want] of cases) {
+      document.body.innerHTML = '';
+      const { root } = await mount({ setpoint: sp });
+      expect(order(root, sel)).toEqual(want);
+    }
+  });
+
+  it('tap mode + hide at target: setpoint shows until reached, then only the current temperature', async () => {
+    const cfg = { setpoint: { reveal: 'tap', hide_at_target: true, reveal_from: 'pills' } };
+    // heating to 70, room at 66: setpoint still shown
+    const a = await mount(cfg, fakeHass([climate('heat', { ...RICH, temperature: 70, current_temperature: 66, hvac_action: 'heating' })]));
+    expect(a.root.querySelector('.pill.heat')).not.toBeNull();
+    expect(a.root.querySelector('.collapsed')).not.toBeNull();
+    document.body.innerHTML = '';
+    // reached: only the temperature, and it opens the controls even though only pills were set to open them
+    const b = await mount(cfg, fakeHass([climate('heat', { ...RICH, temperature: 70, current_temperature: 70, hvac_action: 'idle' })]));
+    expect(b.root.querySelector('.pill')).toBeNull();
+    expect(b.root.querySelector('.collapsed')).toBeNull();
+    b.root.querySelector<HTMLButtonElement>('button.current')!.click();
+    await b.el.updateComplete;
+    expect(b.root.querySelector('.wheel')).not.toBeNull();
+    expect(b.root.querySelector('.pill.heat')).not.toBeNull(); // open: setpoint shows again
+    document.body.innerHTML = '';
+    // Heat/Cool: inside the band counts as reached
+    const c = await mount(cfg, fakeHass([climate('heat_cool', { ...RICH, target_temp_low: 68, target_temp_high: 75, current_temperature: 72 })]));
+    expect(c.root.querySelector('.pill')).toBeNull();
+  });
+
   it('hvac set full-time; preset/fan behind toggles that remember state', async () => {
     const { root, calls, el } = await mount({});
     expect(root.querySelectorAll('.set.t-hvac .btn')).toHaveLength(4);

@@ -387,9 +387,10 @@ export class EasyThermostatStylerCardEditor extends LitElement {
         ? html`
             ${this._select('setpoint.position', 'Position', [['left', 'Left'], ['right', 'Right'], ['center', 'Center (below)']], DEFAULTS.position)}
             ${this._slider('setpoint.scale', 'Size', 40, 250, 5, DEFAULTS.scale, (n) => `${n}%`)}
+            ${this._hint('Size scales the controls only; the current temperature has its own size under Text.')}
+            ${this._nudgeSelect(control)}
             ${control === 'wheel'
               ? html`${this._slider('setpoint.neighbors', 'Next values shown', 0, 3, 1, DEFAULTS.neighbors, (n) => String(n))}
-                ${this._select('setpoint.nudge', '− / + buttons', [['beside', 'Beside'], ['stacked', 'Above & below'], ['hidden', 'Hidden']], DEFAULTS.nudge)}
                 ${this._select('setpoint.wheel_style', 'Centre value', [['bubble', 'Bubble'], ['pill', 'Pill (like the setpoint pills)']], DEFAULTS.wheel_style)}`
               : nothing}
           `
@@ -399,6 +400,23 @@ export class EasyThermostatStylerCardEditor extends LitElement {
       ${this._group('Heat / Cool')}
       ${this._slider('setpoint.min_gap', 'Minimum gap', 0, 10, 0.5, this._defaultGap(), (n) => `${n}°`)}
     `;
+  }
+
+  /** − / + placement; the wheel defaults to Right, the stepper to Either side. */
+  private _nudgeSelect(control: string): TemplateResult {
+    const def = control === 'stepper' ? 'around' : 'right';
+    const raw = this._get('setpoint.nudge') as string | undefined;
+    const cur = raw === 'beside' ? 'right' : (raw ?? def);
+    const opts: Opt[] = [
+      ['right', 'Right'],
+      ['left', 'Left'],
+      ['above', 'Both above'],
+      ['below', 'Both below'],
+      ['stacked', '+ above, − below'],
+      ['around', '− left, + right'],
+      ['hidden', 'Hidden'],
+    ];
+    return this._selectRow('− / + buttons', cur, opts, (v) => this._put('setpoint.nudge', v === def ? undefined : v));
   }
 
   private _revealBody(): TemplateResult {
@@ -433,6 +451,8 @@ export class EasyThermostatStylerCardEditor extends LitElement {
               DEFAULTS.open_in,
             )}
             ${this._hint('“In place of the current temperature” swaps the big number for the controls while they are open.')}
+            ${this._bool('setpoint.hide_at_target', 'Hide the setpoint once the room reaches it', false)}
+            ${this._hint('While closed, only the current temperature shows once it matches the setpoint; until then the setpoint shows beside it. Tap the temperature to open the controls at any time.')}
             ${this._sliderRow('Close after', secs, 0, 60, 1, this._get('setpoint.hide_after') !== undefined, (v) => this._put('setpoint.hide_after', v, DEFAULTS.hide_after), (n) =>
               n ? `${n}s` : 'Stay open',
             )}

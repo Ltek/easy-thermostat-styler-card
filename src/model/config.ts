@@ -7,7 +7,7 @@
 // untouched card never rewrites its YAML. Rendering defaults live in code
 // (`DEFAULTS` below), never in the stored config.
 
-export const CARD_VERSION = '2026.10.24.11';
+export const CARD_VERSION = '2026.10.24.12';
 export const CARD_TYPE = 'easy-thermostat-styler-card';
 export const EDITOR_TYPE = 'easy-thermostat-styler-card-editor';
 
@@ -173,7 +173,8 @@ export interface SetpointConfig {
   position?: 'left' | 'right' | 'center';
   scale?: number; // %
   neighbors?: number; // 0–3
-  nudge?: 'beside' | 'stacked' | 'hidden';
+  /** − / + placement. 'beside' is the older name for 'right'. */
+  nudge?: 'right' | 'left' | 'above' | 'below' | 'stacked' | 'around' | 'hidden' | 'beside';
   /** Wheel centre: the gradient bubble, or the same pill as the setpoint pills. */
   wheel_style?: 'bubble' | 'pill';
   min_gap?: number;
@@ -188,6 +189,8 @@ export interface SetpointConfig {
   open_in?: 'place' | 'current';
   /** Seconds without use before it closes again; 0 = stay open until tapped. */
   hide_after?: number;
+  /** Tap mode: while closed, hide the setpoint once the room has reached it. */
+  hide_at_target?: boolean;
 }
 
 export type FxValue = 'none' | 'glow' | 'pulse' | 'both';

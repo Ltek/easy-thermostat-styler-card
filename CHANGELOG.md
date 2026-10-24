@@ -1,5 +1,14 @@
 # Changelog
 
+## v2026.10.24.12
+
+- **Hide the setpoint once the room reaches it** (Setpoint control → Show controls → "Shown when tapped").
+  - While the controls are closed, the setpoint (pill, bubble, value or bar) shows beside the current temperature until the room reaches it. Then only the current temperature shows.
+  - Tapping the temperature opens the controls at any time, and the setpoint shows again while they're open.
+  - It works with every control and status position. In Heat / Cool, anywhere inside the band counts as reached.
+- **− / + buttons** now offer **Right**, **Left**, **Both above**, **Both below**, **+ above, − below**, **− left, + right** and **Hidden**, for both the wheel and the stepper. The old "Beside" is now Right; existing cards are unchanged.
+- **Fixed**: Setpoint control → Size also scaled the big current temperature. It now scales only the controls; the current temperature has its own size under Text.
+
 ## v2026.10.24.11
 
 - **Sync to Air Movement** (Background) replaces the fan picker and accepts **any entity**:
