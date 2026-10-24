@@ -260,7 +260,7 @@ describe('card render', () => {
       await el.updateComplete;
       const events: Record<string, unknown>[] = [];
       el.addEventListener('config-changed', (e) => events.push((e as CustomEvent).detail.config));
-      const panel = [...el.shadowRoot!.querySelectorAll<HTMLDetailsElement>('details.etce-sec')].find((d) => d.textContent!.includes('Effects'))!;
+      const panel = [...el.shadowRoot!.querySelectorAll<HTMLDetailsElement>('details.etce-sec')].find((d) => d.querySelector('summary')!.textContent!.trim() === 'Effects')!;
       panel.open = true;
       panel.dispatchEvent(new Event('toggle'));
       await el.updateComplete;
@@ -364,7 +364,7 @@ describe('card render', () => {
       await el.updateComplete;
       const events: Record<string, unknown>[] = [];
       el.addEventListener('config-changed', (e) => events.push((e as CustomEvent).detail.config));
-      const panel = [...el.shadowRoot!.querySelectorAll<HTMLDetailsElement>('details.etce-sec')].find((d) => d.textContent!.includes('Background'))!;
+      const panel = [...el.shadowRoot!.querySelectorAll<HTMLDetailsElement>('details.etce-sec')].find((d) => d.querySelector('summary')!.textContent!.trim() === 'Background')!;
       panel.open = true;
       panel.dispatchEvent(new Event('toggle'));
       await el.updateComplete;
@@ -374,6 +374,35 @@ describe('card render', () => {
       mode.dispatchEvent(new Event('change'));
       expect(events.at(-1)).toEqual({ ...base, card: { radius: 4 }, background: { color: 'transparent' } });
     });
+  });
+
+  it('editor: Effects keeps its settings after other panels are opened and closed', async () => {
+    const el = document.createElement('easy-thermostat-styler-card-editor') as EasyThermostatStylerCardEditor;
+    el.hass = fakeHass([climate('heat', { ...RICH, temperature: 68 })]).hass;
+    el.setConfig(base as never);
+    document.body.appendChild(el);
+    await el.updateComplete;
+    const panel = (name: string) => [...el.shadowRoot!.querySelectorAll<HTMLDetailsElement>('details.etce-sec')].find((d) => d.querySelector('summary')!.textContent!.trim() === name)!;
+    for (const name of ['Effects', 'Background', 'Effects', 'Card', 'Effects']) {
+      const d = panel(name);
+      d.open = !d.open;
+      d.dispatchEvent(new Event('toggle'));
+      await el.updateComplete;
+    }
+    const fx = panel('Effects');
+    expect(fx.querySelectorAll('.etce-row').length).toBeGreaterThanOrEqual(10); // 5 parts + when + look
+    expect(fx.textContent).toContain('Glow size');
+  });
+
+  it('frosted glass: top level, older background.frosted still works, wheel bubble included', async () => {
+    const a = await mount({ frosted: true, frost_blur: 18 });
+    expect(a.root.querySelector('ha-card')!.classList.contains('frosted')).toBe(true);
+    expect(a.root.querySelector<HTMLElement>('ha-card')!.style.getPropertyValue('--frost')).toBe('18px');
+    document.body.innerHTML = '';
+    const b = await mount({ background: { frosted: true } });
+    expect(b.root.querySelector('ha-card')!.classList.contains('frosted')).toBe(true);
+    const css = (b.root.host.constructor as unknown as { styles: { cssText: string }[] }).styles.map((s) => s.cssText).join('');
+    expect(css).toMatch(/ha-card\.frosted \.bubble\s*\{/);
   });
 
   it('hvac set full-time; preset/fan behind toggles that remember state', async () => {

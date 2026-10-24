@@ -38,7 +38,7 @@ import {
 import type { ServiceCall } from './model/service-call';
 import { cardStyles } from './styles';
 import { fxClasses, fxVars } from './model/effects';
-import { bgVars, toBgView } from './model/background';
+import { airEntity, bgVars, frosted, toBgView } from './model/background';
 import { renderBackground } from './components/background';
 import { backgroundStyles } from './background-styles';
 
@@ -145,7 +145,8 @@ export class EasyThermostatStylerCard extends LitElement {
   private _watched(): string[] {
     const c = this._config!;
     const ids = [c.entity];
-    if (c.background?.fan_entity) ids.push(c.background.fan_entity);
+    const air = airEntity(c);
+    if (air) ids.push(air);
     for (const s of c.sets ?? []) for (const ch of s.chips ?? []) ids.push(ch.entity);
     if (this.hass) {
       for (const s of c.sets ?? [])
@@ -207,7 +208,7 @@ export class EasyThermostatStylerCard extends LitElement {
       [`eq-${view.equipment ?? 'none'}`]: true,
       [`mode-${view.mode}`]: true,
       ...fxClasses(c, view),
-      frosted: !!c.background?.frosted,
+      frosted: frosted(c),
       'bg-paused': !!bg && this._bgPaused,
     };
     const vars = { ...surfaceVars(c), ...textVars(c.text), ...this._barVars(), ...fxVars(c), ...bgVars(c, bg) };

@@ -270,7 +270,7 @@ export const backgroundStyles = css`
   }
 
   /* ---- Frosted controls ---- */
-  ha-card.frosted :is(.btn, .mt, .chip, .tgl, .round, .hc-switch, .pill, .collapsed .bubble) {
+  ha-card.frosted :is(.btn, .mt, .chip, .tgl, .round, .hc-switch, .pill) {
     -webkit-backdrop-filter: blur(var(--frost, 12px)) saturate(140%);
     backdrop-filter: blur(var(--frost, 12px)) saturate(140%);
   }
@@ -279,6 +279,13 @@ export const backgroundStyles = css`
     box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
   }
   ha-card.frosted .round { background: rgba(255, 255, 255, 0.06); }
+  /* The wheel's setpoint bubble: tinted glass in the heat / cool colour. */
+  ha-card.frosted .bubble {
+    background: color-mix(in srgb, var(--c) 32%, rgba(255, 255, 255, 0.06));
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--c) 60%, rgba(255, 255, 255, 0.25));
+    -webkit-backdrop-filter: blur(var(--frost, 12px)) saturate(150%);
+    backdrop-filter: blur(var(--frost, 12px)) saturate(150%);
+  }
   ha-card.frosted .chip { background: var(--etc-b-bg, rgba(255, 255, 255, 0.07)); }
   ha-card.frosted .menu-list {
     background: color-mix(in srgb, var(--card-background-color, #1c1c1c) 72%, transparent);

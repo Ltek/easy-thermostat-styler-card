@@ -53,7 +53,8 @@ const bgShot = (style, label, entity, extra = {}) =>
     entity,
     setpoint: { wheel_style: 'pill' },
     ...extra.config,
-    background: { style, frosted: true, ...extra.background },
+    frosted: true,
+    background: { style, ...extra.background },
   });
 
 const BACKGROUNDS = [

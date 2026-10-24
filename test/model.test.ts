@@ -9,7 +9,7 @@ import { SetpointController, WRITE_DEBOUNCE_MS, RECONCILE_MS } from '../src/mode
 import { toClimateView } from '../src/model/climate';
 import { climate, fakeHass, RICH, rfFan } from './helpers';
 import { TEMPLATES, applyTemplate, hasTemplateKeys } from '../src/model/templates';
-import { bgState, toBgView, bgItems, baseFill } from '../src/model/background';
+import { bgState, toBgView, bgItems, baseFill, airFraction } from '../src/model/background';
 
 const base = { type: 'custom:easy-thermostat-styler-card', entity: 'climate.t' };
 
@@ -369,6 +369,34 @@ describe('moving background', () => {
       const out = applyTemplate(cfg, tpl);
       expect(out.background?.fill).toBe('image');
       expect(out.background?.image?.url).toBe('/local/x.jpg');
+    }
+  });
+});
+
+describe('Sync to Air Movement — any entity', () => {
+  const h = (id: string, state: string, attributes: Record<string, unknown> = {}) => fakeHass([{ entity_id: id, state, attributes }]).hass;
+  it('fan percentage, number range, percent sensor, raw sensor with/without full-speed value', () => {
+    expect(airFraction(h('fan.lr', 'on', { percentage: 40 }), 'fan.lr')).toBe(0.4);
+    expect(airFraction(h('fan.lr', 'off', { percentage: 0 }), 'fan.lr')).toBeNull();
+    expect(airFraction(h('input_number.speed', '3', { min: 0, max: 6 }), 'input_number.speed')).toBe(0.5);
+    expect(airFraction(h('sensor.speed', '7'), 'sensor.speed')).toBe(0.7); // whole-number levels 1–10
+    expect(airFraction(h('sensor.pct', '25', { unit_of_measurement: '%' }), 'sensor.pct')).toBe(0.25);
+    expect(airFraction(h('sensor.hvac_airflow', '600', { unit_of_measurement: 'CFM' }), 'sensor.hvac_airflow', 1200)).toBe(0.5);
+    expect(airFraction(h('sensor.hvac_airflow', '600', { unit_of_measurement: 'CFM' }), 'sensor.hvac_airflow')).toBe(0.6); // guessed 0–1000
+    expect(airFraction(h('sensor.hvac_airflow', '0'), 'sensor.hvac_airflow')).toBeNull();
+  });
+  it('on/off, speed words, select options', () => {
+    expect(airFraction(h('binary_sensor.blower', 'on'), 'binary_sensor.blower')).toBe(0.6);
+    expect(airFraction(h('binary_sensor.blower', 'off'), 'binary_sensor.blower')).toBeNull();
+    expect(airFraction(h('sensor.fan_level', 'High'), 'sensor.fan_level')).toBe(0.9);
+    expect(airFraction(h('select.fan', 'b', { options: ['off', 'a', 'b', 'c', 'd'] }), 'select.fan')).toBe(0.5);
+    expect(airFraction(h('sensor.x', 'unavailable'), 'sensor.x')).toBeNull();
+  });
+  it('drives the swirl; the older fan_entity key still works', () => {
+    const { hass } = fakeHass([climate('heat', { ...RICH, temperature: 72, hvac_action: 'idle' }), { entity_id: 'sensor.hvac_airflow', state: '900', attributes: {} }]);
+    for (const bgc of [{ air_entity: 'sensor.hvac_airflow', air_max: 1000 }, { fan_entity: 'sensor.hvac_airflow', air_max: 1000 }]) {
+      const cfg = { ...base, background: { style: 'aurora' as const, ...bgc } };
+      expect(toBgView(hass, cfg, toClimateView(hass, cfg))).toMatchObject({ state: 'fan', dir: 'swirl', rate: 2.75 });
     }
   });
 });

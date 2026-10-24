@@ -6,7 +6,7 @@ https://github.com/Ltek/easy-thermostat-styler-card
 
 [![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=Ltek&repository=easy-thermostat-styler-card&category=plugin)
 
-Current build: **v2026.10.24.10** · full history in [CHANGELOG.md](CHANGELOG.md)
+Current build: **v2026.10.24.11** · full history in [CHANGELOG.md](CHANGELOG.md)
 
 ---
 
@@ -28,8 +28,9 @@ Current build: **v2026.10.24.10** · full history in [CHANGELOG.md](CHANGELOG.md
 - **Expandable menus:** a set can collapse to one button showing the current value (for example "Mode · Heat"). Tap it and the full list opens up, down, left or right, floating over the card. Tap outside or press Escape to close it.
 - **Tap to reveal:** keep the card calm. The controls stay folded away (showing just the pill, or the control's own value) until you tap the temperature or a setpoint pill. They can open in place of the big number and fold away again after a number of seconds you choose.
 - **Heating / cooling effects:** make the whole card, the setpoint value, the setpoint pill, the mode button or its icon glow, pulse, or both, in the heat colour while heating and the cool colour while cooling. You set when they run, the glow size, the pulse speed and the colours.
-- **Moving backgrounds:** nine styles: Liquid Plasma, Lava Lamp, Aurora, Thermal Flow, Heat Shimmer / Frost, Embers / Snow, Breathing Core, Mesh Gradient and Glow Beam. Each follows what the system is doing: heat rises, cold sinks, Fan Only (or a running ceiling fan) swirls at the fan's speed, idle barely drifts. Each state has its own colours, and the motion speeds up the further the room is from the setpoint.
-- **Background fill:** theme, transparent, any colour, a gradient or an image. Add a lighten / darken scrim, vignette, grain and **frosted glass controls**.
+- **Moving backgrounds:** nine styles: Liquid Plasma, Lava Lamp, Aurora, Thermal Flow, Heat Shimmer / Frost, Embers / Snow, Breathing Core, Mesh Gradient and Glow Beam. Each follows what the system is doing: heat rises, cold sinks, Fan Only, or anything you pick under **Sync to Air Movement** (a fan, speed levels, on/off, low / medium / high, an airflow sensor), swirls at that speed, idle barely drifts. Each state has its own colours, and the motion speeds up the further the room is from the setpoint.
+- **Background fill:** theme, transparent, any colour, a gradient or an image. Add a lighten / darken scrim, vignette and grain.
+- **Frosted glass controls:** buttons, menus, chips, pills and the wheel's setpoint bubble turn see-through with a blur.
 - **Quick Preset Templates:** nine starting points, each with its own setpoint control, button style and layout: Signature, Mission Control, Tap & Go, Slim Strip, Side Rail, Wall Tablet, Minimal Glass, Neon and Pocket.
 - **Ceiling fan chips:** built in for the [ha-rf-fan](https://github.com/dasimon135/ha-rf-fan) integration.
   - Pick the fan and its light and sleep timer are found automatically.

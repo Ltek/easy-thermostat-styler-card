@@ -1,5 +1,21 @@
 # Changelog
 
+## v2026.10.24.11
+
+- **Sync to Air Movement** (Background) replaces the fan picker and accepts **any entity**:
+  - a fan (its %)
+  - a number or input_number (its own range)
+  - a sensor in %
+  - whole-number speed levels
+  - an airflow sensor, such as `sensor.hvac_airflow` (set **Full speed at**, e.g. 1200 CFM)
+  - on/off entities
+  - low / medium / high names
+  - a select (its position in the list)
+
+  While it shows air moving, the background swirls at that speed. Cards set up with the earlier fan picker keep working.
+- **Frosted glass** moved to the **Button style** panel, since it styles controls, not the background. It now also covers the wheel's **setpoint bubble**, which becomes tinted glass in the heat or cool colour. Existing frosted cards keep working.
+- **Effects**: the When and Look settings are always shown. Before, they were hidden while every part was Off, which the background templates set, so the panel looked empty.
+
 ## v2026.10.24.10
 
 - **Background** panel.

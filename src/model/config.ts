@@ -7,7 +7,7 @@
 // untouched card never rewrites its YAML. Rendering defaults live in code
 // (`DEFAULTS` below), never in the stored config.
 
-export const CARD_VERSION = '2026.10.24.10';
+export const CARD_VERSION = '2026.10.24.11';
 export const CARD_TYPE = 'easy-thermostat-styler-card';
 export const EDITOR_TYPE = 'easy-thermostat-styler-card-editor';
 
@@ -225,13 +225,20 @@ export interface BackgroundConfig {
   follow_gap?: boolean;
   /** Off: a calm, near-still layer, or none. */
   off?: 'calm' | 'none';
-  /** A fan whose speed drives the swirl (and which swirls while it runs). */
+  /** Sync to Air Movement: any entity that says how much air is moving (fan %,
+   *  speed levels, on/off, low/med/high, an airflow sensor). While it shows air
+   *  moving the background swirls at that speed. */
+  air_entity?: string;
+  /** Value that means full speed, for raw numbers (e.g. 1200 for a CFM sensor). */
+  air_max?: number;
+  /** @deprecated v2026.10.24.10 name for air_entity; still read. */
   fan_entity?: string;
   colors?: Partial<Record<BgStateKey, { main?: string; second?: string }>>;
   quality?: 'smooth' | 'light';
   scrim?: number; // -60 (lighten) … 60 (darken)
   vignette?: number; // %
   grain?: number; // %
+  /** @deprecated moved to the top-level `frosted` / `frost_blur`; still read. */
   frosted?: boolean;
   frost_blur?: number; // px
 }
@@ -264,6 +271,9 @@ export interface CardConfig {
   card?: CardSurface;
   effects?: EffectsConfig;
   background?: BackgroundConfig;
+  /** Frosted glass controls: buttons, pills, chips, menus and the wheel bubble. */
+  frosted?: boolean;
+  frost_blur?: number; // px
   [key: string]: unknown;
 }
 
@@ -374,6 +384,7 @@ export function normalizeConfig(raw: unknown): CardConfig {
     if ('vignette' in bg) bg.vignette = clamp(bg.vignette, 0, 100) || undefined;
     if ('grain' in bg) bg.grain = clamp(bg.grain, 0, 100) || undefined;
     if ('frost_blur' in bg) bg.frost_blur = clamp(bg.frost_blur, 0, 40);
+    if ('air_max' in bg) bg.air_max = clamp(bg.air_max, 0.01, 1000000);
     if (isObj(bg.image)) {
       const im = { ...bg.image };
       if ('blur' in im) im.blur = clamp(im.blur, 0, 40) || undefined;
@@ -383,6 +394,7 @@ export function normalizeConfig(raw: unknown): CardConfig {
     if (isObj(bg.gradient) && 'angle' in bg.gradient) bg.gradient = { ...bg.gradient, angle: clamp(bg.gradient.angle, 0, 360) };
     cfg.background = bg;
   }
+  if ('frost_blur' in cfg) cfg.frost_blur = clamp(cfg.frost_blur, 0, 40);
   if (isObj(cfg.effects)) {
     const fx = { ...cfg.effects };
     if ('size' in fx) fx.size = clamp(fx.size, 2, 60);

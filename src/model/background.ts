@@ -1,6 +1,6 @@
 import type { HomeAssistant } from './hass';
 import type { BackgroundConfig, BgStateKey, BgStyle, CardConfig } from './config';
-import type { ClimateView } from './climate';
+import { UNAVAILABLE, type ClimateView } from './climate';
 import { num } from './parse';
 
 // Moving backgrounds. A pure resolver turns hass + config into a BgView:
@@ -26,7 +26,7 @@ export const BG_STATES: [BgStateKey, string][] = [
   ['cooling', 'Cooling'],
   ['idle_heat', 'Idle (heat)'],
   ['idle_cool', 'Idle (cool)'],
-  ['fan', 'Fan'],
+  ['fan', 'Air movement'],
   ['off', 'Off'],
 ];
 
@@ -65,13 +65,56 @@ export interface BgView {
   blades: boolean;
 }
 
-/** 0–1 fan speed from a fan entity, or null when it is off / missing. */
-function fanEntityFraction(hass: HomeAssistant, id: string | undefined): number | null {
+const SPEED_WORDS: Record<string, number> = {
+  quiet: 0.2, silent: 0.2, sleep: 0.2, lowest: 0.15, low: 0.33, 'medium-low': 0.45, medium_low: 0.45, med: 0.6,
+  medium: 0.6, middle: 0.6, mid: 0.6, 'medium-high': 0.8, medium_high: 0.8, high: 0.9, highest: 1, max: 1, turbo: 1, boost: 1, powerful: 1,
+};
+const STILL = new Set(['off', 'idle', 'closed', 'false', 'no', 'none', 'stopped', 'standby', '0', 'not_running', 'clear']);
+const MOVING = new Set(['on', 'true', 'yes', 'open', 'running', 'detected', 'active']);
+
+const clamp01 = (n: number) => Math.min(1, Math.max(0.05, n));
+
+/** Which entity drives "Sync to Air Movement" (newer key first). */
+export function airEntity(config: CardConfig): string | undefined {
+  return config.background?.air_entity || config.background?.fan_entity || undefined;
+}
+
+/**
+ * How much air an entity says is moving, 0–1, or null when none (or unknown).
+ * Handles a fan (percentage), a number / input_number (its own min…max), a raw
+ * numeric sensor (%, a full-speed value, or a sensible guess), speed words
+ * (low / medium / high …), a select's position in its options, and on/off.
+ */
+export function airFraction(hass: HomeAssistant, id: string | undefined, max?: number): number | null {
   if (!id) return null;
   const e = hass.states[id];
-  if (!e || e.state !== 'on') return null;
-  const p = num(e.attributes.percentage);
-  return p === null ? 0.5 : Math.min(1, Math.max(0.05, p / 100));
+  if (!e || UNAVAILABLE.has(e.state)) return null;
+  const s = String(e.state).trim().toLowerCase();
+  const domain = id.split('.')[0];
+  if (STILL.has(s)) return null;
+  const a = e.attributes;
+  if (domain === 'fan') {
+    const p = num(a.percentage);
+    return p === null ? 0.6 : p <= 0 ? null : clamp01(p / 100);
+  }
+  const n = num(e.state);
+  if (n !== null) {
+    if (n <= 0) return null;
+    if (max) return clamp01(n / max);
+    const lo = num(a.min);
+    const hi = num(a.max);
+    if (hi !== null && hi > (lo ?? 0)) return clamp01((n - (lo ?? 0)) / (hi - (lo ?? 0)));
+    if (String(a.unit_of_measurement ?? '').trim() === '%') return clamp01(n / 100);
+    // Raw value without a stated range: assume the next "round" scale up.
+    const scale = n <= 1 ? 1 : n <= 10 ? 10 : 10 ** Math.ceil(Math.log10(n));
+    return clamp01(n / scale);
+  }
+  if (SPEED_WORDS[s] !== undefined) return SPEED_WORDS[s]!;
+  const opts = Array.isArray(a.options) ? (a.options as unknown[]).map((o) => String(o).toLowerCase()).filter((o) => !STILL.has(o) && o !== 'auto') : [];
+  const i = opts.indexOf(s);
+  if (i >= 0) return clamp01((i + 1) / opts.length);
+  if (MOVING.has(s)) return 0.6;
+  return 0.5; // some other running state ("auto", "breeze", …)
 }
 
 /** 0–1 from the thermostat's own fan mode (low … high, or its position in the list). */
@@ -91,8 +134,7 @@ export function bgState(hass: HomeAssistant, config: CardConfig, view: ClimateVi
   if (!view.available) return 'off';
   if (view.equipment === 'heating') return 'heating';
   if (view.equipment === 'cooling') return 'cooling';
-  const fanId = config.background?.fan_entity;
-  if (view.mode === 'fan_only' || view.equipment === 'fan' || (fanId && hass.states[fanId]?.state === 'on')) return 'fan';
+  if (view.mode === 'fan_only' || view.equipment === 'fan' || airFraction(hass, airEntity(config), config.background?.air_max) !== null) return 'fan';
   if (view.mode === 'off') return 'off';
   if (view.mode === 'cool' || view.mode === 'dry' || view.equipment === 'drying') return 'idle_cool';
   if (view.mode === 'heat_cool' && view.setpoints && view.currentTemp !== null) {
@@ -130,7 +172,7 @@ export function toBgView(hass: HomeAssistant, config: CardConfig, view: ClimateV
     rate = 0.6 + 1.4 * k;
     op = 0.6 + 0.4 * k;
   } else if (state === 'fan') {
-    const f = fanEntityFraction(hass, b.fan_entity) ?? climateFanFraction(hass, config);
+    const f = airFraction(hass, airEntity(config), b.air_max) ?? climateFanFraction(hass, config);
     rate = 0.4 + 2.6 * f;
     op = 0.8;
   } else if (state === 'off') {
@@ -152,6 +194,11 @@ export function toBgView(hass: HomeAssistant, config: CardConfig, view: ClimateV
     second: own.second || pal.second,
     blades: state === 'fan',
   };
+}
+
+/** Frosted glass controls (top-level; older cards kept it under background). */
+export function frosted(config: CardConfig): boolean {
+  return !!(config.frosted ?? config.background?.frosted);
 }
 
 /** The card's base fill: colour (or transparent) or a gradient. Unset = theme. */
@@ -187,7 +234,8 @@ export function bgVars(config: CardConfig, bv: BgView | null): Record<string, st
   }
   if (b.vignette) out['--bg-vig'] = String(b.vignette / 100);
   if (b.grain) out['--bg-grain'] = String(b.grain / 100);
-  if (b.frosted && b.frost_blur !== undefined) out['--frost'] = `${b.frost_blur}px`;
+  const blur = config.frost_blur ?? b.frost_blur;
+  if (frosted(config) && blur !== undefined) out['--frost'] = `${blur}px`;
   if (b.fill === 'image' && b.image?.url) {
     out['--bg-img'] = `url("${cssUrl(b.image.url)}")`;
     if (b.image.blur) out['--bg-img-blur'] = `${b.image.blur}px`;

@@ -140,14 +140,14 @@ export class EasyThermostatStylerCardEditor extends LitElement {
   private _panel(id: string, icon: string, title: string, body: TemplateResult): TemplateResult {
     return html`<details class="etce-sec" ?open=${this._open.has(id)} @toggle=${(e: Event) => this._toggleOpen(id, e)}>
       <summary><ha-icon icon=${icon}></ha-icon>${title}<ha-icon class="chev" icon="mdi:chevron-down"></ha-icon></summary>
-      <div class="etce-body">${this._open.has(id) ? body : nothing}</div>
+      <div class="etce-body">${body}</div>
     </details>`;
   }
 
   private _sub(id: string, title: string, body: () => TemplateResult): TemplateResult {
     return html`<details class="etce-sub" ?open=${this._open.has(id)} @toggle=${(e: Event) => this._toggleOpen(id, e)}>
       <summary>${title}<ha-icon class="chev" icon="mdi:chevron-down"></ha-icon></summary>
-      <div class="etce-sub-body">${this._open.has(id) ? body() : nothing}</div>
+      <div class="etce-sub-body">${body()}</div>
     </details>`;
   }
 
@@ -822,8 +822,31 @@ export class EasyThermostatStylerCardEditor extends LitElement {
   // ---- button style (card default + per set — same property set) ---------------
 
   private _buttonsBody(): TemplateResult {
+    const c = this._config!;
+    const on = !!(c.frosted ?? c.background?.frosted);
+    // Moving it here also drops the older background.frosted / frost_blur keys.
+    const writeFrost = (path: 'frosted' | 'frost_blur', v: unknown) => {
+      let next = setPath(c as Record<string, unknown>, 'background.frosted', undefined);
+      next = setPath(next, 'background.frost_blur', undefined);
+      if (path === 'frosted') {
+        next = setPath(next, 'frosted', v ? true : undefined);
+        const blur = c.frost_blur ?? c.background?.frost_blur;
+        next = setPath(next, 'frost_blur', v ? blur : undefined);
+      } else {
+        next = setPath(next, 'frosted', true);
+        next = setPath(next, 'frost_blur', v === BG_DEFAULTS.frost_blur ? undefined : v);
+      }
+      this._emit(next as CardConfig);
+    };
+    const blur = c.frost_blur ?? c.background?.frost_blur;
     return html`${this._hint('The look of every button. Each button set can override any of these under “Button style for this set”.')}
-      ${this._buttonStyleEditor('buttons', false)}`;
+      ${this._buttonStyleEditor('buttons', false)}
+      ${this._group('Frosted glass')}
+      ${this._check('Frosted glass controls', on, (v) => writeFrost('frosted', v))}
+      ${this._hint('Buttons, menus, chips, toggles, setpoint pills and the wheel’s setpoint bubble turn see-through with a blur. Best over a moving background or an image.')}
+      ${on
+        ? this._sliderRow('Blur', blur ?? BG_DEFAULTS.frost_blur, 0, 40, 1, blur !== undefined, (v) => writeFrost('frost_blur', v))
+        : nothing}`;
   }
 
   private _buttonStyleEditor(base: string, isSet: boolean, setIndex?: number): TemplateResult {
@@ -907,7 +930,6 @@ export class EasyThermostatStylerCardEditor extends LitElement {
   private _effectsBody(): TemplateResult {
     const c = this._config!;
     const opts: Opt[] = [['none', 'Off'], ['glow', 'Glow'], ['pulse', 'Pulse'], ['both', 'Glow + pulse']];
-    const any = FX_TARGETS.some((t) => fxMode(c, t) !== 'none');
     const write = (t: string, v: string) => {
       // The card's old "glow" switch defaults the card to Glow; store the
       // choice in effects and drop the legacy key so there is one place.
@@ -922,23 +944,19 @@ export class EasyThermostatStylerCardEditor extends LitElement {
       ${this._hint('Make parts of the card glow or pulse in the heat colour while heating and the cool colour while cooling.')}
       ${this._group('Parts', true)}
       ${FX_TARGETS.map((t) => this._selectRow(FX_LABELS[t], fxMode(c, t), opts, (v) => write(t, v)))}
-      ${any
-        ? html`
-            ${this._group('When')}
-            ${this._select(
-              'effects.when',
-              'Active',
-              [['running', 'Only while heating or cooling'], ['mode', 'Whenever the mode is Heat or Cool']],
-              FX_DEFAULTS.when,
-            )}
-            ${this._hint('“Only while heating or cooling” follows what the system is doing right now; the other also lights up while it waits at the setpoint.')}
-            ${this._group('Look')}
-            ${this._slider('effects.size', 'Glow size', 2, 60, 1, FX_DEFAULTS.size)}
-            ${this._slider('effects.speed', 'Pulse speed', 0.6, 8, 0.2, FX_DEFAULTS.speed, (n) => `${n.toFixed(1)}s`)}
-            ${this._color('effects.heat_color', 'Heating colour', 'Theme heat', '#ff8100')}
-            ${this._color('effects.cool_color', 'Cooling colour', 'Theme cool', '#2b9af9')}
-          `
-        : nothing}
+      ${this._group('When')}
+      ${this._select(
+        'effects.when',
+        'Active',
+        [['running', 'Only while heating or cooling'], ['mode', 'Whenever the mode is Heat or Cool']],
+        FX_DEFAULTS.when,
+      )}
+      ${this._hint('“Only while heating or cooling” follows what the system is doing right now; the other also lights up while it waits at the setpoint.')}
+      ${this._group('Look')}
+      ${this._slider('effects.size', 'Glow size', 2, 60, 1, FX_DEFAULTS.size)}
+      ${this._slider('effects.speed', 'Pulse speed', 0.6, 8, 0.2, FX_DEFAULTS.speed, (n) => `${n.toFixed(1)}s`)}
+      ${this._color('effects.heat_color', 'Heating colour', 'Theme heat', '#ff8100')}
+      ${this._color('effects.cool_color', 'Cooling colour', 'Theme cool', '#2b9af9')}
     `;
   }
 
@@ -975,8 +993,29 @@ export class EasyThermostatStylerCardEditor extends LitElement {
             ${this._bool('background.follow_gap', 'Follow the work', BG_DEFAULTS.follow_gap)}
             ${this._hint('Moves faster and glows stronger the further the room is from the setpoint, and settles as it gets close.')}
             ${this._select('background.off', 'When off', [['calm', 'A calm, near-still background'], ['none', 'No moving background']], BG_DEFAULTS.off)}
-            ${this._selector('Fan', { entity: { domain: 'fan' } }, b.fan_entity, (v) => put('fan_entity', v || undefined))}
-            ${this._hint('Optional. While this fan runs the background swirls, at the fan’s speed. Without one, Fan Only mode uses the thermostat’s fan speed.')}
+            ${this._selector('Sync to Air Movement', { entity: {} }, b.air_entity ?? b.fan_entity, (v) => {
+              let next = setPath(c as Record<string, unknown>, 'background.fan_entity', undefined);
+              next = setPath(next, 'background.air_entity', v || undefined);
+              this._emit(next as CardConfig);
+            })}
+            ${this._hint('Optional. Any entity that says how much air is moving: a fan (%), speed levels, on/off, low / medium / high, or an airflow sensor. While it shows air moving, the background swirls at that speed. Without one, Fan Only mode uses the thermostat’s own fan speed.')}
+            ${b.air_entity || b.fan_entity
+              ? html`<div class="etce-row">
+                    <label class="lbl">Full speed at</label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="any"
+                      placeholder="Automatic"
+                      .value=${b.air_max !== undefined ? String(b.air_max) : ''}
+                      @change=${(e: Event) => {
+                        const v = (e.target as HTMLInputElement).value;
+                        put('air_max', v === '' ? undefined : Number(v));
+                      }}
+                    />
+                  </div>
+                  ${this._hint('For raw numbers only, e.g. 1200 for a 1200 CFM airflow sensor. Leave empty and percentages, number entities and speed names work on their own.')}`
+              : nothing}
             ${this._sub('bg-colours', 'Colours by state', () => this._bgColours())}
             ${this._select('background.quality', 'Quality', [['smooth', 'Smooth'], ['light', 'Light (older tablets)']], BG_DEFAULTS.quality)}
           `
@@ -987,10 +1026,6 @@ export class EasyThermostatStylerCardEditor extends LitElement {
       ${this._slider('background.vignette', 'Vignette', 0, 100, 5, 0, pct)}
       ${this._slider('background.grain', 'Grain', 0, 100, 5, 0, pct)}
 
-      ${this._group('Frosted controls')}
-      ${this._bool('background.frosted', 'Frosted glass buttons, pills and chips', false)}
-      ${this._hint('Controls turn see-through with a blur, so the background shows through them.')}
-      ${b.frosted ? this._slider('background.frost_blur', 'Blur', 0, 40, 1, BG_DEFAULTS.frost_blur) : nothing}
     `;
   }
 
