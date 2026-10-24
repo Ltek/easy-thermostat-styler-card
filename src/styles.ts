@@ -25,16 +25,89 @@ export const cardStyles = css`
     transition: box-shadow 600ms ease;
     container-type: inline-size;
   }
-  ha-card.glow.eq-heating {
-    box-shadow:
-      0 0 0 1px color-mix(in srgb, var(--etc-heat) 55%, transparent),
-      0 0 22px -4px color-mix(in srgb, var(--etc-heat) 65%, transparent);
+  /* ---- heating / cooling effects (model/effects.ts) ----
+     fx-on + fx-heat|fx-cool say which side is active; fx-<target>-glow|pulse
+     say which parts glow or pulse. --fx-c is the active colour. */
+  ha-card {
+    --fx-size: 18px;
+    --fx-speed: 2.4s;
   }
-  ha-card.glow.eq-cooling {
-    box-shadow:
-      0 0 0 1px color-mix(in srgb, var(--etc-cool) 55%, transparent),
-      0 0 22px -4px color-mix(in srgb, var(--etc-cool) 65%, transparent);
+  ha-card.fx-heat { --fx-c: var(--fx-heat, var(--etc-heat)); }
+  ha-card.fx-cool { --fx-c: var(--fx-cool, var(--etc-cool)); }
+  ha-card {
+    --fx-shadow: 0 0 var(--fx-size) calc(var(--fx-size) / 6) color-mix(in srgb, var(--fx-c) 55%, transparent);
+    --fx-shadow-in: 0 0 0 1px color-mix(in srgb, var(--fx-c) 55%, transparent);
   }
+
+  /* Entire card */
+  ha-card.fx-card-glow { box-shadow: var(--fx-shadow-in), 0 0 calc(var(--fx-size) * 1.2) calc(var(--fx-size) / -5) color-mix(in srgb, var(--fx-c) 65%, transparent); }
+  ha-card.fx-card-pulse { animation: etc-fx-card var(--fx-speed) ease-in-out infinite; }
+  ha-card.fx-card-glow.fx-card-pulse { animation-name: etc-fx-card-strong; }
+
+  /* Setpoint value: the wheel centre, the stepper number, the bar handle. */
+  ha-card.fx-heat.fx-setpoint-glow :is(.bubble.heat, .wheel-pill.heat, .handle.heat),
+  ha-card.fx-cool.fx-setpoint-glow :is(.bubble.cool, .wheel-pill.cool, .handle.cool) { box-shadow: var(--fx-shadow); }
+  ha-card.fx-heat.fx-setpoint-glow .stepper.heat .sv,
+  ha-card.fx-cool.fx-setpoint-glow .stepper.cool .sv { text-shadow: 0 0 calc(var(--fx-size) / 1.5) var(--fx-c); }
+  ha-card.fx-heat.fx-setpoint-pulse :is(.bubble.heat, .wheel-pill.heat, .stepper.heat .sv),
+  ha-card.fx-cool.fx-setpoint-pulse :is(.bubble.cool, .wheel-pill.cool, .stepper.cool .sv) {
+    animation: etc-fx-breathe var(--fx-speed) ease-in-out infinite;
+  }
+
+  /* Setpoint pill (and the heat/cool switch that stands in for it). */
+  ha-card.fx-heat.fx-pill-glow :is(.pills .pill.heat, .hc.heat),
+  ha-card.fx-cool.fx-pill-glow :is(.pills .pill.cool, .hc.cool) { box-shadow: var(--fx-shadow); }
+  ha-card.fx-heat.fx-pill-pulse :is(.pills .pill.heat, .hc.heat),
+  ha-card.fx-cool.fx-pill-pulse :is(.pills .pill.cool, .hc.cool) { animation: etc-fx-ring var(--fx-speed) ease-out infinite; }
+  ha-card.fx-heat.fx-pill-glow.fx-pill-pulse :is(.pills .pill.heat, .hc.heat),
+  ha-card.fx-cool.fx-pill-glow.fx-pill-pulse :is(.pills .pill.cool, .hc.cool) { animation-name: etc-fx-ring-glow; }
+
+  /* Mode button: the active HVAC button, or the Mode menu's button. */
+  ha-card.fx-mode_button-glow :is(.t-hvac .btn.active, .menu.t-hvac .mt) { box-shadow: var(--fx-shadow); }
+  ha-card.fx-mode_button-pulse :is(.t-hvac .btn.active, .menu.t-hvac .mt) { animation: etc-fx-ring var(--fx-speed) ease-out infinite; }
+  ha-card.fx-mode_button-glow.fx-mode_button-pulse :is(.t-hvac .btn.active, .menu.t-hvac .mt) { animation-name: etc-fx-ring-glow; }
+
+  /* Mode icon: the icon in that button (or the button itself when icon-only). */
+  ha-card.fx-mode_icon-glow :is(.t-hvac .btn.active, .menu.t-hvac .mt) > ha-icon {
+    filter: drop-shadow(0 0 calc(var(--fx-size) / 3) var(--fx-c)) drop-shadow(0 0 calc(var(--fx-size) / 6) var(--fx-c));
+  }
+  ha-card.fx-mode_icon-pulse :is(.t-hvac .btn.active, .menu.t-hvac .mt) > ha-icon { animation: etc-fx-icon var(--fx-speed) ease-in-out infinite; }
+
+  @keyframes etc-fx-card {
+    0%, 100% { box-shadow: 0 0 0 0 transparent; }
+    50% { box-shadow: 0 0 0 1px color-mix(in srgb, var(--fx-c) 55%, transparent), 0 0 calc(var(--fx-size) * 1.2) 0 color-mix(in srgb, var(--fx-c) 55%, transparent); }
+  }
+  @keyframes etc-fx-card-strong {
+    0%, 100% { box-shadow: var(--fx-shadow-in), 0 0 calc(var(--fx-size) * 0.6) calc(var(--fx-size) / -5) color-mix(in srgb, var(--fx-c) 45%, transparent); }
+    50% { box-shadow: var(--fx-shadow-in), 0 0 calc(var(--fx-size) * 1.8) calc(var(--fx-size) / 6) color-mix(in srgb, var(--fx-c) 80%, transparent); }
+  }
+  @keyframes etc-fx-breathe {
+    0%, 100% { transform: scale(1); filter: brightness(1); }
+    50% { transform: scale(1.06); filter: brightness(1.18); }
+  }
+  /* The handle is positioned by its transform, so it pulses with a ring instead. */
+  ha-card.fx-heat.fx-setpoint-pulse .handle.heat,
+  ha-card.fx-cool.fx-setpoint-pulse .handle.cool { animation: etc-fx-handle var(--fx-speed) ease-in-out infinite; }
+  @keyframes etc-fx-handle {
+    0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--fx-c) 60%, transparent), 0 1px 4px rgba(0, 0, 0, 0.45); }
+    50% { box-shadow: 0 0 0 7px color-mix(in srgb, var(--fx-c) 0%, transparent), 0 1px 4px rgba(0, 0, 0, 0.45); }
+  }
+  @keyframes etc-fx-ring {
+    0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--fx-c) 60%, transparent); }
+    70%, 100% { box-shadow: 0 0 0 calc(var(--fx-size) / 2) color-mix(in srgb, var(--fx-c) 0%, transparent); }
+  }
+  @keyframes etc-fx-ring-glow {
+    0% { box-shadow: var(--fx-shadow), 0 0 0 0 color-mix(in srgb, var(--fx-c) 60%, transparent); }
+    70%, 100% { box-shadow: var(--fx-shadow), 0 0 0 calc(var(--fx-size) / 2) color-mix(in srgb, var(--fx-c) 0%, transparent); }
+  }
+  @keyframes etc-fx-icon {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.18); opacity: 0.75; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    ha-card, ha-card * { animation: none !important; }
+  }
+
   .grid {
     display: grid;
     grid-template-columns: auto minmax(0, 1fr) auto;

@@ -1,5 +1,22 @@
 # Changelog
 
+## v2026.10.24.8
+
+- **Effects** panel: choose Off, Glow, Pulse or Glow + pulse for each of:
+  - the **entire card**
+  - the **setpoint value** (wheel centre, stepper number or bar handle)
+  - the **setpoint pill**
+  - the **mode button**
+  - the **mode icon**
+
+  They use the heat colour while heating and the cool colour while cooling.
+  - **Active**: only while the system is actually heating or cooling, or whenever the mode is Heat or Cool, including while idle.
+  - **Glow size**, **pulse speed**, and **heating / cooling colours** (four-mode).
+  - Animations stop when the device asks for reduced motion.
+- The old "Glow while heating or cooling" switch (Card panel) moved into Effects as "Entire card". Existing cards look the same.
+- Templates use effects now: Mission Control glows the setpoint and mode button, Tap & Go pulses the pill and mode icon, Wall Tablet pulses the card, and Neon glows and pulses everything.
+- New README screenshot: effects while heating.
+
 ## v2026.10.24.7
 
 - **Signature**: the status now sits under the current temperature, in place of the setpoint pills, which are hidden because the wheel's pill already shows the setpoint.

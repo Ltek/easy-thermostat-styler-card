@@ -13,5 +13,6 @@
   "feature-reveal-open": "Tap to reveal: open in place of the temperature",
   "feature-bar": "Setpoint bar with flags, ticks and current marker",
   "feature-vertical-bar": "Vertical setpoint bar",
+  "feature-effects": "Effects while heating: card, setpoint value, pill, mode button and icon glow",
   "feature-fan-chips": "RF fan chips: Breeze level, light, timer, speed 4/10"
 }

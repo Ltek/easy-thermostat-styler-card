@@ -32,7 +32,7 @@ describe('card render', () => {
     expect(root.querySelector('.pill.heat')!.textContent).toContain('68');
     expect(root.querySelector('.wheel .bubble')!.textContent).toContain('68');
     expect(root.querySelectorAll('.wheel .nb')).toHaveLength(2);
-    expect(root.querySelector('ha-card')!.classList.contains('glow')).toBe(true);
+    expect(root.querySelector('ha-card')!.classList.contains('fx-card-glow')).toBe(true);
   });
 
   it('wheel neighbours 0–3 and ± hidden', async () => {
@@ -220,6 +220,60 @@ describe('card render', () => {
     expect(s.root.querySelector('.hc-switch')).toBeNull();
   });
 
+  describe('effects', () => {
+    const cls = (root: ShadowRoot) => [...root.querySelector('ha-card')!.classList].filter((c) => c.startsWith('fx-')).sort();
+
+    it('heating: chosen parts get glow/pulse classes in the heat colour; legacy card.glow still works', async () => {
+      const a = await mount({ effects: { setpoint: 'both', pill: 'pulse', mode_button: 'glow', mode_icon: 'pulse' } });
+      expect(cls(a.root)).toEqual(
+        ['fx-on', 'fx-heat', 'fx-card-glow', 'fx-setpoint-glow', 'fx-setpoint-pulse', 'fx-pill-pulse', 'fx-mode_button-glow', 'fx-mode_icon-pulse'].sort(),
+      );
+      document.body.innerHTML = '';
+      const b = await mount({ card: { glow: false } });
+      expect(cls(b.root)).toEqual(['fx-heat', 'fx-on']);
+    });
+
+    it('idle: nothing, unless "whenever the mode is Heat/Cool"', async () => {
+      const idle = fakeHass([climate('cool', { ...RICH, temperature: 71, hvac_action: 'idle' })]);
+      const a = await mount({ effects: { pill: 'glow' } }, idle);
+      expect(cls(a.root)).toEqual([]);
+      document.body.innerHTML = '';
+      const b = await mount({ effects: { pill: 'glow', when: 'mode' } }, idle);
+      expect(cls(b.root)).toContain('fx-cool');
+      expect(cls(b.root)).toContain('fx-pill-glow');
+    });
+
+    it('size, speed and colours are custom properties', async () => {
+      const { root } = await mount({ effects: { card: 'pulse', size: 30, speed: 1.5, heat_color: 'var(--error-color)' } });
+      const card = root.querySelector<HTMLElement>('ha-card')!;
+      expect(card.style.getPropertyValue('--fx-size')).toBe('30px');
+      expect(card.style.getPropertyValue('--fx-speed')).toBe('1.5s');
+      expect(card.style.getPropertyValue('--fx-heat')).toBe('var(--error-color)');
+    });
+
+    it('editor: choosing Glow for the card drops the legacy key (one source of truth)', async () => {
+      const el = document.createElement('easy-thermostat-styler-card-editor') as EasyThermostatStylerCardEditor;
+      el.hass = fakeHass([climate('heat', { ...RICH, temperature: 68 })]).hass;
+      el.setConfig({ ...base, card: { glow: false } } as never);
+      document.body.appendChild(el);
+      await el.updateComplete;
+      const events: Record<string, unknown>[] = [];
+      el.addEventListener('config-changed', (e) => events.push((e as CustomEvent).detail.config));
+      const panel = [...el.shadowRoot!.querySelectorAll<HTMLDetailsElement>('details.etce-sec')].find((d) => d.textContent!.includes('Effects'))!;
+      panel.open = true;
+      panel.dispatchEvent(new Event('toggle'));
+      await el.updateComplete;
+      const sel = panel.querySelector<HTMLSelectElement>('.etce-row select')!; // Entire card
+      expect(sel.value).toBe('none');
+      sel.value = 'glow';
+      sel.dispatchEvent(new Event('change'));
+      expect(events.at(-1)).toEqual(base);
+      sel.value = 'pulse';
+      sel.dispatchEvent(new Event('change'));
+      expect(events.at(-1)).toEqual({ ...base, effects: { card: 'pulse' } });
+    });
+  });
+
   it('hvac set full-time; preset/fan behind toggles that remember state', async () => {
     const { root, calls, el } = await mount({});
     expect(root.querySelectorAll('.set.t-hvac .btn')).toHaveLength(4);
@@ -307,7 +361,7 @@ describe('editor', () => {
   it('renders panels with the token block root', async () => {
     const { root } = await editor({});
     expect(root.querySelector('.etce')).not.toBeNull();
-    expect(root.querySelectorAll('details.etce-sec').length).toBe(7);
+    expect(root.querySelectorAll('details.etce-sec').length).toBe(8);
     expect(root.querySelectorAll('details.etce-sec summary')[1]!.textContent).toContain('Quick Preset Templates');
   });
 

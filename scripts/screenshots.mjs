@@ -104,7 +104,8 @@ async function main() {
         x1 = Math.max(0, x1); y1 = Math.max(0, y1);
         return { x: x1, y: y1, width: Math.min(window.innerWidth, x2) - x1, height: Math.min(window.innerHeight, y2) - y1 };
       }, s);
-      await page.screenshot({ path: join(OUT, `${s.slug}.png`), clip });
+      // Animations are frozen so every build produces the same image.
+      await page.screenshot({ path: join(OUT, `${s.slug}.png`), clip, animations: 'disabled' });
     }
     const index = Object.fromEntries(shots.map((s) => [s.slug, s.title]));
     await writeFile(join(OUT, 'index.json'), `${JSON.stringify(index, null, 2)}\n`);

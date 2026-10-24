@@ -22,6 +22,7 @@ import { availableOptions, defaultMenuDirection, MODE_ICONS, orderOptions, prett
 import { resolveButtonStyle, BUTTON_DEFAULTS } from '../model/style';
 import { EDITOR_CSS } from './editor-css';
 import { toChipView } from '../model/chips';
+import { FX_DEFAULTS, FX_LABELS, FX_TARGETS, fxMode } from '../model/effects';
 import { TEMPLATES, applyTemplate, hasTemplateKeys } from '../model/templates';
 
 // Visual editor in the Ltek panel idiom (CARD_DESIGN_SYSTEM §2): top-level
@@ -286,6 +287,7 @@ export class EasyThermostatStylerCardEditor extends LitElement {
       ${this._panel('buttons', 'mdi:palette-swatch-outline', 'Button style', this._buttonsBody())}
       ${this._panel('text', 'mdi:format-text', 'Text', this._textBody())}
       ${this._panel('card', 'mdi:card-outline', 'Card', this._cardBody())}
+      ${this._panel('effects', 'mdi:shimmer', 'Effects', this._effectsBody())}
       <div class="etce-foot">Easy Thermostat Styler Card v${CARD_VERSION}</div>
     </div>`;
   }
@@ -858,6 +860,44 @@ export class EasyThermostatStylerCardEditor extends LitElement {
 
   // ---- card -----------------------------------------------------------------------
 
+  private _effectsBody(): TemplateResult {
+    const c = this._config!;
+    const opts: Opt[] = [['none', 'Off'], ['glow', 'Glow'], ['pulse', 'Pulse'], ['both', 'Glow + pulse']];
+    const any = FX_TARGETS.some((t) => fxMode(c, t) !== 'none');
+    const write = (t: string, v: string) => {
+      // The card's old "glow" switch defaults the card to Glow; store the
+      // choice in effects and drop the legacy key so there is one place.
+      let next = setPath(c as Record<string, unknown>, `effects.${t}`, v === 'none' && t !== 'card' ? undefined : v) as CardConfig;
+      if (t === 'card') {
+        next = setPath(next as Record<string, unknown>, 'card.glow', undefined) as CardConfig;
+        if (v === 'glow') next = setPath(next as Record<string, unknown>, 'effects.card', undefined) as CardConfig;
+      }
+      this._emit(next);
+    };
+    return html`
+      ${this._hint('Make parts of the card glow or pulse in the heat colour while heating and the cool colour while cooling.')}
+      ${this._group('Parts', true)}
+      ${FX_TARGETS.map((t) => this._selectRow(FX_LABELS[t], fxMode(c, t), opts, (v) => write(t, v)))}
+      ${any
+        ? html`
+            ${this._group('When')}
+            ${this._select(
+              'effects.when',
+              'Active',
+              [['running', 'Only while heating or cooling'], ['mode', 'Whenever the mode is Heat or Cool']],
+              FX_DEFAULTS.when,
+            )}
+            ${this._hint('“Only while heating or cooling” follows what the system is doing right now; the other also lights up while it waits at the setpoint.')}
+            ${this._group('Look')}
+            ${this._slider('effects.size', 'Glow size', 2, 60, 1, FX_DEFAULTS.size)}
+            ${this._slider('effects.speed', 'Pulse speed', 0.6, 8, 0.2, FX_DEFAULTS.speed, (n) => `${n.toFixed(1)}s`)}
+            ${this._color('effects.heat_color', 'Heating colour', 'Theme heat', '#ff8100')}
+            ${this._color('effects.cool_color', 'Cooling colour', 'Theme cool', '#2b9af9')}
+          `
+        : nothing}
+    `;
+  }
+
   private _cardBody(): TemplateResult {
     return html`
       ${this._hint('The card’s own surface.')}
@@ -866,7 +906,6 @@ export class EasyThermostatStylerCardEditor extends LitElement {
       ${this._slider('card.border_width', 'Border width', 0, 8, 1, 1)}
       ${this._slider('card.radius', 'Corner radius', 0, 48, 1, 16)}
       ${this._slider('card.padding', 'Padding', 0, 40, 1, 16)}
-      ${this._bool('card.glow', 'Glow while heating or cooling', DEFAULTS.glow)}
     `;
   }
 }

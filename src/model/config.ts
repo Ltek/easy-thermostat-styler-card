@@ -7,7 +7,7 @@
 // untouched card never rewrites its YAML. Rendering defaults live in code
 // (`DEFAULTS` below), never in the stored config.
 
-export const CARD_VERSION = '2026.10.24.7';
+export const CARD_VERSION = '2026.10.24.8';
 export const CARD_TYPE = 'easy-thermostat-styler-card';
 export const EDITOR_TYPE = 'easy-thermostat-styler-card-editor';
 
@@ -181,6 +181,24 @@ export interface SetpointConfig {
   hide_after?: number;
 }
 
+export type FxValue = 'none' | 'glow' | 'pulse' | 'both';
+
+/** Heating / cooling effects. Absent targets are off (card: follows `card.glow`). */
+export interface EffectsConfig {
+  card?: FxValue;
+  setpoint?: FxValue;
+  pill?: FxValue;
+  mode_button?: FxValue;
+  mode_icon?: FxValue;
+  /** `running`: only while the system is actually heating / cooling (hvac_action).
+   *  `mode`: whenever the mode is Heat or Cool, even when idle. */
+  when?: 'running' | 'mode';
+  size?: number; // glow size px
+  speed?: number; // pulse period s
+  heat_color?: string;
+  cool_color?: string;
+}
+
 export interface CardSurface {
   background?: string;
   border_color?: string;
@@ -207,6 +225,7 @@ export interface CardConfig {
   buttons?: ButtonStyle;
   text?: Partial<Record<TextRole, TextStyle>>;
   card?: CardSurface;
+  effects?: EffectsConfig;
   [key: string]: unknown;
 }
 
@@ -308,6 +327,12 @@ export function normalizeConfig(raw: unknown): CardConfig {
     if ('min_gap' in sp) sp.min_gap = clamp(sp.min_gap, 0, 20);
     if ('hide_after' in sp) sp.hide_after = clamp(sp.hide_after, 0, 300);
     cfg.setpoint = sp;
+  }
+  if (isObj(cfg.effects)) {
+    const fx = { ...cfg.effects };
+    if ('size' in fx) fx.size = clamp(fx.size, 2, 60);
+    if ('speed' in fx) fx.speed = clamp(fx.speed, 0.6, 8);
+    cfg.effects = fx;
   }
   if (Array.isArray(cfg.sets)) {
     cfg.sets = cfg.sets.map(normalizeSet).filter(Boolean);

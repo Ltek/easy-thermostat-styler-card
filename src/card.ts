@@ -37,6 +37,7 @@ import {
 } from './model/chips';
 import type { ServiceCall } from './model/service-call';
 import { cardStyles } from './styles';
+import { fxClasses, fxVars } from './model/effects';
 
 const PX_PER_STEP = 18;
 const HOLD_MS = 500;
@@ -173,13 +174,12 @@ export class EasyThermostatStylerCard extends LitElement {
     const c = this._config;
     const view = toClimateView(this.hass, c);
     const sets = toSetViews(this.hass, c);
-    const glow = (c.card?.glow ?? DEFAULTS.glow) && view.equipment;
     const cls = {
-      glow: !!glow,
       [`eq-${view.equipment ?? 'none'}`]: true,
       [`mode-${view.mode}`]: true,
+      ...fxClasses(c, view),
     };
-    const vars = { ...surfaceVars(c), ...textVars(c.text), ...this._barVars() };
+    const vars = { ...surfaceVars(c), ...textVars(c.text), ...this._barVars(), ...fxVars(c) };
     const zones: Record<Zone, TemplateResult[]> = { top: [], bottom: [], left: [], right: [] };
     const toggles = sets.filter((s) => s.display === 'toggle');
     // All menu sets in a zone share one row, placed where the first one is.
@@ -750,7 +750,7 @@ export class EasyThermostatStylerCard extends LitElement {
     const showIcon = style.content !== 'label';
     const open = this._menu === s.key;
     const native = typeof HTMLElement !== 'undefined' && 'showPopover' in HTMLElement.prototype;
-    return html`<div class="menu ${open ? 'open' : ''} d-${s.menuDirection} v-${style.variant}" style=${styleMap(buttonVars(style))}>
+    return html`<div class="menu t-${s.type} ${open ? 'open' : ''} d-${s.menuDirection} v-${style.variant}" style=${styleMap(buttonVars(style))}>
       <button
         class="mt ${active ? 'has-active' : ''}"
         style=${styleMap({ '--c': active?.color ?? 'var(--primary-color)' })}
