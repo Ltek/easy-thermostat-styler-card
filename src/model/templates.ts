@@ -46,12 +46,13 @@ export const TEMPLATES: Template[] = [
   {
     id: 'signature',
     name: 'Signature',
-    hint: 'Big light number with the status beside it, a pill-centred wheel on the right, tinted mode buttons.',
+    hint: 'Big light number with the status under it, a pill-centred wheel on the right, tinted mode buttons.',
     icon: 'mdi:thermostat',
-    tags: ['pill wheel', 'status beside', 'tonal'],
+    tags: ['pill wheel', 'status below', 'tonal'],
     values: {
       show_name: false,
-      status_position: 'beside',
+      show_pills: false,
+      status_position: 'below',
       setpoint: { control: 'wheel', wheel_style: 'pill' },
       sets: [hvac(), preset({ display: 'toggle' }), fan({ display: 'toggle' })],
     },

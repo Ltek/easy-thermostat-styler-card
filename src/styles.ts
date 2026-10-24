@@ -255,6 +255,20 @@ export const cardStyles = css`
   .round:disabled { opacity: 0.35; cursor: default; }
   .round:hover:not(:disabled) { background: color-mix(in srgb, var(--c) 14%, transparent); }
 
+  /* ---- heat/cool switch (Heat/Cool with the pills hidden) ---- */
+  .ctl-wrap { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .hc-switch { display: inline-flex; gap: 4px; padding: 3px; border-radius: 999px; background: var(--etc-surface); }
+  .hc {
+    --c: var(--etc-heat);
+    display: inline-flex; align-items: center; gap: 3px;
+    padding: 3px 10px; border: none; border-radius: 999px;
+    background: transparent; color: var(--etc-muted);
+    font: inherit; font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums;
+    cursor: pointer; --mdc-icon-size: 14px;
+  }
+  .hc.cool { --c: var(--etc-cool); }
+  .hc.on { background: color-mix(in srgb, var(--c) 22%, transparent); color: var(--c); }
+
   /* ---- stepper ---- */
   .stepper { display: flex; align-items: center; gap: calc(12px * var(--etc-scale, 1)); }
   .sv {

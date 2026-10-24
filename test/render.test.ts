@@ -204,6 +204,22 @@ describe('card render', () => {
     expect(root.querySelector('.collapsed .wheel-pill')).not.toBeNull();
   });
 
+  it('pills hidden in Heat/Cool: the wheel gets a heat/cool switch', async () => {
+    const h = fakeHass([climate('heat_cool', { ...RICH, target_temp_low: 68, target_temp_high: 75 })]);
+    const { root, el } = await mount({ show_pills: false, status_position: 'below' }, h);
+    expect(root.querySelector('.pill')).toBeNull();
+    const sw = root.querySelectorAll<HTMLButtonElement>('.ctl-wrap .hc-switch .hc');
+    expect(sw).toHaveLength(2);
+    expect(root.querySelector('.wheel .bubble')!.textContent).toContain('75'); // cool is edited first
+    sw[0]!.click();
+    await el.updateComplete;
+    expect(root.querySelector('.wheel .bubble')!.textContent).toContain('68');
+    // single setpoint: no switch
+    document.body.innerHTML = '';
+    const s = await mount({ show_pills: false });
+    expect(s.root.querySelector('.hc-switch')).toBeNull();
+  });
+
   it('hvac set full-time; preset/fan behind toggles that remember state', async () => {
     const { root, calls, el } = await mount({});
     expect(root.querySelectorAll('.set.t-hvac .btn')).toHaveLength(4);

@@ -438,10 +438,32 @@ export class EasyThermostatStylerCard extends LitElement {
       <ha-icon icon="mdi:minus"></ha-icon>
     </button>`;
 
+    // Heat/Cool with the pills hidden: the pills normally pick which setpoint
+    // is edited, so put a small heat/cool switch on the control instead.
+    const pillsHidden = (this._config?.show_pills ?? DEFAULTS.show_pills) === false;
+    const sw =
+      pillsHidden && edit.heat && edit.cool
+        ? html`<div class="hc-switch" role="group" aria-label="Setpoint">
+            ${(['heat', 'cool'] as Setpoint[]).map(
+              (s) => html`<button
+                class="hc ${s} ${edit.active === s ? 'on' : ''}"
+                aria-pressed=${String(edit.active === s)}
+                aria-label=${s === 'heat' ? 'Edit heat setpoint' : 'Edit cool setpoint'}
+                @click=${() => {
+                  this._sp.select(selectSetpoint(edit, s));
+                  this._armReveal();
+                }}
+              >
+                <ha-icon icon=${s === 'heat' ? 'mdi:fire' : 'mdi:snowflake'}></ha-icon>${formatTemp(edit[s]!.value, edit.unit)}
+              </button>`,
+            )}
+          </div>`
+        : nothing;
+
     if (control === 'stepper') {
-      return html`<div class="stepper ${side}">
+      return html`<div class="ctl-wrap">${sw}<div class="stepper ${side}">
         ${minus}<span class="sv">${formatTemp(e.value, edit.unit)}</span>${plus}
-      </div>`;
+      </div></div>`;
     }
 
     const sp = this._config?.setpoint ?? {};
@@ -472,9 +494,13 @@ export class EasyThermostatStylerCard extends LitElement {
       ${this._wheelCentre(side, formatTemp(e.value, edit.unit))}
       ${below.map(nb)}
     </div>`;
-    if (nudgeMode === 'hidden') return html`<div class="wheel">${col}</div>`;
-    if (nudgeMode === 'stacked') return html`<div class="wheel nudge-stacked">${plus}${col}${minus}</div>`;
-    return html`<div class="wheel">${col}<div class="nudges">${plus}${minus}</div></div>`;
+    const wheel =
+      nudgeMode === 'hidden'
+        ? html`<div class="wheel">${col}</div>`
+        : nudgeMode === 'stacked'
+          ? html`<div class="wheel nudge-stacked">${plus}${col}${minus}</div>`
+          : html`<div class="wheel">${col}<div class="nudges">${plus}${minus}</div></div>`;
+    return sw === nothing ? wheel : html`<div class="ctl-wrap">${sw}${wheel}</div>`;
   }
 
   private _wheelCentre(side: Setpoint, value: string): TemplateResult {

@@ -1,5 +1,10 @@
 # Changelog
 
+## v2026.10.24.7
+
+- **Signature**: the status now sits under the current temperature, in place of the setpoint pills, which are hidden because the wheel's pill already shows the setpoint.
+- With the setpoint pills hidden in Heat / Cool, the wheel or stepper gets a small heat/cool switch showing both values, so you can still choose which setpoint you're changing.
+
 ## v2026.10.24.6
 
 - **Screenshots in the README**: every Quick Preset Template plus six feature shots (open menu, tap to reveal closed and open, setpoint bar, vertical bar, fan chips). They're rendered from the built card in a real browser on every publish (`npm run screenshots`), so the gallery always matches the current build.
