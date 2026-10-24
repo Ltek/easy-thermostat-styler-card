@@ -4,3 +4,4 @@ node_modules/
 .vite/
 coverage/
 archive/
+preview/.cache/

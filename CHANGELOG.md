@@ -1,5 +1,19 @@
 # Changelog
 
+## v2026.10.24.5
+
+- **Centering fixed**: with Align set to Center, the temperature and the wheel or stepper beside it are now centred together as one group. Before, the temperature block stretched and pushed the control to the edge.
+- **Tap to reveal** (Setpoint control → Show controls → "Shown when tapped"):
+  - **Open by tapping:** the setpoint pill, the current temperature, or either one.
+  - **While closed show:** the control's own value (the wheel bubble, the stepper number, or a read-only bar, any of which you can also tap), or nothing at all.
+  - **Opens:** in its own place, or *in place of the current temperature*. The big number turns into the controls.
+  - **Close after:** 0–60 seconds without use, or stay open. Using the controls restarts the countdown, and tapping the same pill again closes it.
+- **Quick Preset Templates** replace "Look". There are nine templates, each a different combination of setpoint control (wheel, stepper, bar, vertical bar, gradient bar, tap-to-reveal), button style (tonal, filled, outlined, ghost, icon-only, label-only) and layout (modes on top, down the side, as menus, behind toggles). They keep your device chips, button order, names and icons, and temperature range.
+- **Button sets editor**:
+  - "Default location" and "Compact" moved to the top of the panel, each with a short description.
+  - "Default location" (formerly "Toggle buttons") is where sets without their own Side go, and where toggle buttons sit. A set's Side now offers "Default (…)".
+  - Compact leaves expandable-menu sets alone. The description now says so, and the list shows each set as full time, toggle or menu.
+
 ## v2026.10.24.4
 
 - **RF fan chips detect the fan's speeds** from the fan entity: 10 speeds, 6, 3 and so on. Speed 4 of 10 reads as 4 rather than a rounded guess, and 100% is speed 10.

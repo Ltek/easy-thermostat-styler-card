@@ -8,7 +8,7 @@ import { toTempAdjustModel, nudge } from '../src/model/setpoint';
 import { SetpointController, WRITE_DEBOUNCE_MS, RECONCILE_MS } from '../src/model/setpoint-controller';
 import { toClimateView } from '../src/model/climate';
 import { climate, fakeHass, RICH, rfFan } from './helpers';
-import { LOOKS, applyLook, hasLookKeys } from '../src/model/looks';
+import { TEMPLATES, applyTemplate, hasTemplateKeys } from '../src/model/templates';
 
 const base = { type: 'custom:easy-thermostat-styler-card', entity: 'climate.t' };
 
@@ -233,25 +233,44 @@ describe('climate view', () => {
   });
 });
 
-describe('looks', () => {
-  const cfg = { ...base, sets: [{ type: 'hvac' as const }], setpoint: { control: 'bar' as const }, buttons: { radius: 3 }, show_pills: false };
-  it('replace style keys, keep sets/setpoint, survive normalize', () => {
-    for (const look of LOOKS) {
-      const out = normalizeConfig(applyLook(cfg, look));
-      expect(out.sets).toEqual(cfg.sets);
-      expect(out.setpoint).toEqual(cfg.setpoint);
+describe('quick preset templates', () => {
+  const chips = { type: 'chips' as const, zone: 'top' as const, chips: [{ type: 'rf_fan' as const, entity: 'fan.bedroom' }] };
+  const cfg = {
+    ...base,
+    sets: [chips, { type: 'hvac' as const, order: ['cool'], options: { off: { hide: true } }, zone: 'left' as const }],
+    setpoint: { control: 'wheel' as const, min_gap: 2, bar: { range_min: 60, range_max: 80, look: 'gradient' as const } },
+    buttons: { radius: 3 },
+  };
+  it('every template is valid, byte-stable and keeps the user data', () => {
+    for (const tpl of TEMPLATES) {
+      const out = normalizeConfig(applyTemplate(cfg, tpl));
       expect(normalizeConfig(out)).toEqual(out);
+      expect(out.entity).toBe(base.entity);
+      expect(out.sets![0]).toEqual(chips); // chips kept, first
+      const h = out.sets!.find((s) => s.type === 'hvac')!;
+      expect(h.order).toEqual(['cool']);
+      expect(h.options).toEqual({ off: { hide: true } });
+      expect(out.setpoint!.min_gap).toBe(2);
+      expect(out.setpoint!.bar?.range_min).toBe(60);
+      expect(out.buttons?.radius).not.toBe(3); // old styling replaced
     }
-    expect(normalizeConfig(applyLook(cfg, LOOKS[0]!))).toEqual({ ...base, sets: cfg.sets, setpoint: cfg.setpoint });
   });
-  it('detects existing style keys', () => {
-    expect(hasLookKeys(base)).toBe(false);
-    expect(hasLookKeys(cfg)).toBe(true);
+  it('templates are genuinely different', () => {
+    const sig = (t: (typeof TEMPLATES)[number]) => JSON.stringify([t.values.setpoint?.control ?? 'wheel', t.values.setpoint?.bar?.position, t.values.buttons?.variant, t.values.buttons?.content, t.values.sets?.map((s) => [s.zone, s.display])]);
+    expect(new Set(TEMPLATES.map(sig)).size).toBe(TEMPLATES.length);
+    const controls = new Set(TEMPLATES.map((t) => t.values.setpoint?.control ?? 'wheel'));
+    expect(controls).toEqual(new Set(['wheel', 'bar', 'stepper']));
+    const variants = new Set(TEMPLATES.map((t) => t.values.buttons?.variant ?? 'tonal'));
+    expect(variants).toEqual(new Set(['tonal', 'filled', 'outlined', 'ghost']));
   });
-  it('applying does not alias the look definition', () => {
-    const out = applyLook(base, LOOKS[1]!);
-    (out.buttons as { radius?: number }).radius = 1;
-    expect(LOOKS[1]!.values.buttons!.radius).toBe(10);
+  it('detects existing keys', () => {
+    expect(hasTemplateKeys(base)).toBe(false);
+    expect(hasTemplateKeys(cfg)).toBe(true);
+  });
+  it('applying does not alias the template', () => {
+    const out = applyTemplate(base, TEMPLATES[1]!);
+    out.sets![0]!.zone = 'right';
+    expect(TEMPLATES[1]!.values.sets![0]!.zone).toBe('top');
   });
 });
 

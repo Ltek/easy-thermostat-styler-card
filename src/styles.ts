@@ -61,8 +61,7 @@ export const cardStyles = css`
   .main { display: flex; flex-direction: column; min-width: 0; }
   .core.al-center .main { align-items: center; text-align: center; }
   .core.al-right .main { align-items: flex-end; text-align: right; }
-  .core.al-center.pos-left .main,
-  .core.al-center.pos-right .main { flex: 1 1 auto; }
+  .core.al-left .core-row { justify-content: flex-start; }
   .ctl-center { display: flex; justify-content: center; }
 
   /* ---- text roles ---- */
@@ -132,6 +131,23 @@ export const cardStyles = css`
     vertical-align: top;
     margin-left: 2px;
   }
+
+  /* ---- tap-to-reveal ---- */
+  button.current { background: none; border: none; padding: 0; font-family: inherit; cursor: pointer; border-radius: 12px; }
+  button.current.tappable:hover { filter: brightness(1.12); }
+  button.current:focus-visible, .collapsed:focus-visible { outline: 2px solid var(--primary-color); outline-offset: 4px; }
+  .tappable { -webkit-tap-highlight-color: transparent; }
+  .collapsed { background: none; border: none; padding: 0; font: inherit; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
+  .collapsed .bubble { transition: transform 120ms ease; }
+  .collapsed:hover .bubble { transform: scale(1.04); }
+  .collapsed .sv { color: var(--c); }
+  .bar-c { display: block; cursor: pointer; width: 100%; }
+  .core-row > .bar-c { width: auto; }
+  .track.ro { cursor: pointer; }
+  .in-current { display: flex; justify-content: center; margin: 4px 0; }
+  .core.al-left .in-current { justify-content: flex-start; }
+  .core.al-right .in-current { justify-content: flex-end; }
+  .in-current > .bar { width: 100%; min-width: 220px; }
 
   /* ---- setpoint pills ---- */
   .pills { display: flex; gap: 8px; flex-wrap: wrap; justify-content: inherit; }

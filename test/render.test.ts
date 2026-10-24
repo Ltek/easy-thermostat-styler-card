@@ -123,6 +123,68 @@ describe('card render', () => {
     expect(root.querySelector('.menu')!.classList.contains('open')).toBe(false);
   });
 
+  describe('tap to reveal', () => {
+    const tapCfg = (extra: Record<string, unknown> = {}) => ({ setpoint: { reveal: 'tap', hide_after: 5, ...extra } });
+
+    it('closed: shows the collapsed bubble; tapping the current temperature opens; auto-closes after N s', async () => {
+      vi.useFakeTimers();
+      const { root, el } = await mount(tapCfg());
+      expect(root.querySelector('.wheel')).toBeNull();
+      expect(root.querySelector('.collapsed .bubble')!.textContent).toContain('68');
+      root.querySelector<HTMLButtonElement>('button.current')!.click();
+      await el.updateComplete;
+      expect(root.querySelector('.wheel')).not.toBeNull();
+      // use resets the countdown
+      vi.advanceTimersByTime(4000);
+      root.querySelector<HTMLButtonElement>('.wheel [aria-label="Increase"]')!.click();
+      vi.advanceTimersByTime(4000);
+      await el.updateComplete;
+      expect(root.querySelector('.wheel')).not.toBeNull();
+      vi.advanceTimersByTime(1500);
+      await el.updateComplete;
+      expect(root.querySelector('.wheel')).toBeNull();
+    });
+
+    it('collapsed: hidden + open in place of the current temperature', async () => {
+      const { root, el } = await mount(tapCfg({ collapsed: 'hidden', open_in: 'current', reveal_from: 'pills' }));
+      expect(root.querySelector('.collapsed')).toBeNull();
+      expect(root.querySelector('button.current')).toBeNull(); // only the pill opens it
+      root.querySelector<HTMLButtonElement>('.pill.heat')!.click();
+      await el.updateComplete;
+      expect(root.querySelector('.in-current .wheel')).not.toBeNull();
+      expect(root.querySelector('.current')).toBeNull();
+      root.querySelector<HTMLButtonElement>('.pill.heat')!.click(); // same pill closes
+      await el.updateComplete;
+      expect(root.querySelector('.wheel')).toBeNull();
+      expect(root.querySelector('.current')).not.toBeNull();
+    });
+
+    it('bar: collapsed shows a read-only bar that opens on tap', async () => {
+      const { root, el } = await mount({ setpoint: { control: 'bar', reveal: 'tap' } });
+      expect(root.querySelector('.bar-c .track.ro')).not.toBeNull();
+      expect(root.querySelector('.bar-c .handle[role="slider"]')).toBeNull();
+      root.querySelector<HTMLElement>('.bar-c')!.click();
+      await el.updateComplete;
+      expect(root.querySelector('.track:not(.ro)')).not.toBeNull();
+    });
+
+    it('hide_after 0 stays open', async () => {
+      vi.useFakeTimers();
+      const { root, el } = await mount(tapCfg({ hide_after: 0 }));
+      root.querySelector<HTMLButtonElement>('.collapsed')!.click();
+      vi.advanceTimersByTime(600000);
+      await el.updateComplete;
+      expect(root.querySelector('.wheel')).not.toBeNull();
+    });
+  });
+
+  it('centered core: the info block does not stretch (the whole row centres)', async () => {
+    const { root } = await mount({});
+    const css = (root.host.constructor as unknown as { styles: { cssText: string } }).styles.cssText;
+    expect(css).not.toMatch(/pos-right \.main\s*\{\s*flex:\s*1/);
+    expect(root.querySelector('.core.al-center')).not.toBeNull();
+  });
+
   it('hvac set full-time; preset/fan behind toggles that remember state', async () => {
     const { root, calls, el } = await mount({});
     expect(root.querySelectorAll('.set.t-hvac .btn')).toHaveLength(4);
@@ -211,6 +273,7 @@ describe('editor', () => {
     const { root } = await editor({});
     expect(root.querySelector('.etce')).not.toBeNull();
     expect(root.querySelectorAll('details.etce-sec').length).toBe(7);
+    expect(root.querySelectorAll('details.etce-sec summary')[1]!.textContent).toContain('Quick Preset Templates');
   });
 
   it('a checkbox writes only when it differs from the default', async () => {

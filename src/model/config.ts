@@ -7,7 +7,7 @@
 // untouched card never rewrites its YAML. Rendering defaults live in code
 // (`DEFAULTS` below), never in the stored config.
 
-export const CARD_VERSION = '2026.10.24.4';
+export const CARD_VERSION = '2026.10.24.5';
 export const CARD_TYPE = 'easy-thermostat-styler-card';
 export const EDITOR_TYPE = 'easy-thermostat-styler-card-editor';
 
@@ -165,6 +165,16 @@ export interface SetpointConfig {
   nudge?: 'beside' | 'stacked' | 'hidden';
   min_gap?: number;
   bar?: BarConfig;
+  /** `tap`: the control stays closed until you tap the pills / current temperature. */
+  reveal?: 'always' | 'tap';
+  /** What opens it (tap mode). */
+  reveal_from?: 'both' | 'pills' | 'current';
+  /** What shows while closed: the control's own value (bubble / value / read-only bar) or nothing. */
+  collapsed?: 'visual' | 'hidden';
+  /** Where it opens: its usual place, or in place of the current temperature. */
+  open_in?: 'place' | 'current';
+  /** Seconds without use before it closes again; 0 = stay open until tapped. */
+  hide_after?: number;
 }
 
 export interface CardSurface {
@@ -221,6 +231,11 @@ export const DEFAULTS = {
     handle_shape: 'round' as const,
   },
   glow: true,
+  reveal: 'always' as const,
+  reveal_from: 'both' as const,
+  collapsed: 'visual' as const,
+  open_in: 'place' as const,
+  hide_after: 8,
 };
 
 /** Default button sets when `sets` is absent: the card shows whichever of these
@@ -285,6 +300,7 @@ export function normalizeConfig(raw: unknown): CardConfig {
     if ('scale' in sp) sp.scale = clamp(sp.scale, 40, 250);
     if ('neighbors' in sp) sp.neighbors = clamp(sp.neighbors, 0, 3);
     if ('min_gap' in sp) sp.min_gap = clamp(sp.min_gap, 0, 20);
+    if ('hide_after' in sp) sp.hide_after = clamp(sp.hide_after, 0, 300);
     cfg.setpoint = sp;
   }
   if (Array.isArray(cfg.sets)) {

@@ -53,11 +53,16 @@ export class EasyThermostatStylerCard extends LitElement {
   @state() private _popupOpen = false;
   /** Open menu set key (fallback path when the Popover API is missing). */
   @state() private _menu: string | null = null;
+  @state() private _revealed = false;
+  private _revealTimer: ReturnType<typeof setTimeout> | null = null;
 
   private _sp = new SetpointController(
     () => this._config?.entity ?? '',
     (call) => this._call(call),
-    () => (this._tick += 1),
+    () => {
+      this._tick += 1;
+      if (this._revealed) this._armReveal();
+    },
   );
   private _drag: { startY: number; startValue: number } | null = null;
   private _barDrag: { handle: Setpoint; rect: DOMRect } | null = null;
@@ -91,6 +96,7 @@ export class EasyThermostatStylerCard extends LitElement {
   override disconnectedCallback(): void {
     super.disconnectedCallback();
     this._sp.dispose();
+    if (this._revealTimer) clearTimeout(this._revealTimer);
   }
 
   protected override willUpdate(changed: PropertyValues<this>): void {
@@ -220,6 +226,34 @@ export class EasyThermostatStylerCard extends LitElement {
 
   // ---- core -----------------------------------------------------------------
 
+  /** Tap-to-reveal is on (and there is a control to reveal). */
+  private _tapMode(): boolean {
+    const sp = this._config?.setpoint ?? {};
+    return (sp.reveal ?? DEFAULTS.reveal) === 'tap' && (sp.control ?? DEFAULTS.control) !== 'none';
+  }
+
+  private _setRevealed(open: boolean): void {
+    this._revealed = open;
+    this._armReveal();
+  }
+
+  /** (Re)start the auto-close countdown; called on every interaction. */
+  private _armReveal(): void {
+    if (this._revealTimer) clearTimeout(this._revealTimer);
+    this._revealTimer = null;
+    if (!this._revealed || !this._tapMode()) return;
+    const secs = this._config?.setpoint?.hide_after ?? DEFAULTS.hide_after;
+    if (secs <= 0) return;
+    this._revealTimer = setTimeout(() => {
+      this._revealTimer = null;
+      if (this._sp.dragging) {
+        this._armReveal();
+        return;
+      }
+      this._revealed = false;
+    }, secs * 1000);
+  }
+
   private _renderCore(view: ClimateView): TemplateResult {
     const c = this._config!;
     const sp = c.setpoint ?? {};
@@ -227,13 +261,33 @@ export class EasyThermostatStylerCard extends LitElement {
     const position = sp.position ?? DEFAULTS.position;
     const align = c.core_align ?? DEFAULTS.core_align;
     const edit = this._sp.edit;
-    const editable = !!edit?.available;
-    const ctl = editable && (control === 'wheel' || control === 'stepper') ? this._renderControl(edit!, control) : null;
-    const bar = editable && control === 'bar' ? this._renderBar(edit!, view) : null;
+    const editable = !!edit?.available && control !== 'none';
     const barPos = sp.bar?.position ?? DEFAULTS.bar.position;
     const barAbove = barPos === 'above';
     const barSide = barPos === 'left' || barPos === 'right';
     const eq = view.equipment ? `eq-${view.equipment}` : '';
+
+    // Tap-to-reveal: what sits in the control's place, and whether the open
+    // control has taken over the current temperature.
+    const tap = editable && this._tapMode();
+    const open = !tap || this._revealed;
+    const from = sp.reveal_from ?? DEFAULTS.reveal_from;
+    const fromCurrent = tap && (from === 'both' || from === 'current');
+    const fromPills = tap && (from === 'both' || from === 'pills');
+    const inCurrent = tap && open && (sp.open_in ?? DEFAULTS.open_in) === 'current';
+    const full = editable
+      ? control === 'bar'
+        ? this._renderBar(edit!, view)
+        : this._renderControl(edit!, control as 'wheel' | 'stepper')
+      : null;
+    let atPlace: TemplateResult | typeof nothing | null = null;
+    if (editable) {
+      if (!tap) atPlace = full;
+      else if (open) atPlace = inCurrent ? null : full;
+      else if ((sp.collapsed ?? DEFAULTS.collapsed) === 'visual') atPlace = this._renderCollapsed(edit!, view, control);
+    }
+    const ctl = control !== 'bar' ? atPlace : null;
+    const bar = control === 'bar' ? atPlace : null;
 
     if (!view.available) {
       return html`<div class="core al-${align}">
@@ -243,6 +297,22 @@ export class EasyThermostatStylerCard extends LitElement {
         </div>
       </div>`;
     }
+
+    const temp = html`${formatTemp(view.currentTemp, view.unit)}<span class="unit">${view.unit}</span>`;
+    const currentTpl = inCurrent
+      ? html`<div class="in-current">${full}</div>`
+      : (c.show_current ?? DEFAULTS.show_current)
+        ? fromCurrent
+          ? html`<button
+              class="current tappable ${eq}"
+              aria-expanded=${open}
+              aria-label="Show temperature controls"
+              @click=${() => this._setRevealed(!this._revealed)}
+            >
+              ${temp}
+            </button>`
+          : html`<div class="current ${eq}">${temp}</div>`
+        : nothing;
 
     const main = html`<div class="main">
       ${c.show_name ?? DEFAULTS.show_name ? html`<div class="name">${view.name}</div>` : nothing}
@@ -254,12 +324,8 @@ export class EasyThermostatStylerCard extends LitElement {
       ${(c.show_humidity ?? DEFAULTS.show_humidity) && view.humidity !== null
         ? html`<div class="humidity"><ha-icon icon="mdi:water-outline"></ha-icon>${Math.round(view.humidity)}%</div>`
         : nothing}
-      ${c.show_current ?? DEFAULTS.show_current
-        ? html`<div class="current ${eq}">
-            ${formatTemp(view.currentTemp, view.unit)}<span class="unit">${view.unit}</span>
-          </div>`
-        : nothing}
-      ${(c.show_pills ?? DEFAULTS.show_pills) && edit?.available ? this._renderPills(edit) : nothing}
+      ${currentTpl}
+      ${(c.show_pills ?? DEFAULTS.show_pills) && edit?.available ? this._renderPills(edit, fromPills, open) : nothing}
     </div>`;
 
     return html`<div class="core al-${align} pos-${position}">
@@ -273,7 +339,41 @@ export class EasyThermostatStylerCard extends LitElement {
     </div>`;
   }
 
-  private _renderPills(edit: TempAdjustModel): TemplateResult {
+  /** The control's own value while it is folded away; tap to open. */
+  private _renderCollapsed(edit: TempAdjustModel, view: ClimateView, control: string): TemplateResult | typeof nothing {
+    const e = edit[edit.active];
+    if (!e) return nothing;
+    const openIt = () => this._setRevealed(true);
+    if (control === 'bar') {
+      return html`<div
+        class="collapsed bar-c"
+        role="button"
+        tabindex="0"
+        aria-label="Show temperature controls"
+        @click=${openIt}
+        @keydown=${(ev: KeyboardEvent) => {
+          if (ev.key === 'Enter' || ev.key === ' ') {
+            ev.preventDefault();
+            openIt();
+          }
+        }}
+      >
+        ${this._renderBar(edit, view, true)}
+      </div>`;
+    }
+    const value = formatTemp(e.value, edit.unit);
+    return html`<button class="collapsed" aria-label="Show temperature controls" @click=${openIt}>
+      ${control === 'wheel'
+        ? html`<div class="bubble ${edit.active}">${value}</div>`
+        : html`<span class="sv" style=${styleMap({ '--c': edit.active === 'cool' ? 'var(--etc-cool)' : 'var(--etc-heat)' })}
+            >${value}</span
+          >`}
+    </button>`;
+  }
+
+  /** `tapOpens`: the pills open the control (tap-to-reveal). In Heat/Cool a
+   *  pill also picks which setpoint the wheel/stepper edits. */
+  private _renderPills(edit: TempAdjustModel, tapOpens = false, open = true): TemplateResult {
     const dual = !!(edit.heat && edit.cool);
     const pill = (sp: Setpoint) => {
       const e = edit[sp];
@@ -282,19 +382,29 @@ export class EasyThermostatStylerCard extends LitElement {
           e.value,
           edit.unit,
         )}`;
-      const dim = dual && edit.active !== sp && this._usesActive();
-      return dual
-        ? html`<button
-            class="pill ${sp} ${dim ? 'dim' : ''}"
-            aria-pressed=${edit.active === sp}
-            aria-label=${`${sp === 'heat' ? 'Heat' : 'Cool'} setpoint`}
-            @click=${() => this._sp.select(selectSetpoint(edit, sp))}
-          >
-            ${body}
-          </button>`
-        : html`<div class="pill ${sp}">${body}</div>`;
+      const dim = dual && edit.active !== sp && this._usesActive() && open;
+      if (!dual && !tapOpens) return html`<div class="pill ${sp}">${body}</div>`;
+      return html`<button
+        class="pill ${sp} ${dim ? 'dim' : ''} ${tapOpens ? 'tappable' : ''}"
+        aria-pressed=${dual ? String(edit.active === sp) : nothing}
+        aria-expanded=${tapOpens ? String(open) : nothing}
+        aria-label=${`${sp === 'heat' ? 'Heat' : 'Cool'} setpoint`}
+        @click=${() => this._pillTap(edit, sp, dual, tapOpens, open)}
+      >
+        ${body}
+      </button>`;
     };
     return html`<div class="pills">${pill('heat')} ${pill('cool')}</div>`;
+  }
+
+  private _pillTap(edit: TempAdjustModel, sp: Setpoint, dual: boolean, tapOpens: boolean, open: boolean): void {
+    if (dual) this._sp.select(selectSetpoint(edit, sp));
+    if (!tapOpens) return;
+    // Closed → open on that setpoint. Open: tapping the setpoint being edited
+    // closes it; tapping the other one just switches to it.
+    if (!open) this._setRevealed(true);
+    else if (!dual || edit.active === sp) this._setRevealed(false);
+    else this._armReveal();
   }
 
   /** Wheel and stepper edit one setpoint at a time; the pills pick which. */
@@ -371,6 +481,7 @@ export class EasyThermostatStylerCard extends LitElement {
     el.focus({ preventScroll: true });
     this._drag = { startY: ev.clientY, startValue: e.value };
     this._sp.dragging = true;
+    this._armReveal();
     el.setPointerCapture?.(ev.pointerId);
   };
 
@@ -412,7 +523,7 @@ export class EasyThermostatStylerCard extends LitElement {
 
   // ---- bar ------------------------------------------------------------------
 
-  private _renderBar(edit: TempAdjustModel, view: ClimateView): TemplateResult {
+  private _renderBar(edit: TempAdjustModel, view: ClimateView, readOnly = false): TemplateResult {
     const b = { ...DEFAULTS.bar, ...(this._config?.setpoint?.bar ?? {}) };
     const r = barRange(edit, b);
     const pct = (v: number) => `${(toFraction(v, r) * 100).toFixed(3)}%`;
@@ -443,9 +554,9 @@ export class EasyThermostatStylerCard extends LitElement {
         <div
           class="handle ${sp} s-${b.handle_shape ?? 'round'} ${edit.active === sp && heat && cool ? 'active' : ''}"
           style=${styleMap(at(pct(e.value)))}
-          role="slider"
+          role=${readOnly ? nothing : 'slider'}
           aria-orientation=${vertical ? 'vertical' : 'horizontal'}
-          tabindex="0"
+          tabindex=${readOnly ? nothing : '0'}
           aria-label=${`${sp === 'heat' ? 'Heat' : 'Cool'} setpoint`}
           aria-valuenow=${e.value}
           aria-valuemin=${r.min}
@@ -456,20 +567,23 @@ export class EasyThermostatStylerCard extends LitElement {
       `;
     };
     const cur = view.currentTemp;
+    const marker =
+      b.show_current && cur !== null && cur >= r.min && cur <= r.max
+        ? html`<div class="marker" style=${styleMap(at(pct(cur)))} title="Current"></div>`
+        : nothing;
+    const track = readOnly
+      ? html`<div class="track ro">${segs}${marker}${handle('heat')} ${handle('cool')}</div>`
+      : html`<div
+          class="track"
+          @pointerdown=${this._barDown}
+          @pointermove=${this._barMove}
+          @pointerup=${this._barUp}
+          @pointercancel=${this._barUp}
+        >
+          ${segs}${marker}${handle('heat')} ${handle('cool')}
+        </div>`;
     return html`<div class="bar ${vertical ? `vertical side-${b.position}` : ''} ${b.flags ? '' : 'no-flags'}">
-      <div
-        class="track"
-        @pointerdown=${this._barDown}
-        @pointermove=${this._barMove}
-        @pointerup=${this._barUp}
-        @pointercancel=${this._barUp}
-      >
-        ${segs}
-        ${b.show_current && cur !== null && cur >= r.min && cur <= r.max
-          ? html`<div class="marker" style=${styleMap(at(pct(cur)))} title="Current"></div>`
-          : nothing}
-        ${handle('heat')} ${handle('cool')}
-      </div>
+      ${track}
       ${ticks.length
         ? html`<div class="ticks">
             ${ticks.map(
@@ -509,6 +623,7 @@ export class EasyThermostatStylerCard extends LitElement {
     const handle = nearestHandle(edit, f, r);
     this._barDrag = { handle, rect };
     this._sp.dragging = true;
+    this._armReveal();
     el.setPointerCapture?.(ev.pointerId);
     this._sp.preview(setValue(selectSetpoint(edit, handle), this._barValueAt(ev, rect)));
   };

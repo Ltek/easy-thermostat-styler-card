@@ -16,12 +16,13 @@ import {
   type ChipConfig,
   type SetType,
   type TextRole,
+  type Zone,
 } from '../model/config';
 import { availableOptions, defaultMenuDirection, MODE_ICONS, orderOptions, prettify, SET_TITLES } from '../model/sets';
 import { resolveButtonStyle, BUTTON_DEFAULTS } from '../model/style';
 import { EDITOR_CSS } from './editor-css';
 import { toChipView } from '../model/chips';
-import { LOOKS, applyLook, hasLookKeys } from '../model/looks';
+import { TEMPLATES, applyTemplate, hasTemplateKeys } from '../model/templates';
 
 // Visual editor in the Ltek panel idiom (CARD_DESIGN_SYSTEM §2): top-level
 // panels with accent border when open, flat sub-panels, content-width labels,
@@ -279,7 +280,7 @@ export class EasyThermostatStylerCardEditor extends LitElement {
     if (!this._config) return nothing;
     return html`<div class="etce">
       ${this._panel('thermostat', 'mdi:thermostat', 'Thermostat', this._thermostatBody())}
-      ${this._panel('look', 'mdi:palette-outline', 'Look', this._lookBody())}
+      ${this._panel('templates', 'mdi:palette-outline', 'Quick Preset Templates', this._templatesBody())}
       ${this._panel('setpoint', 'mdi:knob', 'Setpoint control', this._setpointBody())}
       ${this._panel('sets', 'mdi:gesture-tap-button', 'Button sets', this._setsBody())}
       ${this._panel('buttons', 'mdi:palette-swatch-outline', 'Button style', this._buttonsBody())}
@@ -315,25 +316,30 @@ export class EasyThermostatStylerCardEditor extends LitElement {
     `;
   }
 
-  private _lookBody(): TemplateResult {
+  private _templatesBody(): TemplateResult {
     const apply = (id: string) => {
-      const look = LOOKS.find((l) => l.id === id)!;
+      const tpl = TEMPLATES.find((x) => x.id === id)!;
       if (
-        hasLookKeys(this._config!) &&
-        !window.confirm(`Apply the ${look.name} look? It replaces this card's button, text and card styling.`)
+        hasTemplateKeys(this._config!) &&
+        !window.confirm(
+          `Apply the “${tpl.name}” template?\n\nIt replaces this card’s layout, setpoint control and styling. Your device chips, button order/names/icons and temperature range are kept.`,
+        )
       )
         return;
-      this._emit(applyLook(this._config!, look));
+      this._emit(applyTemplate(this._config!, tpl));
     };
     return html`
-      ${this._hint('Start from a built-in look, then fine-tune under Button style, Text and Card. Your button sets and setpoint control are kept.')}
+      ${this._hint('One-click starting points, each with its own setpoint control, button style and layout. Fine-tune anything afterwards; nothing stays linked to the template.')}
       <div class="etce-blist">
-        ${LOOKS.map(
-          (l) => html`<div class="etce-brow">
-            <ha-icon class="etce-sicon" icon=${l.icon}></ha-icon>
-            <span class="etce-sname">${l.name}</span>
-            <span class="etce-stag">${l.hint}</span>
-            <button class="etce-preset" @click=${() => apply(l.id)}>Apply</button>
+        ${TEMPLATES.map(
+          (x) => html`<div class="etce-brow etce-tpl">
+            <ha-icon class="etce-sicon" icon=${x.icon}></ha-icon>
+            <div class="etce-tpl-text">
+              <span class="etce-sname">${x.name}</span>
+              <span class="etce-tpl-hint">${x.hint}</span>
+              <span class="etce-tpl-tags">${x.tags.map((g) => html`<span>${g}</span>`)}</span>
+            </div>
+            <button class="etce-preset" @click=${() => apply(x.id)}>Apply</button>
           </div>`,
         )}
       </div>
@@ -361,8 +367,49 @@ export class EasyThermostatStylerCardEditor extends LitElement {
           `
         : nothing}
       ${control === 'bar' ? this._barBody() : nothing}
+      ${control !== 'none' ? this._revealBody() : nothing}
       ${this._group('Heat / Cool')}
       ${this._slider('setpoint.min_gap', 'Minimum gap', 0, 10, 0.5, this._defaultGap(), (n) => `${n}°`)}
+    `;
+  }
+
+  private _revealBody(): TemplateResult {
+    const tap = (this._get('setpoint.reveal') ?? DEFAULTS.reveal) === 'tap';
+    const secs = (this._get('setpoint.hide_after') as number | undefined) ?? DEFAULTS.hide_after;
+    return html`
+      ${this._group('Show controls')}
+      ${this._select('setpoint.reveal', 'Controls', [['always', 'Always shown'], ['tap', 'Shown when tapped']], DEFAULTS.reveal)}
+      ${this._hint(
+        tap
+          ? 'The controls stay folded away until you tap. They fold away again after the time below without use.'
+          : 'Choose “Shown when tapped” to keep the card calm: just the temperature and setpoint until you want to change it.',
+      )}
+      ${tap
+        ? html`
+            ${this._select(
+              'setpoint.reveal_from',
+              'Open by tapping',
+              [['both', 'Setpoint pill or current temperature'], ['pills', 'Setpoint pill'], ['current', 'Current temperature']],
+              DEFAULTS.reveal_from,
+            )}
+            ${this._select(
+              'setpoint.collapsed',
+              'While closed show',
+              [['visual', 'The control’s value (tap it to open too)'], ['hidden', 'Nothing — just the pill / temperature']],
+              DEFAULTS.collapsed,
+            )}
+            ${this._select(
+              'setpoint.open_in',
+              'Opens',
+              [['place', 'In its own place'], ['current', 'In place of the current temperature']],
+              DEFAULTS.open_in,
+            )}
+            ${this._hint('“In place of the current temperature” swaps the big number for the controls while they are open.')}
+            ${this._sliderRow('Close after', secs, 0, 60, 1, this._get('setpoint.hide_after') !== undefined, (v) => this._put('setpoint.hide_after', v, DEFAULTS.hide_after), (n) =>
+              n ? `${n}s` : 'Stay open',
+            )}
+          `
+        : nothing}
     `;
   }
 
@@ -447,7 +494,12 @@ export class EasyThermostatStylerCardEditor extends LitElement {
       this._writeSets(next as ButtonSetConfig[]);
     };
     return html`
-      ${this._hint('Groups of buttons. Each set picks its side of the card, its layout, and whether it shows full time or behind a toggle button (compact).')}
+      ${this._hint('Groups of buttons. Each set picks its side of the card, its layout, and how it shows: full time, behind a toggle button, or as an expandable menu.')}
+      ${this._select('toggles_zone', 'Default location', [['bottom', 'Bottom'], ['top', 'Top'], ['left', 'Left'], ['right', 'Right']], DEFAULTS.toggles_zone)}
+      ${this._hint('Where sets go when they have no Side of their own, and where the toggle buttons sit. A set’s own Side always wins.')}
+      ${this._bool('compact', 'Compact', false)}
+      ${this._hint('Puts every full-time set behind a toggle button, so the card stays small until you open one. Sets shown as expandable menus are already compact and are not changed.')}
+      ${this._group('Sets')}
       <div class="etce-addbar">
         ${(['hvac', 'preset', 'fan_mode', 'chips'] as SetType[]).map(
           (t) => html`<button class="etce-add" @click=${() => add(t)}>+ ${SET_TITLES[t]}</button>`,
@@ -461,7 +513,7 @@ export class EasyThermostatStylerCardEditor extends LitElement {
               <ha-icon class="etce-sicon" icon=${SET_ICONS[s.type]}></ha-icon>
               <span class="etce-sname" @click=${() => (this._set = open ? null : i)}>${s.name ?? SET_TITLES[s.type]}</span>
               <span class="etce-stag"
-                >${supported ? `${s.zone ?? 'bottom'} · ${(this._config!.compact ? 'toggle' : s.display) ?? 'always'}` : 'not on this entity'}</span
+                >${supported ? `${s.zone ?? this._defaultZone()} · ${this._displayTag(s)}` : 'not on this entity'}</span
               >
               <div class="etce-sctl">
                 <button class="etce-act" title="Edit" @click=${() => (this._set = open ? null : i)}><ha-icon icon="mdi:pencil"></ha-icon></button>
@@ -482,10 +534,17 @@ export class EasyThermostatStylerCardEditor extends LitElement {
             ${open ? html`<div class="etce-sedit">${this._setEditor(s, i)}</div>` : nothing}`;
         })}
       </div>
-      ${this._group('Compact')}
-      ${this._bool('compact', 'Compact: put every set behind a toggle button', false)}
-      ${this._select('toggles_zone', 'Toggle buttons', [['bottom', 'Bottom'], ['top', 'Top'], ['left', 'Left'], ['right', 'Right']], DEFAULTS.toggles_zone)}
     `;
+  }
+
+  private _defaultZone(): Zone {
+    return this._config?.toggles_zone ?? DEFAULTS.toggles_zone;
+  }
+
+  private _displayTag(s: ButtonSetConfig): string {
+    if (s.display === 'menu' && s.type !== 'chips') return 'menu';
+    if (this._config!.compact || s.display === 'toggle') return 'toggle';
+    return 'full time';
   }
 
   private _moveSet(i: number, d: number): void {
@@ -505,7 +564,7 @@ export class EasyThermostatStylerCardEditor extends LitElement {
   }
 
   private _setEditor(s: ButtonSetConfig, i: number): TemplateResult {
-    const zone = s.zone ?? 'bottom';
+    const zone = s.zone ?? this._defaultZone();
     const sideZone = zone === 'left' || zone === 'right';
     const put = (path: string, v: unknown, def?: unknown) => this._patchSet(i, path, v, def);
     return html`
@@ -514,7 +573,12 @@ export class EasyThermostatStylerCardEditor extends LitElement {
         <input type="text" .value=${s.name ?? ''} placeholder=${SET_TITLES[s.type]} @change=${(e: Event) => put('name', (e.target as HTMLInputElement).value || undefined)} />
       </div>
       ${this._group('Placement')}
-      ${this._selectRow('Side', zone, [['bottom', 'Bottom'], ['top', 'Top'], ['left', 'Left'], ['right', 'Right']], (v) => put('zone', v, 'bottom'))}
+      ${this._selectRow(
+        'Side',
+        s.zone ?? '',
+        [['', `Default (${this._defaultZone()})`], ['bottom', 'Bottom'], ['top', 'Top'], ['left', 'Left'], ['right', 'Right']],
+        (v) => put('zone', v || undefined),
+      )}
       ${this._selectRow('Orientation', s.orientation ?? (sideZone ? 'column' : 'row'), [['row', 'Row'], ['column', 'Column']], (v) =>
         put('orientation', v, sideZone ? 'column' : 'row'),
       )}
