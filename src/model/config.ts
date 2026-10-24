@@ -7,7 +7,7 @@
 // untouched card never rewrites its YAML. Rendering defaults live in code
 // (`DEFAULTS` below), never in the stored config.
 
-export const CARD_VERSION = '2026.10.24.2';
+export const CARD_VERSION = '2026.10.24.3';
 export const CARD_TYPE = 'easy-thermostat-styler-card';
 export const EDITOR_TYPE = 'easy-thermostat-styler-card-editor';
 
@@ -121,7 +121,11 @@ export interface ButtonSetConfig {
   orientation?: 'row' | 'column';
   columns?: number; // 0/absent = auto-fit
   align?: 'start' | 'center' | 'end' | 'stretch';
-  display?: 'always' | 'toggle';
+  display?: 'always' | 'toggle' | 'menu';
+  /** menu: which way the list opens; default away from the card edge it sits on. */
+  menu_direction?: 'down' | 'up' | 'left' | 'right';
+  /** menu: show the set name above the current value (default true). */
+  menu_show_name?: boolean;
   toggle_icon?: string;
   hidden?: boolean;
   order?: string[];

@@ -75,6 +75,24 @@ describe('button sets', () => {
   it('compact forces every set behind a toggle', () => {
     expect(toSetViews(hass, { ...base, compact: true }).every((s) => s.display === 'toggle')).toBe(true);
   });
+  it('menu: direction defaults away from the edge; compact leaves menus alone; chips never menu', () => {
+    const v = toSetViews(hass, {
+      ...base,
+      compact: true,
+      sets: [
+        { type: 'hvac', display: 'menu' },
+        { type: 'preset', display: 'menu', zone: 'top' },
+        { type: 'fan_mode', display: 'menu', zone: 'left', menu_direction: 'up' },
+        { type: 'chips', display: 'menu', chips: [{ type: 'entity', entity: 'climate.t' }] },
+      ],
+    });
+    expect(v.map((s) => [s.type, s.display, s.menuDirection])).toEqual([
+      ['hvac', 'menu', 'up'],
+      ['preset', 'menu', 'down'],
+      ['fan_mode', 'menu', 'up'],
+      ['chips', 'toggle', 'up'],
+    ]);
+  });
   it('side zones default to column orientation', () => {
     expect(toSetViews(hass, { ...base, sets: [{ type: 'hvac', zone: 'left' }] })[0]!.orientation).toBe('column');
   });

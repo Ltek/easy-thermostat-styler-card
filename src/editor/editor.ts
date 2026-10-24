@@ -17,7 +17,7 @@ import {
   type SetType,
   type TextRole,
 } from '../model/config';
-import { availableOptions, MODE_ICONS, orderOptions, prettify, SET_TITLES } from '../model/sets';
+import { availableOptions, defaultMenuDirection, MODE_ICONS, orderOptions, prettify, SET_TITLES } from '../model/sets';
 import { resolveButtonStyle, BUTTON_DEFAULTS } from '../model/style';
 import { EDITOR_CSS } from './editor-css';
 import { LOOKS, applyLook, hasLookKeys } from '../model/looks';
@@ -524,8 +524,23 @@ export class EasyThermostatStylerCardEditor extends LitElement {
         ? this._sliderRow('Columns', s.columns ?? 0, 0, 8, 1, s.columns !== undefined, (v) => put('columns', v, 0), (n) => (n ? String(n) : 'Auto'))
         : nothing}
       ${this._group('Display')}
-      ${this._selectRow('Show', s.display ?? 'always', [['always', 'Full time'], ['toggle', 'Behind a toggle button']], (v) => put('display', v, 'always'))}
-      ${(s.display ?? 'always') === 'toggle' || this._config!.compact
+      ${this._selectRow(
+        'Show',
+        s.display ?? 'always',
+        [['always', 'Full time'], ['toggle', 'Behind a toggle button'], ...(s.type === 'chips' ? [] : [['menu', 'Expandable menu'] as Opt])],
+        (v) => put('display', v, 'always'),
+      )}
+      ${s.display === 'menu'
+        ? html`${this._hint('One button shows the current value; tap it to open the full list.')}
+          ${this._selectRow(
+            'Opens',
+            s.menu_direction ?? defaultMenuDirection(zone),
+            [['down', 'Down'], ['up', 'Up'], ['right', 'Right'], ['left', 'Left']],
+            (v) => put('menu_direction', v, defaultMenuDirection(zone)),
+          )}
+          ${this._check('Show the set name on the button', s.menu_show_name ?? true, (v) => put('menu_show_name', v, true))}`
+        : nothing}
+      ${(s.display ?? 'always') === 'toggle' || (this._config!.compact && s.display !== 'menu')
         ? this._selector('Toggle icon', { icon: {} }, s.toggle_icon, (v) => put('toggle_icon', v || undefined))
         : nothing}
       ${s.type === 'chips'

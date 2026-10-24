@@ -103,6 +103,26 @@ describe('card render', () => {
     expect(calls.at(-1)!.data).toEqual({ entity_id: 'climate.t', temperature: 65 });
   });
 
+  it('expandable menu: one trigger shows the active value; picking an item calls the service and closes', async () => {
+    const { root, el, calls } = await mount({ sets: [{ type: 'hvac', display: 'menu' }, { type: 'preset', display: 'menu' }] });
+    const row = root.querySelector('.zone.bottom .menus')!;
+    expect(row.querySelectorAll('.menu')).toHaveLength(2); // both menus share one row
+    const trigger = root.querySelector<HTMLButtonElement>('.menu .mt')!;
+    expect(trigger.querySelector('.mt-name')!.textContent).toBe('Mode');
+    expect(trigger.querySelector('.mt-value')!.textContent).toBe('Heat');
+    expect(root.querySelector('.menu')!.classList.contains('d-up')).toBe(true);
+    trigger.click();
+    await el.updateComplete;
+    const list = root.querySelector<HTMLElement>('.menu-list')!;
+    const open = list.matches?.(':popover-open') || root.querySelector('.menu')!.classList.contains('open');
+    expect(open).toBe(true);
+    expect(list.querySelector('.mi.active')!.textContent!.trim()).toBe('Heat');
+    list.querySelectorAll<HTMLButtonElement>('.mi')[2]!.click(); // cool
+    await el.updateComplete;
+    expect(calls.at(-1)).toEqual({ domain: 'climate', service: 'set_hvac_mode', data: { entity_id: 'climate.t', hvac_mode: 'cool' } });
+    expect(root.querySelector('.menu')!.classList.contains('open')).toBe(false);
+  });
+
   it('hvac set full-time; preset/fan behind toggles that remember state', async () => {
     const { root, calls, el } = await mount({});
     expect(root.querySelectorAll('.set.t-hvac .btn')).toHaveLength(4);

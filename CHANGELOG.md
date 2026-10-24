@@ -1,5 +1,15 @@
 # Changelog
 
+## v2026.10.24.3
+
+- **Expandable menus**: a new "Expandable menu" display for mode, preset and fan sets.
+  - The set collapses to one button showing the set name and current value.
+  - Tapping it opens the full list up, down, left or right. By default it opens away from the edge the set sits on.
+  - The list floats above the card, so it's never clipped, and it flips to stay on screen.
+  - Tap outside or press Escape to close it; arrow keys move through the items.
+  - Menu sets on the same side share one row.
+- README: lists the vertical bar, Looks and menus.
+
 ## v2026.10.24.2
 
 - **Vertical setpoint bar**: the bar can now sit to the left or right of the temperature as well as above or below it. It has an adjustable height, flags beside the handles, and ticks and labels down the side. Drag, tap and arrow keys work in both directions.

@@ -6,7 +6,7 @@ https://github.com/Ltek/easy-thermostat-styler-card
 
 [![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=Ltek&repository=easy-thermostat-styler-card&category=plugin)
 
-Current build: **v2026.10.24.2** · full history in [CHANGELOG.md](CHANGELOG.md)
+Current build: **v2026.10.24.3** · full history in [CHANGELOG.md](CHANGELOG.md)
 
 ---
 
@@ -15,7 +15,7 @@ Current build: **v2026.10.24.2** · full history in [CHANGELOG.md](CHANGELOG.md)
 - **Setpoint control:** pick one per card.
   - **Wheel:** scroll or drag through values. Place it left, centre or right, set its size, show 0–3 next values either side, and put the − / + buttons beside it, above and below, or hide them.
   - **Stepper:** plain − / + buttons around the value.
-  - **Setpoint bar:** heat and cool handles on a track.
+  - **Setpoint bar:** heat and cool handles on a track, horizontal above or below the temperature or vertical beside it.
     - Heat / comfort / cool zones or a colour gradient.
     - Value flags above the handles, tick marks and labels, and a current-temperature marker.
     - Four handle shapes and its own range.
@@ -25,6 +25,8 @@ Current build: **v2026.10.24.2** · full history in [CHANGELOG.md](CHANGELOG.md)
   - Each set goes on the top, bottom, left or right, as a row or a column, with a column count and alignment.
   - Within a set, reorder, hide, rename or re-icon any button.
 - **Compact mode:** any set can sit behind a toggle button, or one switch puts them all there. Each browser remembers which ones are open.
+- **Expandable menus:** a set can collapse to one button showing the current value (for example "Mode · Heat"). Tap it and the full list opens up, down, left or right, floating over the card. Tap outside or press Escape to close it.
+- **Looks:** start from Modern, Solid, Outline, Compact or Minimal, then fine-tune.
 - **Ceiling fan chips:** built in for the [ha-rf-fan](https://github.com/dasimon135/ha-rf-fan) integration.
   - Pick the fan and its light and sleep timer are found automatically.
   - The chip shows on/off, speed, direction, natural mode, light and time left.

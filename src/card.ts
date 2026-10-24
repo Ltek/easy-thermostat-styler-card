@@ -51,6 +51,8 @@ export class EasyThermostatStylerCard extends LitElement {
   @state() private _open = new Set<string>();
   @state() private _tick = 0;
   @state() private _popupOpen = false;
+  /** Open menu set key (fallback path when the Popover API is missing). */
+  @state() private _menu: string | null = null;
 
   private _sp = new SetpointController(
     () => this._config?.entity ?? '',
@@ -174,7 +176,14 @@ export class EasyThermostatStylerCard extends LitElement {
     const vars = { ...surfaceVars(c), ...textVars(c.text), ...this._barVars() };
     const zones: Record<Zone, TemplateResult[]> = { top: [], bottom: [], left: [], right: [] };
     const toggles = sets.filter((s) => s.display === 'toggle');
+    // All menu sets in a zone share one row, placed where the first one is.
+    const menus: Record<Zone, SetView[]> = { top: [], bottom: [], left: [], right: [] };
+    for (const s of sets) if (s.display === 'menu') menus[s.zone].push(s);
     for (const s of sets) {
+      if (s.display === 'menu') {
+        if (menus[s.zone][0] === s) zones[s.zone].push(this._renderMenuRow(menus[s.zone], s.zone));
+        continue;
+      }
       if (s.display === 'toggle' && !this._open.has(s.key)) continue;
       zones[s.zone].push(this._renderSet(s));
     }
@@ -574,6 +583,129 @@ export class EasyThermostatStylerCard extends LitElement {
       )}
     </div>`;
   }
+
+  // ---- expandable menus -------------------------------------------------------
+
+  private _renderMenuRow(sets: SetView[], zone: Zone): TemplateResult {
+    return html`<div class="menus z-${zone}">${sets.map((s) => this._renderMenu(s))}</div>`;
+  }
+
+  private _renderMenu(s: SetView): TemplateResult {
+    const style = resolveButtonStyle(this._config?.buttons, s.config.style);
+    const active = s.options.find((o) => o.active);
+    const showIcon = style.content !== 'label';
+    const open = this._menu === s.key;
+    const native = typeof HTMLElement !== 'undefined' && 'showPopover' in HTMLElement.prototype;
+    return html`<div class="menu ${open ? 'open' : ''} d-${s.menuDirection} v-${style.variant}" style=${styleMap(buttonVars(style))}>
+      <button
+        class="mt ${active ? 'has-active' : ''}"
+        style=${styleMap({ '--c': active?.color ?? 'var(--primary-color)' })}
+        aria-haspopup="listbox"
+        aria-expanded=${open}
+        aria-label=${`${s.title}: ${active?.label ?? ''}`}
+        @click=${(ev: Event) => this._toggleMenu(s, ev.currentTarget as HTMLElement)}
+      >
+        ${showIcon ? html`<ha-icon icon=${active?.icon ?? s.toggleIcon}></ha-icon>` : nothing}
+        <span class="mt-text">
+          ${s.menuShowName ? html`<span class="mt-name">${s.title}</span>` : nothing}
+          <span class="mt-value">${active?.label ?? '—'}</span>
+        </span>
+      </button>
+      <div
+        class="menu-list"
+        role="listbox"
+        aria-label=${s.title}
+        data-key=${s.key}
+        popover=${native ? 'auto' : nothing}
+        @toggle=${(ev: Event) => this._menuToggled(s, ev)}
+        @keydown=${this._menuKey}
+      >
+        ${s.options.map(
+          (o) => html`<button
+            class="mi ${o.active ? 'active' : ''}"
+            role="option"
+            aria-selected=${o.active}
+            style=${styleMap({ '--c': o.color })}
+            @click=${() => this._pickMenu(s, o.value)}
+          >
+            ${showIcon ? html`<ha-icon icon=${o.icon}></ha-icon>` : nothing}<span>${o.label}</span>
+          </button>`,
+        )}
+      </div>
+    </div>`;
+  }
+
+  private _menuList(key: string): HTMLElement | null {
+    return this.renderRoot.querySelector<HTMLElement>(`.menu-list[data-key="${key}"]`);
+  }
+
+  private _toggleMenu(s: SetView, trigger: HTMLElement): void {
+    const list = this._menuList(s.key);
+    if (!list) return;
+    if (!('showPopover' in list)) {
+      this._menu = this._menu === s.key ? null : s.key;
+      return;
+    }
+    const pop = list as HTMLElement & { showPopover(): void; hidePopover(): void };
+    if (list.matches(':popover-open')) {
+      pop.hidePopover();
+      return;
+    }
+    pop.showPopover();
+    this._placeMenu(list, trigger, s.menuDirection);
+    this._menu = s.key;
+    (list.querySelector<HTMLElement>('.mi.active') ?? list.querySelector<HTMLElement>('.mi'))?.focus({ preventScroll: true });
+  }
+
+  /** Fixed-position the top-layer list next to its trigger, kept on screen. */
+  private _placeMenu(list: HTMLElement, trigger: HTMLElement, dir: SetView['menuDirection']): void {
+    const t = trigger.getBoundingClientRect();
+    const gap = 6;
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    list.style.minWidth = dir === 'up' || dir === 'down' ? `${Math.round(t.width)}px` : '';
+    const l = list.getBoundingClientRect();
+    let left = dir === 'right' ? t.right + gap : dir === 'left' ? t.left - gap - l.width : t.left;
+    let top = dir === 'down' ? t.bottom + gap : dir === 'up' ? t.top - gap - l.height : t.top;
+    // Flip if it would leave the screen, then clamp.
+    if (dir === 'down' && top + l.height > vh) top = t.top - gap - l.height;
+    if (dir === 'up' && top < 0) top = t.bottom + gap;
+    if (dir === 'right' && left + l.width > vw) left = t.left - gap - l.width;
+    if (dir === 'left' && left < 0) left = t.right + gap;
+    left = Math.max(4, Math.min(left, vw - l.width - 4));
+    top = Math.max(4, Math.min(top, vh - l.height - 4));
+    list.style.left = `${Math.round(left)}px`;
+    list.style.top = `${Math.round(top)}px`;
+  }
+
+  private _menuToggled(s: SetView, ev: Event): void {
+    const open = (ev as Event & { newState?: string }).newState === 'open';
+    if (!open && this._menu === s.key) this._menu = null;
+  }
+
+  private _closeMenus(): void {
+    for (const el of this.renderRoot.querySelectorAll<HTMLElement & { hidePopover?: () => void }>('.menu-list')) {
+      if (el.hidePopover && el.matches(':popover-open')) el.hidePopover();
+    }
+    this._menu = null;
+  }
+
+  private _pickMenu(s: SetView, value: string): void {
+    const call = optionCall(s.type, this._config!.entity, value);
+    if (call) this._call(call);
+    this._fire('haptic', 'light');
+    this._closeMenus();
+  }
+
+  private _menuKey = (ev: KeyboardEvent): void => {
+    const items = [...(ev.currentTarget as HTMLElement).querySelectorAll<HTMLElement>('.mi')];
+    const i = items.indexOf((this.renderRoot as ShadowRoot).activeElement as HTMLElement);
+    if (ev.key === 'ArrowDown' || ev.key === 'ArrowRight') items[(i + 1) % items.length]?.focus();
+    else if (ev.key === 'ArrowUp' || ev.key === 'ArrowLeft') items[(i - 1 + items.length) % items.length]?.focus();
+    else if (ev.key === 'Escape') this._closeMenus();
+    else return;
+    ev.preventDefault();
+  };
 
   private _renderToggles(sets: SetView[]): TemplateResult {
     return html`<div class="toggles">

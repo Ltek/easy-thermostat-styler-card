@@ -26,7 +26,9 @@ export interface SetView {
   orientation: 'row' | 'column';
   columns: number;
   align: 'start' | 'center' | 'end' | 'stretch';
-  display: 'always' | 'toggle';
+  display: 'always' | 'toggle' | 'menu';
+  menuDirection: 'down' | 'up' | 'left' | 'right';
+  menuShowName: boolean;
   toggleIcon: string;
   options: ButtonOption[];
   config: ButtonSetConfig;
@@ -182,13 +184,21 @@ export function toSetViews(hass: HomeAssistant, config: CardConfig): SetView[] {
       orientation: set.orientation ?? (set.zone === 'left' || set.zone === 'right' ? 'column' : 'row'),
       columns: set.columns ?? 0,
       align: set.align ?? (type === 'chips' ? 'center' : 'stretch'),
-      display: config.compact ? 'toggle' : (set.display ?? 'always'),
+      // Compact turns full-time sets into toggles; menus are already compact.
+      display: set.display === 'menu' && type !== 'chips' ? 'menu' : config.compact ? 'toggle' : (set.display ?? 'always'),
+      menuDirection: set.menu_direction ?? defaultMenuDirection(set.zone ?? (config.toggles_zone || 'bottom')),
+      menuShowName: set.menu_show_name ?? true,
       toggleIcon: set.toggle_icon ?? SET_TOGGLE_ICONS[type],
       options,
       config: set,
     });
   });
   return views;
+}
+
+/** Open away from the edge the set sits on: top → down, bottom → up, left → right, right → left. */
+export function defaultMenuDirection(zone: Zone): 'down' | 'up' | 'left' | 'right' {
+  return zone === 'bottom' ? 'up' : zone === 'left' ? 'right' : zone === 'right' ? 'left' : 'down';
 }
 
 export function optionCall(type: SetType, entityId: string, value: string): ServiceCall | null {

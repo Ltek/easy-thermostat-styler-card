@@ -395,6 +395,82 @@ export const cardStyles = css`
   .v-ghost .btn:hover, .v-ghost .btn:focus-visible { background: var(--etc-b-bg, var(--etc-surface)); }
   .v-ghost .btn.active { color: var(--etc-b-afg, var(--c)); background: var(--etc-b-abg, transparent); }
 
+  /* ---- expandable menus ---- */
+  .menus { display: flex; flex-wrap: wrap; gap: var(--etc-b-gap, 8px); justify-content: center; }
+  .menus.z-left, .menus.z-right { flex-direction: column; }
+  .menu { position: relative; }
+  .mt {
+    --c: var(--primary-color, #03a9f4);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: var(--etc-b-minw, 120px);
+    min-height: var(--etc-b-height, 0);
+    padding: 10px 18px 10px 14px;
+    border-radius: var(--etc-b-radius, 14px);
+    border: var(--etc-b-bw, 0px) solid var(--etc-b-bc, transparent);
+    background: var(--etc-b-bg, var(--etc-surface));
+    color: var(--etc-b-fg, var(--etc-fg));
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    --mdc-icon-size: var(--etc-b-icon, 22px);
+    -webkit-tap-highlight-color: transparent;
+  }
+  .v-outlined .mt { background: var(--etc-b-bg, transparent); border: max(var(--etc-b-bw, 1px), 1px) solid var(--etc-b-bc, color-mix(in srgb, var(--divider-color, #555) 70%, transparent)); }
+  .v-ghost .mt { background: var(--etc-b-bg, transparent); }
+  .mt.has-active > ha-icon { color: var(--etc-b-afg, var(--c)); }
+  .menu.open .mt, .mt[aria-expanded='true'] { border-color: var(--etc-b-abc, color-mix(in srgb, var(--c) 50%, transparent)); }
+  .mt-text { display: flex; flex-direction: column; min-width: 0; line-height: 1.2; }
+  .mt-name { font-size: 12px; color: var(--etc-muted); }
+  .mt-value { font-size: calc(var(--etc-b-fs, 13px) + 3px); font-weight: var(--etc-b-fw, 500); white-space: nowrap; }
+  .menu-list {
+    flex-direction: column;
+    gap: 2px;
+    padding: 6px;
+    margin: 0;
+    border-radius: calc(var(--etc-b-radius, 14px) - 2px);
+    border: 1px solid var(--divider-color, #444);
+    background: var(--card-background-color, #1c1c1c);
+    color: var(--etc-fg);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+    box-sizing: border-box;
+    max-height: 70vh;
+    overflow: auto;
+  }
+  .menu-list[popover] { position: fixed; inset: auto; }
+  .menu-list[popover]:popover-open { display: flex; }
+  /* Fallback without the Popover API: absolute inside the card. */
+  .menu-list:not([popover]) { display: none; position: absolute; z-index: 5; min-width: 100%; }
+  .menu.open .menu-list:not([popover]) { display: flex; }
+  .d-down .menu-list:not([popover]) { top: calc(100% + 6px); left: 0; }
+  .d-up .menu-list:not([popover]) { bottom: calc(100% + 6px); left: 0; }
+  .d-right .menu-list:not([popover]) { left: calc(100% + 6px); top: 0; }
+  .d-left .menu-list:not([popover]) { right: calc(100% + 6px); top: 0; }
+  .mi {
+    --c: var(--primary-color, #03a9f4);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 10px 16px 10px 12px;
+    border: none;
+    border-radius: calc(var(--etc-b-radius, 14px) - 6px);
+    background: transparent;
+    color: var(--etc-b-fg, var(--etc-fg));
+    font: inherit;
+    font-size: calc(var(--etc-b-fs, 13px) + 3px);
+    text-align: left;
+    white-space: nowrap;
+    cursor: pointer;
+    --mdc-icon-size: var(--etc-b-icon, 22px);
+  }
+  .mi > ha-icon { color: var(--etc-muted); }
+  .mi:hover, .mi:focus-visible { background: var(--etc-surface); outline: none; }
+  .mi.active { background: var(--etc-b-abg, color-mix(in srgb, var(--c) 18%, transparent)); color: var(--etc-b-afg, var(--c)); }
+  .mi.active > ha-icon { color: var(--etc-b-afg, var(--c)); }
+  .v-filled .mi.active { background: var(--etc-b-abg, var(--c)); color: var(--etc-b-afg, #fff); }
+  .v-filled .mi.active > ha-icon { color: var(--etc-b-afg, #fff); }
+
   /* ---- toggles (compact) ---- */
   .toggles { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
   .tgl {
