@@ -40,6 +40,7 @@ import { cardStyles } from './styles';
 import { fxClasses, fxVars } from './model/effects';
 import { airEntity, bgVars, frosted, toBgView } from './model/background';
 import { renderBackground } from './components/background';
+import { simulateView, testState, TEST_CYCLE_MS, TEST_LABEL } from './model/test-mode';
 import { backgroundStyles } from './background-styles';
 
 const PX_PER_STEP = 18;
@@ -73,6 +74,11 @@ export class EasyThermostatStylerCard extends LitElement {
   @state() private _revealed = false;
   /** Moving background paused (card off-screen or tab hidden). */
   @state() private _bgPaused = false;
+  /** HA sets these while the dashboard is edited / in the card editor preview. */
+  @state() private _editMode = false;
+  @state() private _preview = false;
+  @state() private _cycle = 0;
+  private _cycleTimer: ReturnType<typeof setInterval> | null = null;
   private _onScreen = true;
   private _io?: IntersectionObserver;
   private _revealTimer: ReturnType<typeof setTimeout> | null = null;
@@ -106,6 +112,30 @@ export class EasyThermostatStylerCard extends LitElement {
     return { entity: entity ?? 'climate.thermostat' };
   }
 
+  set editMode(v: boolean) {
+    this._editMode = !!v;
+  }
+
+  set preview(v: boolean) {
+    this._preview = !!v;
+  }
+
+  /** Test mode only runs while editing, so a saved test_mode is harmless. */
+  private _testActive(): boolean {
+    if (!this._config?.test_mode) return false;
+    const w = window as unknown as { __etcEditorsOpen?: number; __etcForceEditMode?: boolean };
+    return this._editMode || this._preview || (w.__etcEditorsOpen ?? 0) > 0 || !!w.__etcForceEditMode;
+  }
+
+  private _syncCycleTimer(): void {
+    const want = this._testActive() && this._config?.test_mode === 'cycle';
+    if (want && !this._cycleTimer) this._cycleTimer = setInterval(() => (this._cycle += 1), TEST_CYCLE_MS);
+    if (!want && this._cycleTimer) {
+      clearInterval(this._cycleTimer);
+      this._cycleTimer = null;
+    }
+  }
+
   getCardSize(): number {
     return 5;
   }
@@ -135,6 +165,8 @@ export class EasyThermostatStylerCard extends LitElement {
     super.disconnectedCallback();
     this._io?.disconnect();
     this._io = undefined;
+    if (this._cycleTimer) clearInterval(this._cycleTimer);
+    this._cycleTimer = null;
     document.removeEventListener('visibilitychange', this._updatePause);
     this._sp.dispose();
     if (this._revealTimer) clearTimeout(this._revealTimer);
@@ -214,13 +246,19 @@ export class EasyThermostatStylerCard extends LitElement {
   protected override render(): TemplateResult | typeof nothing {
     if (!this._config || !this.hass) return nothing;
     const c = this._config;
-    const view = toClimateView(this.hass, c);
+    const real = toClimateView(this.hass, c);
+    this._syncCycleTimer();
+    const test = this._testActive() ? testState(c, this._cycle) : null;
+    // Status, colours, effects and background follow the simulated state;
+    // the temperature and setpoints shown stay real.
+    const view = test ? { ...simulateView(real, test), currentTemp: real.currentTemp, setpoints: real.setpoints } : real;
+    const fxView = test ? simulateView(real, test) : real;
     const sets = toSetViews(this.hass, c);
-    const bg = toBgView(this.hass, c, view);
+    const bg = toBgView(this.hass, c, fxView);
     const cls = {
       [`eq-${view.equipment ?? 'none'}`]: true,
       [`mode-${view.mode}`]: true,
-      ...fxClasses(c, view),
+      ...fxClasses(c, fxView),
       frosted: frosted(c),
       'bg-paused': !!bg && this._bgPaused,
     };
@@ -244,6 +282,7 @@ export class EasyThermostatStylerCard extends LitElement {
     return html`
       <ha-card class=${classMap(cls)} style=${styleMap(vars)}>
         ${renderBackground(c, bg)}
+        ${test ? html`<div class="test-badge" title="Test mode runs only while you edit the dashboard">TEST · ${TEST_LABEL[test]}</div>` : nothing}
         <div class="grid">
           ${(['top', 'left'] as Zone[]).map((z) => this._zone(z, zones[z]))}
           ${this._renderCore(view)}

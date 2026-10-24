@@ -205,6 +205,22 @@ export const cardStyles = css`
     margin-left: 2px;
   }
 
+  /* ---- test mode badge (editing only) ---- */
+  .test-badge {
+    position: absolute;
+    top: 6px;
+    right: 8px;
+    z-index: 3;
+    padding: 1px 8px;
+    border-radius: 999px;
+    background: var(--warning-color, #ffb300);
+    color: #000;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    pointer-events: none;
+  }
+
   /* ---- tap-to-reveal ---- */
   button.current { background: none; border: none; padding: 0; font-family: inherit; cursor: pointer; border-radius: 12px; }
   button.current.tappable:hover { filter: brightness(1.12); }

@@ -277,6 +277,9 @@ export interface CardConfig {
   /** Frosted glass controls: buttons, pills, chips, menus and the wheel bubble. */
   frosted?: boolean;
   frost_blur?: number; // px
+  /** Editing only: pretend the system is in this state so effects and
+   *  backgrounds run. The live dashboard ignores it. */
+  test_mode?: 'heating' | 'cooling' | 'idle' | 'fan' | 'off' | 'cycle';
   [key: string]: unknown;
 }
 

@@ -260,7 +260,7 @@ describe('card render', () => {
       await el.updateComplete;
       const events: Record<string, unknown>[] = [];
       el.addEventListener('config-changed', (e) => events.push((e as CustomEvent).detail.config));
-      const panel = [...el.shadowRoot!.querySelectorAll<HTMLDetailsElement>('details.etce-sec')].find((d) => d.querySelector('summary')!.textContent!.trim() === 'Effects')!;
+      const panel = [...el.shadowRoot!.querySelectorAll<HTMLDetailsElement>('details.etce-sec')].find((d) => d.querySelector('summary')!.textContent!.trim() === 'Heating & Cooling Effects')!;
       panel.open = true;
       panel.dispatchEvent(new Event('toggle'));
       await el.updateComplete;
@@ -383,13 +383,13 @@ describe('card render', () => {
     document.body.appendChild(el);
     await el.updateComplete;
     const panel = (name: string) => [...el.shadowRoot!.querySelectorAll<HTMLDetailsElement>('details.etce-sec')].find((d) => d.querySelector('summary')!.textContent!.trim() === name)!;
-    for (const name of ['Effects', 'Background', 'Effects', 'Card', 'Effects']) {
+    for (const name of ['Heating & Cooling Effects', 'Background', 'Heating & Cooling Effects', 'Card Shape', 'Heating & Cooling Effects']) {
       const d = panel(name);
       d.open = !d.open;
       d.dispatchEvent(new Event('toggle'));
       await el.updateComplete;
     }
-    const fx = panel('Effects');
+    const fx = panel('Heating & Cooling Effects');
     expect(fx.querySelectorAll('.etce-row').length).toBeGreaterThanOrEqual(10); // 5 parts + when + look
     expect(fx.textContent).toContain('Glow size');
   });
@@ -450,6 +450,64 @@ describe('card render', () => {
     // Heat/Cool: inside the band counts as reached
     const c = await mount(cfg, fakeHass([climate('heat_cool', { ...RICH, target_temp_low: 68, target_temp_high: 75, current_temperature: 72 })]));
     expect(c.root.querySelector('.pill')).toBeNull();
+  });
+
+  describe('test mode', () => {
+    const idleCool = () => fakeHass([climate('cool', { ...RICH, temperature: 71, current_temperature: 71, hvac_action: 'idle' })]);
+    afterEach(() => {
+      delete (window as unknown as { __etcForceEditMode?: boolean }).__etcForceEditMode;
+    });
+
+    it('ignored on the live dashboard', async () => {
+      const { root } = await mount({ test_mode: 'heating', background: { style: 'plasma' }, effects: { pill: 'glow' } }, idleCool());
+      expect(root.querySelector('.test-badge')).toBeNull();
+      expect(root.querySelector('.bg')!.className).toContain('st-idle_cool');
+    });
+
+    it('while editing: effects, status and background follow the simulated state; numbers stay real', async () => {
+      const { root, el } = await mount({ test_mode: 'heating', background: { style: 'plasma' }, effects: { pill: 'glow' } }, idleCool());
+      (el as unknown as { editMode: boolean }).editMode = true;
+      await el.updateComplete;
+      expect(root.querySelector('.test-badge')!.textContent).toContain('Heating');
+      expect(root.querySelector('.bg')!.className).toContain('st-heating');
+      expect(root.querySelector('.bg')!.className).toContain('dir-up');
+      expect(root.querySelector('ha-card')!.classList.contains('fx-pill-glow')).toBe(true);
+      expect(root.querySelector('.status')!.textContent).toContain('Heating');
+      expect(root.querySelector('.current')!.textContent).toContain('71');
+    });
+
+    it('cycle steps through every state', async () => {
+      vi.useFakeTimers();
+      (window as unknown as { __etcForceEditMode?: boolean }).__etcForceEditMode = true;
+      const { root, el } = await mount({ test_mode: 'cycle', background: { style: 'aurora' } }, idleCool());
+      const seen: string[] = [];
+      for (let i = 0; i < 5; i++) {
+        seen.push(root.querySelector('.test-badge')!.textContent!.replace('TEST · ', '').trim());
+        vi.advanceTimersByTime(6000);
+        await el.updateComplete;
+      }
+      expect(seen).toEqual(['Heating', 'Cooling', 'Idle', 'Fan', 'Off']);
+    });
+  });
+
+  it('editor: opening a panel closes the others; titles renamed', async () => {
+    const el = document.createElement('easy-thermostat-styler-card-editor') as EasyThermostatStylerCardEditor;
+    el.hass = fakeHass([climate('heat', { ...RICH, temperature: 68 })]).hass;
+    el.setConfig(base as never);
+    document.body.appendChild(el);
+    await el.updateComplete;
+    const all = () => [...el.shadowRoot!.querySelectorAll<HTMLDetailsElement>('details.etce-sec')];
+    const titles = all().map((d) => d.querySelector('summary')!.textContent!.trim());
+    expect(titles).toContain('Card Shape');
+    expect(titles).toContain('Heating & Cooling Effects');
+    for (const name of ['Background', 'Card Shape']) {
+      const d = all().find((x) => x.querySelector('summary')!.textContent!.trim() === name)!;
+      d.open = true;
+      d.dispatchEvent(new Event('toggle'));
+      await el.updateComplete;
+      expect(all().filter((x) => x.open).map((x) => x.querySelector('summary')!.textContent!.trim())).toEqual([name]);
+    }
+    expect(el.shadowRoot!.querySelector('.etce-test select')).not.toBeNull();
   });
 
   it('hvac set full-time; preset/fan behind toggles that remember state', async () => {

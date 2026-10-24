@@ -129,16 +129,36 @@ export class EasyThermostatStylerCardEditor extends LitElement {
 
   // ---- primitives -------------------------------------------------------------
 
-  private _toggleOpen(id: string, ev: Event): void {
+  private _toggleOpen(id: string, ev: Event, top = false): void {
     const open = (ev.currentTarget as HTMLDetailsElement).open;
+    if (open === this._open.has(id)) return;
     const next = new Set(this._open);
-    if (open) next.add(id);
-    else next.delete(id);
+    if (open) {
+      // One top-level panel at a time; sub-panels keep their own state.
+      if (top) for (const p of this._panels) if (p !== id) next.delete(p);
+      next.add(id);
+    } else next.delete(id);
     this._open = next;
   }
 
+  /** Ids of the top-level panels (filled as they render). */
+  private _panels = new Set<string>();
+
+  override connectedCallback(): void {
+    super.connectedCallback();
+    const w = window as unknown as { __etcEditorsOpen?: number };
+    w.__etcEditorsOpen = (w.__etcEditorsOpen ?? 0) + 1;
+  }
+
+  override disconnectedCallback(): void {
+    super.disconnectedCallback();
+    const w = window as unknown as { __etcEditorsOpen?: number };
+    w.__etcEditorsOpen = Math.max(0, (w.__etcEditorsOpen ?? 1) - 1);
+  }
+
   private _panel(id: string, icon: string, title: string, body: TemplateResult): TemplateResult {
-    return html`<details class="etce-sec" ?open=${this._open.has(id)} @toggle=${(e: Event) => this._toggleOpen(id, e)}>
+    this._panels.add(id);
+    return html`<details class="etce-sec" ?open=${this._open.has(id)} @toggle=${(e: Event) => this._toggleOpen(id, e, true)}>
       <summary><ha-icon icon=${icon}></ha-icon>${title}<ha-icon class="chev" icon="mdi:chevron-down"></ha-icon></summary>
       <div class="etce-body">${body}</div>
     </details>`;
@@ -298,16 +318,42 @@ export class EasyThermostatStylerCardEditor extends LitElement {
   protected override render(): TemplateResult | typeof nothing {
     if (!this._config) return nothing;
     return html`<div class="etce">
+      ${this._testBar()}
       ${this._panel('thermostat', 'mdi:thermostat', 'Thermostat', this._thermostatBody())}
       ${this._panel('templates', 'mdi:palette-outline', 'Quick Preset Templates', this._templatesBody())}
       ${this._panel('setpoint', 'mdi:knob', 'Setpoint control', this._setpointBody())}
       ${this._panel('sets', 'mdi:gesture-tap-button', 'Button sets', this._setsBody())}
       ${this._panel('buttons', 'mdi:palette-swatch-outline', 'Button style', this._buttonsBody())}
       ${this._panel('text', 'mdi:format-text', 'Text', this._textBody())}
-      ${this._panel('card', 'mdi:card-outline', 'Card', this._cardBody())}
+      ${this._panel('card', 'mdi:card-outline', 'Card Shape', this._cardBody())}
       ${this._panel('background', 'mdi:image-filter-hdr', 'Background', this._backgroundBody())}
-      ${this._panel('effects', 'mdi:shimmer', 'Effects', this._effectsBody())}
+      ${this._panel('effects', 'mdi:shimmer', 'Heating & Cooling Effects', this._effectsBody())}
       <div class="etce-foot">Easy Thermostat Styler Card v${CARD_VERSION}</div>
+    </div>`;
+  }
+
+  private _testBar(): TemplateResult {
+    const cur = this._config!.test_mode ?? '';
+    return html`<div class="etce-test ${cur ? 'on' : ''}">
+      ${this._selectRow(
+        'Test mode',
+        cur,
+        [
+          ['', 'Off'],
+          ['heating', 'Heating'],
+          ['cooling', 'Cooling'],
+          ['idle', 'Idle'],
+          ['fan', 'Fan / air movement'],
+          ['off', 'System off'],
+          ['cycle', 'Cycle through all (6 s each)'],
+        ],
+        (v) => this._put('test_mode', v || undefined),
+      )}
+      <p class="etce-hint">
+        ${cur
+          ? 'The card acts as if it were in that state so you can see the effects and moving background. It only does this while you edit the dashboard; the live card ignores it, so saving with it on is harmless.'
+          : 'Preview the heating, cooling, idle, fan and off looks (effects and moving background) without waiting for the real thing.'}
+      </p>
     </div>`;
   }
 
