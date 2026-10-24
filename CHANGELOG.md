@@ -1,5 +1,22 @@
 # Changelog
 
+## v2026.10.24.10
+
+- **Background** panel.
+  - **Fill:** theme card colour, transparent, theme / custom / CSS colour, a gradient (2–4 colours, linear or radial, any angle), or an image (fill, fit or tile, with blur and darken).
+  - **Moving background**, nine styles: Liquid Plasma, Lava Lamp, Aurora, Thermal Flow, Heat Shimmer / Frost, Embers / Snow, Breathing Core, Mesh Gradient, Glow Beam.
+    - **It follows the system:** heating rises, cooling sinks, idle drifts very slowly, off is near-still (or none).
+    - **Fan:** Fan Only, or a chosen ceiling fan while it runs, swirls with soft rotating blades at the fan's speed.
+    - **Colours by state:** two colours each for heating, cooling, idle (heat), idle (cool), fan and off. They default to your theme's heat, cool and fan colours and cross-fade when the state changes.
+    - **Follow the work:** faster and stronger the further the room is from the setpoint.
+    - **Strength**, **speed**, and **quality** (a lighter setting for older tablets).
+    - It pauses when the card is off screen or the tab is hidden, and stops when the device asks for reduced motion.
+  - **Finish:** lighten / darken scrim, vignette, grain.
+  - **Frosted controls:** buttons, pills, chips, toggles and menus become see-through glass, with an adjustable blur.
+- The card colour moved from the Card panel to Background. Existing cards look the same.
+- New templates: **Lava Lamp**, **Northern Lights** and **Frosted Glass**. Templates keep your own background image.
+- README: a "Moving backgrounds" gallery with 13 screenshots, frozen mid-motion.
+
 ## v2026.10.24.9
 
 - **Fixed**: the gradient didn't show on a vertical setpoint bar.

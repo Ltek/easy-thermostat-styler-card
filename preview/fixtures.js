@@ -43,6 +43,8 @@ add('climate.hall', 'heat_cool', { ...RICH, friendly_name: 'Hallway', target_tem
 add('climate.office', 'heat', { ...RICH, friendly_name: 'Office', temperature: 70, hvac_action: 'heating', current_temperature: 66 });
 add('climate.bed', 'cool', { ...RICH, friendly_name: 'Bedroom', temperature: 71, hvac_action: 'idle', current_temperature: 71 });
 add('climate.den', 'off', { ...RICH, friendly_name: 'Den', current_temperature: 69 });
+add('climate.loft', 'fan_only', { ...RICH, friendly_name: 'Loft', current_temperature: 74, hvac_action: 'fan', fan_modes: ['low', 'medium', 'high'], fan_mode: 'high' });
+add('climate.study', 'heat', { ...RICH, friendly_name: 'Study', temperature: 70, hvac_action: 'idle', current_temperature: 70 });
 add('fan.bedroom', 'on', { friendly_name: 'Bedroom fan', percentage: 70, percentage_step: 10, direction: 'forward', preset_mode: 'natural 2', preset_modes: ['normal', 'natural 1', 'natural 2', 'natural 3'] });
 add('fan.living', 'on', { friendly_name: 'Living fan', percentage: 40, percentage_step: 10, direction: 'reverse', preset_mode: 'normal', preset_modes: ['normal', 'natural 1', 'natural 2', 'natural 3'] });
 add('light.bedroom_fan', 'on', {});

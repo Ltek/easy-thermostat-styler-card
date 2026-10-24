@@ -1,5 +1,6 @@
 import type { ButtonStyle, CardConfig, TextRole, TextStyle } from './config';
 import { BUTTON_STYLE_KEYS, TEXT_ROLES } from './config';
+import { baseFill } from './background';
 
 // Style resolvers. Per-card values are carried as CSS custom properties set on
 // the instance (via Lit's styleMap → style.setProperty, so a config string can
@@ -92,7 +93,7 @@ export function surfaceVars(config: CardConfig): StyleVars {
   const c = config.card ?? {};
   const s = config.setpoint ?? {};
   return compact({
-    '--etc-card-bg': c.background,
+    '--etc-card-bg': baseFill(config),
     '--etc-card-bc': c.border_color,
     '--etc-card-bw': c.border_width !== undefined ? `${c.border_width}px` : undefined,
     '--etc-card-r': c.radius !== undefined ? `${c.radius}px` : undefined,

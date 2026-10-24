@@ -23,6 +23,7 @@ import { resolveButtonStyle, BUTTON_DEFAULTS } from '../model/style';
 import { EDITOR_CSS } from './editor-css';
 import { toChipView } from '../model/chips';
 import { FX_DEFAULTS, FX_LABELS, FX_TARGETS, fxMode } from '../model/effects';
+import { BG_DEFAULTS, BG_PALETTE, BG_STATES, BG_STYLES } from '../model/background';
 import { TEMPLATES, applyTemplate, hasTemplateKeys } from '../model/templates';
 
 // Visual editor in the Ltek panel idiom (CARD_DESIGN_SYSTEM §2): top-level
@@ -43,9 +44,10 @@ export const THEME_COLORS: [string, string][] = [
   ['var(--info-color)', 'Info'],
 ];
 
-export function colorMode(cur: unknown): 'default' | 'theme' | 'custom' | 'css' {
+export function colorMode(cur: unknown): 'default' | 'transparent' | 'theme' | 'custom' | 'css' {
   const v = cur == null ? '' : String(cur);
   if (v === '') return 'default';
+  if (v === 'transparent') return 'transparent';
   if (/^#[0-9a-fA-F]{3,8}$/.test(v)) return 'custom';
   if (/^var\(/.test(v) && THEME_COLORS.some(([t]) => t === v)) return 'theme';
   return 'css';
@@ -221,8 +223,17 @@ export class EasyThermostatStylerCardEditor extends LitElement {
   }
 
   /** Four-mode color control (§3). `write(undefined)` = default (key removed). */
-  private _colorRow(id: string, label: string, cur: string | undefined, defaultLabel: string, seedHex: string, write: (v: string | undefined) => void): TemplateResult {
-    const mode = (this._cmode[id] as ReturnType<typeof colorMode>) || colorMode(cur);
+  private _colorRow(
+    id: string,
+    label: string,
+    cur: string | undefined,
+    defaultLabel: string,
+    seedHex: string,
+    write: (v: string | undefined) => void,
+    opts: { transparent?: boolean } = {},
+  ): TemplateResult {
+    let mode = (this._cmode[id] as ReturnType<typeof colorMode>) || colorMode(cur);
+    if (mode === 'transparent' && !opts.transparent) mode = 'css';
     let field: TemplateResult | typeof nothing = nothing;
     if (mode === 'theme') {
       field = html`<select @change=${(e: Event) => write((e.target as HTMLSelectElement).value)}>
@@ -242,6 +253,7 @@ export class EasyThermostatStylerCardEditor extends LitElement {
     const onMode = (m: string) => {
       this._cmode = { ...this._cmode, [id]: m };
       if (m === 'default') write(undefined);
+      else if (m === 'transparent') write('transparent');
       else if (m === 'theme') write(THEME_COLORS.some(([v]) => v === cur) ? cur : THEME_COLORS[0]![0]);
       else if (m === 'custom') write(cur && /^#[0-9a-fA-F]{6}$/.test(cur) ? cur : seedHex);
       else this.requestUpdate(); // css: keep the current value, just show the text field
@@ -250,7 +262,13 @@ export class EasyThermostatStylerCardEditor extends LitElement {
       <label class="lbl">${label}</label>
       <div class="etce-color">
         <select class="etce-cmode" @change=${(e: Event) => onMode((e.target as HTMLSelectElement).value)}>
-          ${[['default', defaultLabel], ['theme', 'Theme color'], ['custom', 'Custom color'], ['css', 'Custom CSS']].map(
+          ${[
+            ['default', defaultLabel],
+            ...(opts.transparent ? [['transparent', 'Transparent']] : []),
+            ['theme', 'Theme color'],
+            ['custom', 'Custom color'],
+            ['css', 'Custom CSS'],
+          ].map(
             ([m, n]) => html`<option value=${m!} ?selected=${m === mode}>${n}</option>`,
           )}
         </select>
@@ -287,6 +305,7 @@ export class EasyThermostatStylerCardEditor extends LitElement {
       ${this._panel('buttons', 'mdi:palette-swatch-outline', 'Button style', this._buttonsBody())}
       ${this._panel('text', 'mdi:format-text', 'Text', this._textBody())}
       ${this._panel('card', 'mdi:card-outline', 'Card', this._cardBody())}
+      ${this._panel('background', 'mdi:image-filter-hdr', 'Background', this._backgroundBody())}
       ${this._panel('effects', 'mdi:shimmer', 'Effects', this._effectsBody())}
       <div class="etce-foot">Easy Thermostat Styler Card v${CARD_VERSION}</div>
     </div>`;
@@ -923,10 +942,114 @@ export class EasyThermostatStylerCardEditor extends LitElement {
     `;
   }
 
+  private _backgroundBody(): TemplateResult {
+    const c = this._config!;
+    const b = c.background ?? {};
+    const fill = b.fill ?? 'color';
+    const style = b.style ?? 'none';
+    const put = (path: string, v: unknown, def?: unknown) => this._put(`background.${path}`, v, def);
+    // One place owns the fill: writing it here also clears the older card.background.
+    const writeColor = (v: string | undefined) => {
+      let next = setPath(c as Record<string, unknown>, 'card.background', undefined);
+      next = setPath(next, 'background.color', v);
+      this._emit(next as CardConfig);
+    };
+    const pct = (n: number) => `${n}%`;
+    return html`
+      ${this._hint('The card’s surface. A moving background follows what the thermostat is doing: heat rises, cold sinks, a fan swirls, idle barely drifts.')}
+      ${this._group('Base', true)}
+      ${this._selectRow('Fill', fill, [['color', 'Colour'], ['gradient', 'Gradient'], ['image', 'Image']], (v) => put('fill', v, 'color'))}
+      ${fill === 'color'
+        ? this._colorRow('background.color', 'Colour', b.color ?? (c.card?.background as string | undefined), 'Theme card', '#1c1c1c', writeColor, { transparent: true })
+        : nothing}
+      ${fill === 'gradient' ? this._gradientEditor() : nothing}
+      ${fill === 'image' ? this._imageEditor() : nothing}
+
+      ${this._group('Moving background')}
+      ${this._selectRow('Style', style, BG_STYLES.map(([v, n]) => [v, n] as Opt), (v) => put('style', v, 'none'))}
+      ${style !== 'none'
+        ? html`
+            ${this._hint(BG_STYLES.find(([v]) => v === style)?.[2] ?? '')}
+            ${this._slider('background.strength', 'Strength', 0, 100, 5, BG_DEFAULTS.strength, pct)}
+            ${this._slider('background.speed', 'Speed', 25, 300, 5, BG_DEFAULTS.speed, pct)}
+            ${this._bool('background.follow_gap', 'Follow the work', BG_DEFAULTS.follow_gap)}
+            ${this._hint('Moves faster and glows stronger the further the room is from the setpoint, and settles as it gets close.')}
+            ${this._select('background.off', 'When off', [['calm', 'A calm, near-still background'], ['none', 'No moving background']], BG_DEFAULTS.off)}
+            ${this._selector('Fan', { entity: { domain: 'fan' } }, b.fan_entity, (v) => put('fan_entity', v || undefined))}
+            ${this._hint('Optional. While this fan runs the background swirls, at the fan’s speed. Without one, Fan Only mode uses the thermostat’s fan speed.')}
+            ${this._sub('bg-colours', 'Colours by state', () => this._bgColours())}
+            ${this._select('background.quality', 'Quality', [['smooth', 'Smooth'], ['light', 'Light (older tablets)']], BG_DEFAULTS.quality)}
+          `
+        : nothing}
+
+      ${this._group('Finish')}
+      ${this._slider('background.scrim', 'Lighten / darken', -60, 60, 5, 0, (n) => (n > 0 ? `Darken ${n}%` : n < 0 ? `Lighten ${-n}%` : 'None'))}
+      ${this._slider('background.vignette', 'Vignette', 0, 100, 5, 0, pct)}
+      ${this._slider('background.grain', 'Grain', 0, 100, 5, 0, pct)}
+
+      ${this._group('Frosted controls')}
+      ${this._bool('background.frosted', 'Frosted glass buttons, pills and chips', false)}
+      ${this._hint('Controls turn see-through with a blur, so the background shows through them.')}
+      ${b.frosted ? this._slider('background.frost_blur', 'Blur', 0, 40, 1, BG_DEFAULTS.frost_blur) : nothing}
+    `;
+  }
+
+  private _gradientEditor(): TemplateResult {
+    const g = this._config!.background?.gradient ?? {};
+    const stops = g.stops?.length ? [...g.stops] : ['#1c2a3a', '#3a1c2a'];
+    const writeStops = (s: string[]) => this._put('background.gradient.stops', s);
+    return html`
+      ${this._selectRow('Type', g.type ?? 'linear', [['linear', 'Linear'], ['radial', 'Radial']], (v) => this._put('background.gradient.type', v, 'linear'))}
+      ${(g.type ?? 'linear') === 'linear' ? this._slider('background.gradient.angle', 'Angle', 0, 360, 5, 135, (n) => `${n}°`) : nothing}
+      ${stops.map(
+        (s, i) => html`${this._colorRow(`bg-stop-${i}`, `Colour ${i + 1}`, s, 'Card colour', '#1c2a3a', (v) => {
+            const next = [...stops];
+            next[i] = v ?? 'var(--card-background-color)';
+            writeStops(next);
+          })}
+          ${stops.length > 2
+            ? html`<div class="etce-row"><button class="etce-act del" title="Remove colour" @click=${() => writeStops(stops.filter((_, k) => k !== i))}>
+                <ha-icon icon="mdi:trash-can-outline"></ha-icon></button></div>`
+            : nothing}`,
+      )}
+      ${stops.length < 4 ? html`<div class="etce-addbar"><button class="etce-add" @click=${() => writeStops([...stops, '#000000'])}>+ Colour</button></div>` : nothing}
+    `;
+  }
+
+  private _imageEditor(): TemplateResult {
+    const im = this._config!.background?.image ?? {};
+    return html`
+      <div class="etce-row">
+        <label class="lbl">Image</label>
+        <input
+          type="text"
+          .value=${im.url ?? ''}
+          placeholder="/local/backgrounds/living-room.jpg"
+          @change=${(e: Event) => this._put('background.image.url', (e.target as HTMLInputElement).value.trim() || undefined)}
+        />
+      </div>
+      ${this._hint('A URL, or a file in your config’s www folder as /local/…')}
+      ${this._selectRow('Fit', im.fit ?? 'cover', [['cover', 'Fill (crop)'], ['contain', 'Fit (whole image)'], ['tile', 'Tile']], (v) => this._put('background.image.fit', v, 'cover'))}
+      ${this._slider('background.image.blur', 'Blur', 0, 40, 1, 0)}
+      ${this._slider('background.image.darken', 'Darken', 0, 90, 5, 0, (n) => `${n}%`)}
+    `;
+  }
+
+  private _bgColours(): TemplateResult {
+    const own = this._config!.background?.colors ?? {};
+    return html`${this._hint('Two colours per state. Unset follows your theme’s heat, cool and fan colours.')}
+      ${BG_STATES.map(
+        ([k, label]) => html`<div class="etce-group">${label}</div>
+          ${this._colorRow(`bg-${k}-main`, 'Main', own[k]?.main, 'Automatic', /^#/.test(BG_PALETTE[k].main) ? BG_PALETTE[k].main : k.includes('cool') ? '#2b9af9' : k === 'fan' ? '#00bfa5' : '#ff8100', (v) =>
+            this._put(`background.colors.${k}.main`, v),
+          )}
+          ${this._colorRow(`bg-${k}-second`, 'Second', own[k]?.second, 'Automatic', BG_PALETTE[k].second, (v) => this._put(`background.colors.${k}.second`, v))}`,
+      )}`;
+  }
+
   private _cardBody(): TemplateResult {
     return html`
-      ${this._hint('The card’s own surface.')}
-      ${this._color('card.background', 'Background', 'Theme card', '#1c1c1c')}
+      ${this._hint('The card’s border, corners and padding. Its fill and moving background are under Background.')}
       ${this._color('card.border_color', 'Border', 'Theme', '#444444')}
       ${this._slider('card.border_width', 'Border width', 0, 8, 1, 1)}
       ${this._slider('card.radius', 'Corner radius', 0, 48, 1, 16)}

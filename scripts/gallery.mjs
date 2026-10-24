@@ -19,6 +19,10 @@ ${table(e.filter(([k]) => k.startsWith('template-')))}
 ## Features
 
 ${table(e.filter(([k]) => k.startsWith('feature-')))}
+
+## Moving backgrounds
+
+${table(e.filter(([k]) => k.startsWith('background-')))}
 <!-- gallery:end -->`;
 const readme = readFileSync('README.md', 'utf8');
 const s = readme.indexOf('<!-- gallery:start');

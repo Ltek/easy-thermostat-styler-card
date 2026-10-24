@@ -9,6 +9,7 @@ import { SetpointController, WRITE_DEBOUNCE_MS, RECONCILE_MS } from '../src/mode
 import { toClimateView } from '../src/model/climate';
 import { climate, fakeHass, RICH, rfFan } from './helpers';
 import { TEMPLATES, applyTemplate, hasTemplateKeys } from '../src/model/templates';
+import { bgState, toBgView, bgItems, baseFill } from '../src/model/background';
 
 const base = { type: 'custom:easy-thermostat-styler-card', entity: 'climate.t' };
 
@@ -302,5 +303,72 @@ describe('RF fan speeds — auto-detected', () => {
     expect(naturalLevelOf('natural')).toBeNull();
     expect(naturalLevelOf('natural 3')).toBe(3);
     expect(naturalLevelOf('normal')).toBeNull();
+  });
+});
+
+describe('moving background', () => {
+  const view = (state: string, attrs: Record<string, unknown>, extra: Record<string, unknown> = {}) => {
+    const { hass } = fakeHass([climate(state, { ...RICH, ...attrs })]);
+    const cfg = { ...base, background: { style: 'plasma' as const, ...extra } };
+    return { hass, cfg, v: toClimateView(hass, cfg) };
+  };
+  it('state from what the system is doing', () => {
+    const s = (state: string, attrs: Record<string, unknown>) => {
+      const x = view(state, attrs);
+      return bgState(x.hass, x.cfg, x.v);
+    };
+    expect(s('heat', { temperature: 72, hvac_action: 'heating' })).toBe('heating');
+    expect(s('cool', { temperature: 70, hvac_action: 'cooling' })).toBe('cooling');
+    expect(s('heat', { temperature: 72, hvac_action: 'idle' })).toBe('idle_heat');
+    expect(s('cool', { temperature: 72, hvac_action: 'idle' })).toBe('idle_cool');
+    expect(s('heat_cool', { target_temp_low: 68, target_temp_high: 74, current_temperature: 73, hvac_action: 'idle' })).toBe('idle_cool');
+    expect(s('heat_cool', { target_temp_low: 68, target_temp_high: 74, current_temperature: 69, hvac_action: 'idle' })).toBe('idle_heat');
+    expect(s('fan_only', {})).toBe('fan');
+    expect(s('off', {})).toBe('off');
+    expect(s('unavailable', {})).toBe('off');
+  });
+  it('a running ceiling fan swirls the background at its speed', () => {
+    const f = rfFan({ on: true, pct: 90 });
+    const { hass } = fakeHass([climate('heat', { ...RICH, temperature: 72, hvac_action: 'idle' }), ...f.entities], { registry: f.registry });
+    const cfg = { ...base, background: { style: 'aurora' as const, fan_entity: 'fan.bedroom' } };
+    const bv = toBgView(hass, cfg, toClimateView(hass, cfg))!;
+    expect(bv).toMatchObject({ state: 'fan', dir: 'swirl', blades: true });
+    expect(bv.rate).toBe(2.75); // 0.4 + 2.6 × 0.9 = 2.74 → nearest quarter
+  });
+  it('the further from the setpoint, the faster and stronger', () => {
+    const near = view('heat', { temperature: 72, current_temperature: 71.5, hvac_action: 'heating' });
+    const far = view('heat', { temperature: 72, current_temperature: 64, hvac_action: 'heating' });
+    const a = toBgView(near.hass, near.cfg, near.v)!;
+    const b = toBgView(far.hass, far.cfg, far.v)!;
+    expect(b.rate).toBeGreaterThan(a.rate);
+    expect(b.opacity).toBeGreaterThan(a.opacity);
+    const flat = view('heat', { temperature: 72, current_temperature: 64, hvac_action: 'heating' }, { follow_gap: false });
+    expect(toBgView(flat.hass, flat.cfg, flat.v)!.rate).toBe(toBgView(near.hass, { ...near.cfg, background: { style: 'plasma', follow_gap: false } }, near.v)!.rate);
+  });
+  it('idle drifts very slowly; speed and strength scale it; own colours win', () => {
+    const idle = view('heat', { temperature: 72, hvac_action: 'idle' }, { speed: 200, strength: 50, colors: { idle_heat: { main: '#123456' } } });
+    const bv = toBgView(idle.hass, idle.cfg, idle.v)!;
+    expect(bv).toMatchObject({ state: 'idle_heat', dir: 'up', rate: 0.75, opacity: 0.28, main: '#123456' });
+    expect(bv.second).toBe('#7a3d14');
+  });
+  it('layout is deterministic and lighter on the light setting', () => {
+    expect(bgItems('particles', 'smooth')).toEqual(bgItems('particles', 'smooth'));
+    expect(bgItems('particles', 'smooth')).toHaveLength(22);
+    expect(bgItems('particles', 'light')).toHaveLength(10);
+    expect(bgItems('flow', 'smooth')).toEqual([]);
+  });
+  it('base fill: colour, gradient (needs 2 stops), legacy card.background', () => {
+    expect(baseFill({ ...base, background: { fill: 'gradient', gradient: { type: 'radial', stops: ['#000', '#fff'] } } })).toBe('radial-gradient(circle at 50% 40%, #000, #fff)');
+    expect(baseFill({ ...base, background: { fill: 'gradient', gradient: { stops: ['#000'] } } })).toBeUndefined();
+    expect(baseFill({ ...base, card: { background: '#111' } })).toBe('#111');
+    expect(baseFill({ ...base, card: { background: '#111' }, background: { color: 'transparent' } })).toBe('transparent');
+  });
+  it('templates keep the user image', () => {
+    const cfg = { ...base, background: { fill: 'image' as const, image: { url: '/local/x.jpg' } } };
+    for (const tpl of TEMPLATES) {
+      const out = applyTemplate(cfg, tpl);
+      expect(out.background?.fill).toBe('image');
+      expect(out.background?.image?.url).toBe('/local/x.jpg');
+    }
   });
 });

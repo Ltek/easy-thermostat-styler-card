@@ -48,11 +48,36 @@ const FEATURES = [
   }),
 ];
 
+const bgShot = (style, label, entity, extra = {}) =>
+  card(`background-${style}${extra.slug ?? ''}`, label, {
+    entity,
+    setpoint: { wheel_style: 'pill' },
+    ...extra.config,
+    background: { style, frosted: true, ...extra.background },
+  });
+
+const BACKGROUNDS = [
+  bgShot('plasma', 'Liquid Plasma: heating', 'climate.office'),
+  bgShot('lava', 'Lava Lamp: heating, blobs rising from the pool', 'climate.office'),
+  bgShot('aurora', 'Aurora: cooling', 'climate.hall'),
+  bgShot('flow', 'Thermal Flow: heating, streaming up', 'climate.office'),
+  bgShot('shimmer', 'Heat Shimmer: heating', 'climate.office'),
+  bgShot('shimmer', 'Frost: cooling, mist and sparkles', 'climate.hall', { slug: '-frost' }),
+  bgShot('particles', 'Embers: heating', 'climate.office'),
+  bgShot('particles', 'Snow: cooling', 'climate.hall', { slug: '-snow' }),
+  bgShot('core', 'Breathing Core: heating', 'climate.office'),
+  bgShot('mesh', 'Mesh Gradient: cooling', 'climate.hall'),
+  bgShot('beam', 'Glow Beam: cooling, with vignette and grain', 'climate.hall', { background: { vignette: 40, grain: 20, color: '#050507' } }),
+  bgShot('plasma', 'Fan Only: swirling blades at the fan speed', 'climate.loft', { slug: '-fan' }),
+  bgShot('aurora', 'Idle: a very slow drift', 'climate.study', { slug: '-idle' }),
+];
+
 const SHOTS = [
   ...TEMPLATES.map((t) =>
     card(`template-${t.id}`, `${t.name}: ${t.hint}`, applyTemplate({ entity: 'climate.hall', sets: [fans] }, t)),
   ),
   ...FEATURES,
+  ...BACKGROUNDS,
 ];
 
 await import('../dist/easy-thermostat-styler-card.js');

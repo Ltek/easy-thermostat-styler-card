@@ -180,7 +180,8 @@ describe('card render', () => {
 
   it('centered core: the info block does not stretch (the whole row centres)', async () => {
     const { root } = await mount({});
-    const css = (root.host.constructor as unknown as { styles: { cssText: string } }).styles.cssText;
+    const styles = (root.host.constructor as unknown as { styles: { cssText: string } | { cssText: string }[] }).styles;
+    const css = (Array.isArray(styles) ? styles : [styles]).map((s) => s.cssText).join('\n');
     expect(css).not.toMatch(/pos-right \.main\s*\{\s*flex:\s*1/);
     expect(root.querySelector('.core.al-center')).not.toBeNull();
   });
@@ -304,6 +305,77 @@ describe('card render', () => {
     expect(c.root.querySelector('.bar.vertical.flags-left.ticks-left')).not.toBeNull();
   });
 
+  describe('background', () => {
+    it('no style: no moving layer; base colour and gradient fill', async () => {
+      const a = await mount({ background: { color: 'transparent' } });
+      expect(a.root.querySelector('.bg')).toBeNull();
+      expect(a.root.querySelector<HTMLElement>('ha-card')!.style.getPropertyValue('--etc-card-bg')).toBe('transparent');
+      document.body.innerHTML = '';
+      const b = await mount({ background: { fill: 'gradient', gradient: { angle: 90, stops: ['#111111', 'var(--primary-color)'] } } });
+      expect(b.root.querySelector<HTMLElement>('ha-card')!.style.getPropertyValue('--etc-card-bg')).toBe('linear-gradient(90deg, #111111, var(--primary-color))');
+      document.body.innerHTML = '';
+      // the older card.background still renders
+      const c = await mount({ card: { background: '#222222' } });
+      expect(c.root.querySelector<HTMLElement>('ha-card')!.style.getPropertyValue('--etc-card-bg')).toBe('#222222');
+    });
+
+    it('every style renders behind the content, heating rises with heat colours', async () => {
+      for (const style of ['plasma', 'lava', 'aurora', 'flow', 'shimmer', 'particles', 'core', 'mesh', 'beam']) {
+        document.body.innerHTML = '';
+        const { root } = await mount({ background: { style } });
+        const bg = root.querySelector('ha-card > .bg')!;
+        expect(bg.className).toContain(`s-${style}`);
+        expect(bg.className).toContain('st-heating');
+        expect(bg.className).toContain('dir-up');
+        expect(bg.nextElementSibling!.classList.contains('grid')).toBe(true);
+        expect(root.querySelector<HTMLElement>('ha-card')!.style.getPropertyValue('--etc-bg-a')).toContain('--state-climate-heat-color');
+      }
+    });
+
+    it('cooling sinks, fan swirls with blades, off can be turned off', async () => {
+      const cool = await mount({ background: { style: 'plasma' } }, fakeHass([climate('cool', { ...RICH, temperature: 70, hvac_action: 'cooling' })]));
+      expect(cool.root.querySelector('.bg.dir-down.st-cooling')).not.toBeNull();
+      document.body.innerHTML = '';
+      const fan = await mount({ background: { style: 'aurora' } }, fakeHass([climate('fan_only', { ...RICH, fan_mode: 'high' })]));
+      expect(fan.root.querySelector('.bg.dir-swirl.st-fan .blades')).not.toBeNull();
+      document.body.innerHTML = '';
+      const off = await mount({ background: { style: 'mesh', off: 'none' } }, fakeHass([climate('off', { ...RICH })]));
+      expect(off.root.querySelector('.bg')).toBeNull();
+    });
+
+    it('image layer, finish layer, frosted controls', async () => {
+      const { root } = await mount({
+        background: { fill: 'image', image: { url: '/local/a "b".jpg', darken: 40 }, scrim: 20, vignette: 30, grain: 10, frosted: true, frost_blur: 20 },
+      });
+      const card = root.querySelector<HTMLElement>('ha-card')!;
+      expect(card.classList.contains('frosted')).toBe(true);
+      expect(root.querySelector('.bg-base .bg-img.fit-cover')).not.toBeNull();
+      expect(root.querySelector('.bg-base .bg-dark')).not.toBeNull();
+      expect(root.querySelectorAll('.bg-finish i')).toHaveLength(3);
+      expect(card.style.getPropertyValue('--bg-img')).toBe('url("/local/a \\"b\\".jpg")');
+      expect(card.style.getPropertyValue('--frost')).toBe('20px');
+    });
+
+    it('editor: setting the colour here clears the older card.background', async () => {
+      const el = document.createElement('easy-thermostat-styler-card-editor') as EasyThermostatStylerCardEditor;
+      el.hass = fakeHass([climate('heat', { ...RICH, temperature: 68 })]).hass;
+      el.setConfig({ ...base, card: { background: '#222222', radius: 4 } } as never);
+      document.body.appendChild(el);
+      await el.updateComplete;
+      const events: Record<string, unknown>[] = [];
+      el.addEventListener('config-changed', (e) => events.push((e as CustomEvent).detail.config));
+      const panel = [...el.shadowRoot!.querySelectorAll<HTMLDetailsElement>('details.etce-sec')].find((d) => d.textContent!.includes('Background'))!;
+      panel.open = true;
+      panel.dispatchEvent(new Event('toggle'));
+      await el.updateComplete;
+      const mode = panel.querySelector<HTMLSelectElement>('.etce-color .etce-cmode')!;
+      expect([...mode.options].map((o) => o.value)).toContain('transparent');
+      mode.value = 'transparent';
+      mode.dispatchEvent(new Event('change'));
+      expect(events.at(-1)).toEqual({ ...base, card: { radius: 4 }, background: { color: 'transparent' } });
+    });
+  });
+
   it('hvac set full-time; preset/fan behind toggles that remember state', async () => {
     const { root, calls, el } = await mount({});
     expect(root.querySelectorAll('.set.t-hvac .btn')).toHaveLength(4);
@@ -360,14 +432,14 @@ describe('card render', () => {
   });
 
   it('every card instance shares one stylesheet (no per-config CSS)', async () => {
-    const a = await mount({ text: { current: { size: 40 } } });
+    const a = await mount({ text: { current: { size: 97 } } });
     const b = await mount({ buttons: { radius: 2 }, setpoint: { control: 'bar' } });
     const css = (r: ShadowRoot) =>
       r.adoptedStyleSheets?.length
         ? r.adoptedStyleSheets.map((s) => [...s.cssRules].map((x) => x.cssText).join('\n'))
         : [...r.querySelectorAll('style')].map((s) => s.textContent);
     expect(css(a.root)).toEqual(css(b.root));
-    expect(css(a.root).join('')).not.toContain('40px');
+    expect(css(a.root).join('')).not.toContain('97px');
   });
 
   it('unavailable entity renders a quiet shell', async () => {
@@ -391,7 +463,7 @@ describe('editor', () => {
   it('renders panels with the token block root', async () => {
     const { root } = await editor({});
     expect(root.querySelector('.etce')).not.toBeNull();
-    expect(root.querySelectorAll('details.etce-sec').length).toBe(8);
+    expect(root.querySelectorAll('details.etce-sec').length).toBe(9);
     expect(root.querySelectorAll('details.etce-sec summary')[1]!.textContent).toContain('Quick Preset Templates');
   });
 

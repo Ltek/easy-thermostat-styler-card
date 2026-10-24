@@ -7,7 +7,7 @@
 // untouched card never rewrites its YAML. Rendering defaults live in code
 // (`DEFAULTS` below), never in the stored config.
 
-export const CARD_VERSION = '2026.10.24.9';
+export const CARD_VERSION = '2026.10.24.10';
 export const CARD_TYPE = 'easy-thermostat-styler-card';
 export const EDITOR_TYPE = 'easy-thermostat-styler-card-editor';
 
@@ -208,6 +208,34 @@ export interface EffectsConfig {
   cool_color?: string;
 }
 
+export type BgStyle = 'none' | 'plasma' | 'lava' | 'aurora' | 'flow' | 'shimmer' | 'particles' | 'core' | 'mesh' | 'beam';
+export type BgStateKey = 'heating' | 'cooling' | 'idle_heat' | 'idle_cool' | 'fan' | 'off';
+
+/** The card's surface: a base fill plus an optional moving layer. */
+export interface BackgroundConfig {
+  fill?: 'color' | 'gradient' | 'image';
+  /** Base colour (four-mode or 'transparent'); unset = theme card colour. */
+  color?: string;
+  gradient?: { type?: 'linear' | 'radial'; angle?: number; stops?: string[] };
+  image?: { url?: string; fit?: 'cover' | 'contain' | 'tile'; blur?: number; darken?: number };
+  style?: BgStyle;
+  strength?: number; // %
+  speed?: number; // %
+  /** Heating / cooling move faster and stronger the further the room is from the setpoint. */
+  follow_gap?: boolean;
+  /** Off: a calm, near-still layer, or none. */
+  off?: 'calm' | 'none';
+  /** A fan whose speed drives the swirl (and which swirls while it runs). */
+  fan_entity?: string;
+  colors?: Partial<Record<BgStateKey, { main?: string; second?: string }>>;
+  quality?: 'smooth' | 'light';
+  scrim?: number; // -60 (lighten) … 60 (darken)
+  vignette?: number; // %
+  grain?: number; // %
+  frosted?: boolean;
+  frost_blur?: number; // px
+}
+
 export interface CardSurface {
   background?: string;
   border_color?: string;
@@ -235,6 +263,7 @@ export interface CardConfig {
   text?: Partial<Record<TextRole, TextStyle>>;
   card?: CardSurface;
   effects?: EffectsConfig;
+  background?: BackgroundConfig;
   [key: string]: unknown;
 }
 
@@ -336,6 +365,23 @@ export function normalizeConfig(raw: unknown): CardConfig {
     if ('min_gap' in sp) sp.min_gap = clamp(sp.min_gap, 0, 20);
     if ('hide_after' in sp) sp.hide_after = clamp(sp.hide_after, 0, 300);
     cfg.setpoint = sp;
+  }
+  if (isObj(cfg.background)) {
+    const bg = { ...cfg.background } as Obj;
+    if ('strength' in bg) bg.strength = clamp(bg.strength, 0, 100);
+    if ('speed' in bg) bg.speed = clamp(bg.speed, 25, 300);
+    if ('scrim' in bg) bg.scrim = clamp(bg.scrim, -60, 60) || undefined;
+    if ('vignette' in bg) bg.vignette = clamp(bg.vignette, 0, 100) || undefined;
+    if ('grain' in bg) bg.grain = clamp(bg.grain, 0, 100) || undefined;
+    if ('frost_blur' in bg) bg.frost_blur = clamp(bg.frost_blur, 0, 40);
+    if (isObj(bg.image)) {
+      const im = { ...bg.image };
+      if ('blur' in im) im.blur = clamp(im.blur, 0, 40) || undefined;
+      if ('darken' in im) im.darken = clamp(im.darken, 0, 90) || undefined;
+      bg.image = im;
+    }
+    if (isObj(bg.gradient) && 'angle' in bg.gradient) bg.gradient = { ...bg.gradient, angle: clamp(bg.gradient.angle, 0, 360) };
+    cfg.background = bg;
   }
   if (isObj(cfg.effects)) {
     const fx = { ...cfg.effects };

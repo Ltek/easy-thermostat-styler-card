@@ -23,6 +23,7 @@ export const TEMPLATE_KEYS = [
   'toggles_zone',
   'status_position',
   'effects',
+  'background',
   'setpoint',
   'sets',
 ] as const;
@@ -154,7 +155,8 @@ export const TEMPLATES: Template[] = [
       setpoint: { control: 'stepper', position: 'center', scale: 90 },
       buttons: { variant: 'ghost', content: 'label', font_size: 14, font_weight: 600 },
       text: { current: { size: 76, weight: 100 } },
-      card: { background: 'transparent', border_width: 0, glow: false },
+      background: { color: 'transparent' },
+      card: { border_width: 0, glow: false },
       sets: [hvac({ align: 'center' })],
     },
   },
@@ -198,6 +200,58 @@ export const TEMPLATES: Template[] = [
   },
 ];
 
+TEMPLATES.push(
+  {
+    id: 'lava',
+    name: 'Lava Lamp',
+    hint: 'Molten blobs rise while heating and sink while cooling, behind frosted menus and a big light number.',
+    icon: 'mdi:lava-lamp',
+    tags: ['lava background', 'frosted', 'menus'],
+    values: {
+      show_name: false,
+      status_position: 'below',
+      show_pills: false,
+      setpoint: { control: 'wheel', wheel_style: 'pill', position: 'right' },
+      text: { current: { size: 84, weight: 200 } },
+      buttons: { radius: 16 },
+      background: { style: 'lava', strength: 90, frosted: true, vignette: 35 },
+      effects: { card: 'none' },
+      sets: [hvac({ display: 'menu' }), preset({ display: 'menu' }), fan({ display: 'menu' })],
+    },
+  },
+  {
+    id: 'aurora',
+    name: 'Northern Lights',
+    hint: 'Aurora ribbons that drift with the system, a gradient bar under the number, and ghost buttons.',
+    icon: 'mdi:weather-night',
+    tags: ['aurora background', 'gradient bar', 'ghost'],
+    values: {
+      setpoint: { control: 'bar', bar: { look: 'gradient', position: 'below', flags: true, ticks: 0, labels: 5 } },
+      buttons: { variant: 'ghost', icon_position: 'left' },
+      text: { name: { transform: 'uppercase', letter_spacing: 12, size: 12 }, current: { weight: 100 } },
+      background: { style: 'aurora', strength: 85, frosted: true, grain: 15 },
+      effects: { card: 'none' },
+      sets: [hvac(), preset({ display: 'toggle' }), fan({ display: 'toggle' })],
+    },
+  },
+  {
+    id: 'frost',
+    name: 'Frosted Glass',
+    hint: 'A soft light beam behind frosted glass controls, with a vignette and fine grain.',
+    icon: 'mdi:blur',
+    tags: ['beam background', 'frosted', 'stepper'],
+    values: {
+      setpoint: { control: 'stepper', position: 'center', scale: 110 },
+      buttons: { variant: 'outlined', radius: 999, content: 'icon', height: 46, min_width: 46 },
+      text: { current: { size: 92, weight: 100 } },
+      card: { border_width: 0 },
+      background: { color: '#050507', style: 'beam', strength: 95, frosted: true, frost_blur: 16, vignette: 45, grain: 20 },
+      effects: { card: 'none' },
+      sets: [hvac({ align: 'center' }), preset({ display: 'menu' })],
+    },
+  },
+);
+
 /** True when the card has any key a template would replace. */
 export function hasTemplateKeys(config: CardConfig): boolean {
   return TEMPLATE_KEYS.some((k) => config[k] !== undefined);
@@ -236,6 +290,10 @@ export function applyTemplate(config: CardConfig, tpl: Template): CardConfig {
       if (old.bar?.range_max !== undefined) sp.bar.range_max = old.bar.range_max;
     }
     v.setpoint = sp;
+  }
+  const img = config.background;
+  if (img?.fill === 'image' && img.image?.url && !v.background?.fill) {
+    v.background = { ...(v.background ?? {}), fill: 'image', image: structuredClone(img.image) };
   }
   if (v.sets) v.sets = mergeSets(config.sets, v.sets);
   else if (config.sets) v.sets = config.sets;

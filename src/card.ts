@@ -38,6 +38,9 @@ import {
 import type { ServiceCall } from './model/service-call';
 import { cardStyles } from './styles';
 import { fxClasses, fxVars } from './model/effects';
+import { bgVars, toBgView } from './model/background';
+import { renderBackground } from './components/background';
+import { backgroundStyles } from './background-styles';
 
 const PX_PER_STEP = 18;
 const HOLD_MS = 500;
@@ -45,7 +48,7 @@ const HOLD_MS = 500;
 type CardHelpers = { createCardElement(c: Record<string, unknown>): HTMLElement & { hass?: unknown } };
 
 export class EasyThermostatStylerCard extends LitElement {
-  static override styles = cardStyles;
+  static override styles = [cardStyles, backgroundStyles];
 
   @property({ attribute: false }) hass?: HomeAssistant;
   @state() private _config?: CardConfig;
@@ -55,6 +58,10 @@ export class EasyThermostatStylerCard extends LitElement {
   /** Open menu set key (fallback path when the Popover API is missing). */
   @state() private _menu: string | null = null;
   @state() private _revealed = false;
+  /** Moving background paused (card off-screen or tab hidden). */
+  @state() private _bgPaused = false;
+  private _onScreen = true;
+  private _io?: IntersectionObserver;
   private _revealTimer: ReturnType<typeof setTimeout> | null = null;
 
   private _sp = new SetpointController(
@@ -94,8 +101,28 @@ export class EasyThermostatStylerCard extends LitElement {
     return { columns: 6, min_columns: 4, rows: 'auto' };
   }
 
+  override connectedCallback(): void {
+    super.connectedCallback();
+    if (typeof IntersectionObserver !== 'undefined') {
+      this._io = new IntersectionObserver((entries) => {
+        this._onScreen = entries.some((e) => e.isIntersecting);
+        this._updatePause();
+      });
+      this._io.observe(this);
+    }
+    document.addEventListener('visibilitychange', this._updatePause);
+  }
+
+  private _updatePause = (): void => {
+    const paused = !this._onScreen || document.visibilityState === 'hidden';
+    if (paused !== this._bgPaused) this._bgPaused = paused;
+  };
+
   override disconnectedCallback(): void {
     super.disconnectedCallback();
+    this._io?.disconnect();
+    this._io = undefined;
+    document.removeEventListener('visibilitychange', this._updatePause);
     this._sp.dispose();
     if (this._revealTimer) clearTimeout(this._revealTimer);
   }
@@ -118,6 +145,7 @@ export class EasyThermostatStylerCard extends LitElement {
   private _watched(): string[] {
     const c = this._config!;
     const ids = [c.entity];
+    if (c.background?.fan_entity) ids.push(c.background.fan_entity);
     for (const s of c.sets ?? []) for (const ch of s.chips ?? []) ids.push(ch.entity);
     if (this.hass) {
       for (const s of c.sets ?? [])
@@ -174,12 +202,15 @@ export class EasyThermostatStylerCard extends LitElement {
     const c = this._config;
     const view = toClimateView(this.hass, c);
     const sets = toSetViews(this.hass, c);
+    const bg = toBgView(this.hass, c, view);
     const cls = {
       [`eq-${view.equipment ?? 'none'}`]: true,
       [`mode-${view.mode}`]: true,
       ...fxClasses(c, view),
+      frosted: !!c.background?.frosted,
+      'bg-paused': !!bg && this._bgPaused,
     };
-    const vars = { ...surfaceVars(c), ...textVars(c.text), ...this._barVars(), ...fxVars(c) };
+    const vars = { ...surfaceVars(c), ...textVars(c.text), ...this._barVars(), ...fxVars(c), ...bgVars(c, bg) };
     const zones: Record<Zone, TemplateResult[]> = { top: [], bottom: [], left: [], right: [] };
     const toggles = sets.filter((s) => s.display === 'toggle');
     // All menu sets in a zone share one row, placed where the first one is.
@@ -198,6 +229,7 @@ export class EasyThermostatStylerCard extends LitElement {
 
     return html`
       <ha-card class=${classMap(cls)} style=${styleMap(vars)}>
+        ${renderBackground(c, bg)}
         <div class="grid">
           ${(['top', 'left'] as Zone[]).map((z) => this._zone(z, zones[z]))}
           ${this._renderCore(view)}
