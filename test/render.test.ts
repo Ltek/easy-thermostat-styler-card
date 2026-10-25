@@ -798,6 +798,35 @@ describe('card render', () => {
     expect(/\.etce-sub\.etce-rowsub > \.etce-sub-body\s*\{\s*padding:\s*0 0 /.test(EDITOR_CSS)).toBe(true);
   });
 
+  it('editor: every background / fill color offers Transparent and every border offers None, everywhere', async () => {
+    for (const variant of [{ setpoint: { control: 'bar' }, background: { style: 'plasma', fill: 'gradient' } }, { setpoint: { control: 'bar' }, background: { style: 'plasma' } }]) {
+      const el = document.createElement('easy-thermostat-styler-card-editor') as EasyThermostatStylerCardEditor;
+      el.hass = fakeHass([climate('heat', { ...RICH, temperature: 68 })]).hass;
+      el.setConfig({ ...base, ...variant, sets: [{ type: 'hvac' }] } as never);
+      document.body.appendChild(el);
+      await el.updateComplete;
+      const r = el.shadowRoot!;
+      for (let pass = 0; pass < 5; pass++) {
+        for (const d of r.querySelectorAll<HTMLDetailsElement>('details:not([open])')) {
+          d.open = true;
+          d.dispatchEvent(new Event('toggle'));
+        }
+        await el.updateComplete;
+      }
+      for (const row of r.querySelectorAll('.etce-row')) {
+        const sel = row.querySelector('select.etce-cmode');
+        if (!sel) continue;
+        const label = row.querySelector('label')!.textContent!.trim();
+        const opts = [...sel.querySelectorAll('option')].map((o) => o.textContent!.trim());
+        const panel = row.closest('details.etce-sec')!.querySelector(':scope > summary')!.textContent!.trim();
+        const fill = /background|fill|zone|main|second|flag color/i.test(label) || (panel === 'Background' && /^color( \d)?$/i.test(label));
+        if (fill) expect(opts, `${panel} › ${label}`).toContain('Transparent');
+        if (/border/i.test(label)) expect(opts, label).toContain('None');
+      }
+      el.remove();
+    }
+  });
+
   it('hvac set full-time; preset/fan behind toggles that remember state', async () => {
     const { root, calls, el } = await mount({});
     expect(root.querySelectorAll('.set.t-hvac .btn')).toHaveLength(4);

@@ -321,9 +321,10 @@ export class EasyThermostatStylerCardEditor extends LitElement {
     defaultLabel: string,
     seedHex: string,
     write: (v: string | undefined) => void,
-    opts: { transparent?: boolean; transparentLabel?: string } = {},
+    opts: { transparent?: boolean; transparentLabel?: string; transparentValue?: string } = {},
   ): TemplateResult {
-    let mode = (this._cmode[id] as ReturnType<typeof colorMode>) || colorMode(cur);
+    const none = opts.transparentValue ?? 'transparent';
+    let mode = (this._cmode[id] as ReturnType<typeof colorMode>) || (opts.transparent && cur === none ? 'transparent' : colorMode(cur));
     if (mode === 'transparent' && !opts.transparent) mode = 'css';
     let field: TemplateResult | typeof nothing = nothing;
     if (mode === 'theme') {
@@ -344,7 +345,7 @@ export class EasyThermostatStylerCardEditor extends LitElement {
     const onMode = (m: string) => {
       this._cmode = { ...this._cmode, [id]: m };
       if (m === 'default') write(undefined);
-      else if (m === 'transparent') write('transparent');
+      else if (m === 'transparent') write(none);
       else if (m === 'theme') write(THEME_COLORS.some(([v]) => v === cur) ? cur : THEME_COLORS[0]![0]);
       else if (m === 'custom') write(cur && /^#[0-9a-fA-F]{6}$/.test(cur) ? cur : seedHex);
       else this.requestUpdate(); // css: keep the current value, just show the text field
@@ -368,9 +369,10 @@ export class EasyThermostatStylerCardEditor extends LitElement {
     </div>`;
   }
 
-  private _color(path: string, label: string, defaultLabel: string, seedHex: string): TemplateResult {
-    return this._colorRow(path, label, this._get(path) as string | undefined, defaultLabel, seedHex, (v) => this._put(path, v));
+  private _color(path: string, label: string, defaultLabel: string, seedHex: string, opts: { transparent?: boolean; transparentLabel?: string; transparentValue?: string } = {}): TemplateResult {
+    return this._colorRow(path, label, this._get(path) as string | undefined, defaultLabel, seedHex, (v) => this._put(path, v), opts);
   }
+
 
   private _selector(label: string, selector: Record<string, unknown>, value: unknown, onChange: (v: unknown) => void): TemplateResult {
     return html`<div class="etce-row">
@@ -606,7 +608,7 @@ export class EasyThermostatStylerCardEditor extends LitElement {
       ${this._bool('setpoint.bar.flags', 'Show value flags on the handles', b.flags)}
       ${(this._get('setpoint.bar.flags') ?? b.flags)
         ? html`${this._sidePlacement('flag_position', 'Flag placement', 'above', 'left')}
-          ${this._color('setpoint.bar.flag_color', 'Flag color', 'Heat / cool color', '#ff8100')}
+          ${this._color('setpoint.bar.flag_color', 'Flag color', 'Heat / cool color', '#ff8100', { transparent: true })}
           ${this._color('setpoint.bar.flag_text_color', 'Flag text color', 'White', '#ffffff')}`
         : nothing}
     `;
@@ -675,9 +677,9 @@ export class EasyThermostatStylerCardEditor extends LitElement {
               )}
             </div>
           </div>`
-        : html`${this._color('setpoint.bar.heat_color', 'Heat zone', 'Theme heat', '#ff8100')}
-          ${this._color('setpoint.bar.comfort_color', 'Comfort zone', 'Green', '#4caf50')}
-          ${this._color('setpoint.bar.cool_color', 'Cool zone', 'Theme cool', '#2b9af9')}`}
+        : html`${this._color('setpoint.bar.heat_color', 'Heat zone', 'Theme heat', '#ff8100', { transparent: true })}
+          ${this._color('setpoint.bar.comfort_color', 'Comfort zone', 'Green', '#4caf50', { transparent: true })}
+          ${this._color('setpoint.bar.cool_color', 'Cool zone', 'Theme cool', '#2b9af9', { transparent: true })}`}
       ${this._group('Handles')}
       ${this._select(
         'setpoint.bar.handle_shape',
@@ -685,13 +687,8 @@ export class EasyThermostatStylerCardEditor extends LitElement {
         [['round', 'Round'], ['square', 'Square'], ['diamond', 'Diamond'], ['line', 'Line']],
         b.handle_shape,
       )}
-      ${this._color('setpoint.bar.handle_color', 'Handle fill', 'White', '#ffffff')}
-      ${this._check('Handle border', this._get('setpoint.bar.handle_border_color') !== 'none', (on) =>
-        this._put('setpoint.bar.handle_border_color', on ? undefined : 'none'),
-      )}
-      ${this._get('setpoint.bar.handle_border_color') !== 'none'
-        ? this._color('setpoint.bar.handle_border_color', 'Handle border color', 'Heat / cool color', '#ffffff')
-        : nothing}
+      ${this._color('setpoint.bar.handle_color', 'Handle fill', 'White', '#ffffff', { transparent: true })}
+      ${this._color('setpoint.bar.handle_border_color', 'Handle border', 'Heat / cool color', '#ffffff', { transparent: true, transparentLabel: 'None', transparentValue: 'none' })}
     `;
   }
 
@@ -1433,7 +1430,7 @@ export class EasyThermostatStylerCardEditor extends LitElement {
             const next = [...stops];
             next[i] = v ?? 'var(--card-background-color)';
             writeStops(next);
-          })}
+          }, { transparent: true })}
           ${stops.length > 2
             ? html`<div class="etce-row"><button class="etce-act del" title="Remove color" @click=${() => writeStops(stops.filter((_, k) => k !== i))}>
                 <ha-icon icon="mdi:trash-can-outline"></ha-icon></button></div>`
@@ -1468,16 +1465,16 @@ export class EasyThermostatStylerCardEditor extends LitElement {
       ${BG_STATES.map(
         ([k, label], n) => html`<div class="etce-group ${n === 0 ? 'first' : ''}">${tc(label)}</div>
           ${this._colorRow(`bg-${k}-main`, 'Main', own[k]?.main, 'Automatic', /^#/.test(BG_PALETTE[k].main) ? BG_PALETTE[k].main : k.includes('cool') ? '#2b9af9' : k === 'fan' ? '#00bfa5' : '#ff8100', (v) =>
-            this._put(`background.colors.${k}.main`, v),
+            this._put(`background.colors.${k}.main`, v), { transparent: true },
           )}
-          ${this._colorRow(`bg-${k}-second`, 'Second', own[k]?.second, 'Automatic', BG_PALETTE[k].second, (v) => this._put(`background.colors.${k}.second`, v))}`,
+          ${this._colorRow(`bg-${k}-second`, 'Second', own[k]?.second, 'Automatic', BG_PALETTE[k].second, (v) => this._put(`background.colors.${k}.second`, v), { transparent: true })}`,
       )}`;
   }
 
   private _cardBody(): TemplateResult {
     return html`
       ${this._hint('The card’s border, corners and padding. Its fill and moving background are under Background.')}
-      ${this._color('card.border_color', 'Border', 'Theme', '#444444')}
+      ${this._color('card.border_color', 'Border', 'Theme', '#444444', { transparent: true, transparentLabel: 'None' })}
       ${this._slider('card.border_width', 'Border width', 0, 8, 1, 1)}
       ${this._slider('card.radius', 'Corner radius', 0, 48, 1, 16)}
       ${this._slider('card.padding', 'Padding', 0, 40, 1, 16)}

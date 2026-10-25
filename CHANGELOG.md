@@ -1,5 +1,14 @@
 # Changelog
 
+## v2026.10.25.22
+
+- **Transparent and None everywhere they belong.** Every background or fill color offers **Transparent**, and every border offers **None**:
+  - Button Style and each set's Button Style: Background (inactive and active) → Transparent; Border (inactive and active) → None.
+  - Card Shape: Border → None.
+  - Setpoint bar: heat, comfort and cool zones, handle fill and flag color → Transparent; **Handle Border → None**. This replaces the separate "Handle border" checkbox; existing cards keep their setting.
+  - Background: base color, gradient colors, and the main / second colors for each state → Transparent.
+  - Text, icon and glow colors don't offer it, since transparent would just hide them.
+
 ## v2026.10.25.21
 
 - **Editor (Button Sets)**: an opened set, and an opened button inside it, no longer draws its own bordered, indented box. Its sections and fields now sit exactly where every other panel's do: one box deep and the same distance from the panel edge as in Background or Text. Before, they were two or three boxes deep.
