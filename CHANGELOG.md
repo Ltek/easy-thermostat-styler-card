@@ -1,5 +1,12 @@
 # Changelog
 
+## v2026.10.25.16
+
+- **Look: Button / Chip** for every set (Button style, and per set). Mode, preset and fan buttons, and expandable-menu buttons, can be chips. Device sets can be full buttons in any variant, with each item's icon and "name · value" as the label. Turn off **Show name** on an item for value only.
+- **Share a row with** (every set): Own row, or any other set by name. The set then sits in that set's row and on its side of the card. Removing the link also tidies away the internal id.
+- **Keep the main area centred** (on by default): with buttons on only one side, the temperature and controls no longer shift off-centre. On a card too narrow to balance both sides, it falls back to the old layout instead of squeezing the middle.
+- **Distance from the main area**: a card-wide slider, plus **Distance per side** for top, bottom, left and right.
+
 ## v2026.10.25.15
 
 - **Hide the setpoint pill while the controls are open** (Setpoint control → Show controls, with "Shown when tapped"). The pill shows while the controls are closed and hides while the wheel, stepper or bar is open, since the control already shows the setpoint. In Heat / Cool, a small heat/cool switch appears on the control so you can still pick which setpoint to change.

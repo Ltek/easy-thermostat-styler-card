@@ -7,7 +7,7 @@
 // untouched card never rewrites its YAML. Rendering defaults live in code
 // (`DEFAULTS` below), never in the stored config.
 
-export const CARD_VERSION = '2026.10.25.15';
+export const CARD_VERSION = '2026.10.25.16';
 export const CARD_TYPE = 'easy-thermostat-styler-card';
 export const EDITOR_TYPE = 'easy-thermostat-styler-card-editor';
 
@@ -53,6 +53,8 @@ export type ButtonContent = 'icon_label' | 'icon' | 'label';
 
 /** The ONE button property set, offered identically at card and set level. */
 export interface ButtonStyle {
+  /** Button tiles or chips. Unset: chips for device sets, buttons for the rest. */
+  look?: 'button' | 'chip';
   variant?: ButtonVariant;
   content?: ButtonContent;
   icon_position?: 'top' | 'left';
@@ -76,6 +78,7 @@ export interface ButtonStyle {
   active_border_color?: string;
 }
 export const BUTTON_STYLE_KEYS: (keyof ButtonStyle)[] = [
+  'look',
   'variant',
   'content',
   'icon_position',
@@ -124,6 +127,10 @@ export interface ChipConfig {
 
 export interface ButtonSetConfig {
   type: SetType;
+  /** Stable id, only added when another set refers to this one. */
+  id?: string;
+  /** Sit in the same row as the set with this id (in its place). */
+  row_with?: string;
   name?: string;
   zone?: Zone;
   orientation?: 'row' | 'column';
@@ -280,6 +287,15 @@ export interface CardConfig {
   buttons?: ButtonStyle;
   text?: Partial<Record<TextRole, TextStyle>>;
   card?: CardSurface;
+  /** Space between the button areas and the main area, and keeping it centred. */
+  zones?: {
+    centered?: boolean;
+    gap?: number;
+    top?: number;
+    bottom?: number;
+    left?: number;
+    right?: number;
+  };
   effects?: EffectsConfig;
   background?: BackgroundConfig;
   /** Frosted glass controls: buttons, pills, chips, menus and the wheel bubble. */

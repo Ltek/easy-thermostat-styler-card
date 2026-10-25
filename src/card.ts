@@ -159,6 +159,7 @@ export class EasyThermostatStylerCard extends LitElement {
     this._io = undefined;
     if (this._cycleTimer) clearInterval(this._cycleTimer);
     this._cycleTimer = null;
+    this._sideRO?.disconnect();
     document.removeEventListener('visibilitychange', this._updatePause);
     window.removeEventListener(TEST_EVENT, this._onTest);
     this._sp.dispose();
@@ -259,15 +260,45 @@ export class EasyThermostatStylerCard extends LitElement {
     const zones: Record<Zone, TemplateResult[]> = { top: [], bottom: [], left: [], right: [] };
     const toggles = sets.filter((s) => s.display === 'toggle');
     // All menu sets in a zone share one row, placed where the first one is.
-    const menus: Record<Zone, SetView[]> = { top: [], bottom: [], left: [], right: [] };
-    for (const s of sets) if (s.display === 'menu') menus[s.zone].push(s);
+    const shown = (s: SetView) => s.display !== 'toggle' || this._open.has(s.key);
+    // "Share a row with": a set joins the row of the set it names (following
+    // chains, ignoring cycles), in that set's zone and place.
+    const byId = new Map(sets.filter((s) => s.config.id).map((s) => [s.config.id!, s]));
+    const rootOf = (s: SetView): SetView => {
+      let cur = s;
+      const seen = new Set<SetView>([s]);
+      while (cur.config.row_with) {
+        const next = byId.get(cur.config.row_with);
+        if (!next || seen.has(next) || !shown(next)) break;
+        seen.add(next);
+        cur = next;
+      }
+      return cur;
+    };
+    const rows = new Map<SetView, SetView[]>();
     for (const s of sets) {
-      if (s.display === 'menu') {
+      if (!shown(s)) continue;
+      const root = rootOf(s);
+      if (!rows.has(root)) rows.set(root, []);
+      rows.get(root)!.push(s);
+    }
+    // Menu sets left on their own in a zone still share one row, as before.
+    const menus: Record<Zone, SetView[]> = { top: [], bottom: [], left: [], right: [] };
+    for (const [root, members] of rows) if (members.length === 1 && root.display === 'menu') menus[root.zone].push(root);
+    for (const s of sets) {
+      const members = rows.get(s);
+      if (!members) continue;
+      if (members.length === 1 && s.display === 'menu') {
         if (menus[s.zone][0] === s) zones[s.zone].push(this._renderMenuRow(menus[s.zone], s.zone));
         continue;
       }
-      if (s.display === 'toggle' && !this._open.has(s.key)) continue;
-      zones[s.zone].push(this._renderSet(s));
+      if (members.length === 1) {
+        zones[s.zone].push(this._renderSet(s));
+        continue;
+      }
+      zones[s.zone].push(html`<div class="row-group">
+        ${members.map((m) => (m.display === 'menu' ? this._renderMenuRow([m], s.zone) : this._renderSet(m)))}
+      </div>`);
     }
     const tz = c.toggles_zone ?? DEFAULTS.toggles_zone;
     if (toggles.length) zones[tz].push(this._renderToggles(toggles));
@@ -276,7 +307,7 @@ export class EasyThermostatStylerCard extends LitElement {
       <ha-card class=${classMap(cls)} style=${styleMap(vars)}>
         ${renderBackground(c, bg)}
         ${test ? html`<div class="test-badge" title="Test mode switches off when the editor closes">TEST · ${TEST_LABEL[test]}</div>` : nothing}
-        <div class="grid">
+        <div class=${classMap({ grid: true, centered: c.zones?.centered ?? true, 'has-sides': !!(zones.left.length || zones.right.length) })} style=${styleMap(this._zoneVars())}>
           ${(['top', 'left'] as Zone[]).map((z) => this._zone(z, zones[z]))}
           ${this._renderCore(view)}
           ${(['right', 'bottom'] as Zone[]).map((z) => this._zone(z, zones[z]))}
@@ -284,6 +315,55 @@ export class EasyThermostatStylerCard extends LitElement {
         ${this._renderPopup()}
       </ha-card>
     `;
+  }
+
+  private _zoneVars(): Record<string, string> {
+    const z = this._config?.zones ?? {};
+    const out: Record<string, string> = {};
+    if (z.gap !== undefined) out['--zg'] = `${z.gap}px`;
+    for (const k of ['top', 'bottom', 'left', 'right'] as const) if (z[k] !== undefined) out[`--zg-${k}`] = `${z[k]}px`;
+    return out;
+  }
+
+  /** Measure the side areas so "keep the main area centred" can balance them. */
+  private _sideRO?: ResizeObserver;
+
+  protected override updated(): void {
+    const grid = this.renderRoot.querySelector<HTMLElement>('.grid');
+    if (!grid || typeof ResizeObserver === 'undefined') return;
+    const sides = [...grid.querySelectorAll<HTMLElement>(':scope > .zone.left, :scope > .zone.right')];
+    this._sideRO?.disconnect();
+    if (!sides.length || !grid.classList.contains('centered')) {
+      grid.style.removeProperty('--side-w');
+      return;
+    }
+    const measure = () => {
+      grid.classList.remove('no-center');
+      // Natural width of each side's contents (+ its distance margin).
+      const w = Math.ceil(
+        Math.max(
+          ...sides.map((s) => {
+            const cs = getComputedStyle(s);
+            const kids = [...s.children].map((k) => k.getBoundingClientRect().width);
+            const gap = parseFloat(cs.columnGap) || 0;
+            const inner = cs.flexDirection === 'row' ? kids.reduce((a, b) => a + b, 0) + gap * Math.max(0, kids.length - 1) : Math.max(0, ...kids);
+            return inner + parseFloat(cs.marginLeft) + parseFloat(cs.marginRight);
+          }),
+        ),
+      );
+      if (grid.style.getPropertyValue('--side-w') !== `${w}px`) grid.style.setProperty('--side-w', `${w}px`);
+      // If a side can't get its full width the middle would be squeezed or
+      // covered: give up on balancing for this size.
+      const squeezed = sides.some((s) => {
+        const cs = getComputedStyle(s);
+        return s.getBoundingClientRect().width + parseFloat(cs.marginLeft) + parseFloat(cs.marginRight) + 1 < w &&
+          [...s.children].reduce((a, k) => a + k.getBoundingClientRect().width, 0) > s.getBoundingClientRect().width + 1;
+      });
+      if (squeezed) grid.classList.add('no-center');
+    };
+    this._sideRO ??= new ResizeObserver(() => measure());
+    for (const s of sides) this._sideRO.observe(s);
+    measure();
   }
 
   private _zone(z: Zone, items: TemplateResult[]): TemplateResult | typeof nothing {
@@ -802,7 +882,9 @@ export class EasyThermostatStylerCard extends LitElement {
 
   private _renderSet(s: SetView): TemplateResult {
     const style = resolveButtonStyle(this._config?.buttons, s.config.style);
-    const grid = s.type !== 'chips' && s.orientation === 'row' && s.align === 'stretch';
+    const look = style.look ?? (s.type === 'chips' ? 'chip' : 'button');
+    // Device items as buttons tile like the other sets.
+    const grid = (s.type !== 'chips' || look === 'button') && s.orientation === 'row' && s.align === 'stretch';
     const layout: Record<string, string> = { ...buttonVars(style) };
     if (grid) {
       layout['grid-template-columns'] = s.columns
@@ -818,11 +900,12 @@ export class EasyThermostatStylerCard extends LitElement {
       [`a-${s.align}`]: true,
       [`v-${style.variant}`]: true,
       [`ip-${style.icon_position}`]: true,
+      [`look-${look}`]: true,
     };
     if (s.type === 'chips') {
       const chips = (s.config.chips ?? []).map((ch, i) => toChipView(this.hass!, ch, i));
       return html`<div class=${classMap(cls)} style=${styleMap(layout)} role="group" aria-label=${s.title}>
-        ${chips.map((v) => this._renderChip(v, style.content))}
+        ${chips.map((v) => this._renderChip(v, style.content, look))}
       </div>`;
     }
     const showIcon = style.content !== 'label';
@@ -858,7 +941,8 @@ export class EasyThermostatStylerCard extends LitElement {
     const showIcon = style.content !== 'label';
     const open = this._menu === s.key;
     const native = typeof HTMLElement !== 'undefined' && 'showPopover' in HTMLElement.prototype;
-    return html`<div class="menu t-${s.type} ${open ? 'open' : ''} d-${s.menuDirection} v-${style.variant}" style=${styleMap(buttonVars(style))}>
+    const look = style.look ?? 'button';
+    return html`<div class="menu t-${s.type} look-${look} ${open ? 'open' : ''} d-${s.menuDirection} v-${style.variant}" style=${styleMap(buttonVars(style))}>
       <button
         class="mt ${active ? 'has-active' : ''}"
         style=${styleMap({ '--c': active?.color ?? 'var(--primary-color)' })}
@@ -983,12 +1067,41 @@ export class EasyThermostatStylerCard extends LitElement {
 
   // ---- chips --------------------------------------------------------------------
 
-  private _renderChip(v: ChipView, content: string): TemplateResult {
+  private _renderChip(v: ChipView, content: string, look: 'button' | 'chip' = 'chip'): TemplateResult {
     const showName = v.config.show_name ?? content !== 'icon';
     const showState = v.config.show_state ?? true;
     const rf = v.type === 'rf_fan';
+    const asButton = look === 'button';
+    const showIcon = !asButton || content !== 'label';
+    const cls = asButton ? `btn dev ${v.on ? 'active' : ''}` : `chip ${v.on ? 'on' : ''}`;
+    const state = rf && v.natural
+      ? html`<span class="badge natural" title=${v.naturalLevel !== null ? `Breeze ${v.naturalLevel}` : 'Breeze'}
+          ><ha-icon icon="mdi:leaf"></ha-icon>${showState && v.naturalLevel !== null ? v.naturalLevel : nothing}</span
+        >`
+      : showState && (!rf || v.speed !== null || !v.on)
+        ? html`<span class="badge">${v.state}</span>`
+        : nothing;
+    const extras = html`${rf && v.lightOn ? html`<span class="extra light"><ha-icon icon="mdi:lightbulb"></ha-icon></span>` : nothing}
+      ${rf && v.timerEnds ? html`<span class="extra"><ha-icon icon="mdi:timer-outline"></ha-icon>${formatRemaining(v.timerEnds)}</span>` : nothing}`;
+    if (asButton) {
+      // Button look: icon, then "name · value" as the label (each optional).
+      return html`<button
+        class="${cls} ${v.available ? '' : 'unavailable'} ${v.direction === 'reverse' ? 'rev' : ''}"
+        aria-label=${`${v.name}: ${v.state}`}
+        title=${`${v.name}: ${v.state}`}
+        @pointerdown=${(ev: PointerEvent) => this._chipDown(ev, v)}
+        @pointerup=${this._chipCancelHold}
+        @pointerleave=${this._chipCancelHold}
+        @pointercancel=${this._chipCancelHold}
+        @click=${() => this._chipTap(v)}
+        @contextmenu=${(ev: Event) => ev.preventDefault()}
+      >
+        ${showIcon ? html`<ha-icon class=${v.spin ? 'spin' : ''} style=${styleMap(v.spin ? { '--spin': `${v.spin}s` } : {})} icon=${v.icon}></ha-icon>` : nothing}
+        <span class="lbl dev-row">${showName ? html`<span>${v.name}</span>` : nothing}${state}${extras}</span>
+      </button>`;
+    }
     return html`<button
-      class="chip ${v.on ? 'on' : ''} ${v.available ? '' : 'unavailable'} ${v.direction === 'reverse' ? 'rev' : ''}"
+      class="${cls} ${v.available ? '' : 'unavailable'} ${v.direction === 'reverse' ? 'rev' : ''}"
       aria-label=${`${v.name}: ${v.state}`}
       title=${`${v.name}: ${v.state}`}
       @pointerdown=${(ev: PointerEvent) => this._chipDown(ev, v)}

@@ -115,18 +115,33 @@ export const cardStyles = css`
       'top top top'
       'left core right'
       'bottom bottom bottom';
-    gap: 12px;
+    gap: 0;
   }
+  /* Keep the main area centred: both side columns as wide as the wider side
+     (--side-w is measured), so the temperature stays on the card's centre. */
+  .grid.centered.has-sides {
+    grid-template-columns: minmax(0, var(--side-w, auto)) minmax(min-content, 1fr) minmax(0, var(--side-w, auto));
+  }
+  /* Too narrow to balance both sides without overlap: the plain layout. */
+  .grid.centered.has-sides.no-center { grid-template-columns: auto minmax(0, 1fr) auto; }
+  .grid.centered .zone.left { justify-content: flex-end; }
+  .grid.centered .zone.right { justify-content: flex-start; }
   .zone {
     display: flex;
     flex-direction: column;
     gap: 8px;
     min-width: 0;
   }
-  .zone.top { grid-area: top; }
-  .zone.bottom { grid-area: bottom; }
-  .zone.left { grid-area: left; flex-direction: row; align-items: center; }
-  .zone.right { grid-area: right; flex-direction: row; align-items: center; }
+  /* Distance from the main area: per side, else the card default. */
+  .zone.top { grid-area: top; margin-bottom: var(--zg-top, var(--zg, 12px)); }
+  .zone.bottom { grid-area: bottom; margin-top: var(--zg-bottom, var(--zg, 12px)); }
+  .zone.left { grid-area: left; flex-direction: row; align-items: center; margin-right: var(--zg-left, var(--zg, 12px)); }
+  .zone.right { grid-area: right; flex-direction: row; align-items: center; margin-left: var(--zg-right, var(--zg, 12px)); }
+  /* Sets sharing one row. */
+  .row-group { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: calc(var(--etc-b-gap, 8px)); min-width: 0; }
+  .zone.left .row-group, .zone.right .row-group { flex-direction: column; flex-wrap: nowrap; }
+  .row-group > .set { flex: 1 1 auto; }
+  .row-group > .set.a-center, .row-group > .set.a-start, .row-group > .set.a-end { flex: 0 1 auto; }
   .core { grid-area: core; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
   .core-row { display: flex; align-items: center; gap: 16px; min-width: 0; }
   .core.al-center .core-row { justify-content: center; }
@@ -674,15 +689,30 @@ export const cardStyles = css`
     --mdc-icon-size: calc(var(--etc-b-icon, 22px) * var(--etc-b-k, 1));
   }
   .chip.on { color: var(--etc-b-afg, var(--c)); border-color: var(--etc-b-abc, color-mix(in srgb, var(--c) 55%, transparent)); background: var(--etc-b-abg, color-mix(in srgb, var(--c) 12%, transparent)); }
-  .chip.unavailable { opacity: 0.45; }
-  .chip .spin { animation: etc-spin var(--spin, 1.5s) linear infinite; }
-  .chip.rev .spin { animation-direction: reverse; }
-  .chip .badge { font-weight: 700; font-variant-numeric: tabular-nums; }
-  .chip .badge.natural { display: inline-flex; align-items: center; gap: 1px; color: #7ccf8a; --mdc-icon-size: 15px; }
-  .chip .extra { display: inline-flex; align-items: center; gap: 2px; --mdc-icon-size: 14px; opacity: 0.85; font-size: 11px; }
-  .chip .extra.light { color: #ffc107; }
+:is(.chip, .dev).unavailable { opacity: 0.45; }
+  :is(.chip, .dev) .spin { animation: etc-spin var(--spin, 1.5s) linear infinite; }
+  :is(.chip, .dev).rev .spin { animation-direction: reverse; }
+  :is(.chip, .dev) .badge { font-weight: 700; font-variant-numeric: tabular-nums; }
+  .dev .dev-row { display: inline-flex; align-items: center; gap: 4px; }
+  :is(.chip, .dev) .badge.natural { display: inline-flex; align-items: center; gap: 1px; color: #7ccf8a; --mdc-icon-size: 15px; }
+  :is(.chip, .dev) .extra { display: inline-flex; align-items: center; gap: 2px; --mdc-icon-size: 14px; opacity: 0.85; font-size: 11px; }
+  :is(.chip, .dev) .extra.light { color: #ffc107; }
   @keyframes etc-spin { to { transform: rotate(360deg); } }
-  @media (prefers-reduced-motion: reduce) { .chip .spin { animation: none; } }
+  @media (prefers-reduced-motion: reduce) { :is(.chip, .dev) .spin { animation: none; } }
+
+  /* ---- Look: Chip for any set (mode, preset, fan buttons and menu buttons) ---- */
+  .look-chip .btn, .look-chip .mt {
+    flex-direction: row;
+    border-radius: 999px;
+    border: max(var(--etc-b-bw, 1px), 1px) solid var(--etc-b-bc, var(--divider-color, #444));
+    padding: calc(6px * var(--etc-b-k, 1)) calc(12px * var(--etc-b-k, 1));
+    gap: calc(var(--etc-b-igap, 6px) * var(--etc-b-k, 1));
+    min-width: 0;
+    min-height: 0;
+  }
+  .look-chip.v-tonal .btn:not(.active), .look-chip.v-tonal .mt { background: var(--etc-b-bg, transparent); }
+  .look-chip .btn.active { border-color: var(--etc-b-abc, color-mix(in srgb, var(--c) 55%, transparent)); }
+  .set.look-chip.grid { display: flex; flex-wrap: wrap; justify-content: center; }
 
   .unavailable-msg { color: var(--etc-muted); padding: 8px 0; text-align: center; }
 

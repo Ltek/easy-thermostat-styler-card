@@ -566,6 +566,82 @@ describe('card render', () => {
     expect(d.root.querySelectorAll('.hc-switch .hc')).toHaveLength(2);
   });
 
+  describe('look, shared rows, distance', () => {
+    it('Look: chip on a mode set, button on a device set', async () => {
+      const f = rfFan({ on: true, pct: 40 });
+      const h = fakeHass([climate('heat', { ...RICH, temperature: 68 }), ...f.entities], { registry: f.registry });
+      const { root } = await mount(
+        { sets: [{ type: 'hvac', style: { look: 'chip' } }, { type: 'chips', style: { look: 'button', variant: 'filled' }, chips: [{ type: 'rf_fan', entity: 'fan.bedroom', show_name: false }] }] },
+        h,
+      );
+      expect(root.querySelector('.set.t-hvac.look-chip .btn')).not.toBeNull();
+      const dev = root.querySelector<HTMLButtonElement>('.set.t-chips.look-button.v-filled button.btn.dev.active')!;
+      expect(dev).not.toBeNull();
+      expect(dev.querySelector('.lbl')!.textContent!.trim()).toBe('2'); // value only (40% of 6 speeds ≈ 2)
+      expect(root.querySelector('.chip')).toBeNull();
+    });
+
+    it('Share a row with: sets join the named set\u2019s row and zone', async () => {
+      const { root } = await mount({
+        sets: [
+          { type: 'hvac', id: 'm', zone: 'bottom' },
+          { type: 'preset', row_with: 'm', zone: 'top' },
+          { type: 'fan_mode', zone: 'top' },
+        ],
+      });
+      const row = root.querySelector('.zone.bottom > .row-group')!;
+      expect([...row.querySelectorAll(':scope > .set')].map((s) => [...s.classList].find((c) => c.startsWith('t-')))).toEqual(['t-hvac', 't-preset']);
+      expect(root.querySelector('.zone.top .t-preset')).toBeNull();
+      expect(root.querySelector('.zone.top .t-fan_mode')).not.toBeNull();
+    });
+
+    it('a cycle or a missing target falls back to its own row', async () => {
+      const { root } = await mount({ sets: [{ type: 'hvac', id: 'a', row_with: 'b' }, { type: 'preset', id: 'b', row_with: 'a' }, { type: 'fan_mode', row_with: 'zz' }] });
+      expect(root.querySelectorAll('.set').length).toBe(3);
+    });
+
+    it('distance and centring are set on the grid', async () => {
+      const { root } = await mount({ zones: { gap: 4, left: 20 }, sets: [{ type: 'hvac', zone: 'right' }] });
+      const g = root.querySelector<HTMLElement>('.grid')!;
+      expect(g.classList.contains('centered')).toBe(true);
+      expect(g.classList.contains('has-sides')).toBe(true);
+      expect(g.style.getPropertyValue('--zg')).toBe('4px');
+      expect(g.style.getPropertyValue('--zg-left')).toBe('20px');
+      document.body.innerHTML = '';
+      const b = await mount({ zones: { centered: false } });
+      expect(b.root.querySelector('.grid')!.classList.contains('centered')).toBe(false);
+    });
+
+    it('editor: Share a row with adds an id to the target and removes it when unused', async () => {
+      const el = document.createElement('easy-thermostat-styler-card-editor') as EasyThermostatStylerCardEditor;
+      el.hass = fakeHass([climate('heat', { ...RICH, temperature: 68 })]).hass;
+      el.setConfig({ ...base, sets: [{ type: 'hvac' }, { type: 'preset' }] } as never);
+      document.body.appendChild(el);
+      await el.updateComplete;
+      const events: Record<string, unknown>[] = [];
+      el.addEventListener('config-changed', (e) => {
+        events.push((e as CustomEvent).detail.config);
+        el.setConfig((e as CustomEvent).detail.config);
+      });
+      const panel = [...el.shadowRoot!.querySelectorAll<HTMLDetailsElement>('details.etce-sec')].find((d) => d.querySelector('summary')!.textContent!.trim() === 'Button sets')!;
+      panel.open = true;
+      panel.dispatchEvent(new Event('toggle'));
+      await el.updateComplete;
+      panel.querySelectorAll<HTMLButtonElement>('.etce-srow .etce-act[title="Edit"]')[1]!.click();
+      await el.updateComplete;
+      const row = [...panel.querySelectorAll('.etce-row')].find((r) => r.textContent!.includes('Share a row with'))!;
+      const sel = row.querySelector('select')!;
+      sel.value = '0';
+      sel.dispatchEvent(new Event('change'));
+      expect((events.at(-1)!.sets as unknown[])).toEqual([{ type: 'hvac', id: 'set1' }, { type: 'preset', row_with: 'set1' }]);
+      await el.updateComplete;
+      const sel2 = [...panel.querySelectorAll('.etce-row')].find((r) => r.textContent!.includes('Share a row with'))!.querySelector('select')!;
+      sel2.value = '';
+      sel2.dispatchEvent(new Event('change'));
+      expect((events.at(-1)!.sets as unknown[])).toEqual([{ type: 'hvac' }, { type: 'preset' }]);
+    });
+  });
+
   it('hvac set full-time; preset/fan behind toggles that remember state', async () => {
     const { root, calls, el } = await mount({});
     expect(root.querySelectorAll('.set.t-hvac .btn')).toHaveLength(4);

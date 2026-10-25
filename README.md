@@ -6,7 +6,7 @@ https://github.com/Ltek/easy-thermostat-styler-card
 
 [![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=Ltek&repository=easy-thermostat-styler-card&category=plugin)
 
-Current build: **v2026.10.25.15** · full history in [CHANGELOG.md](CHANGELOG.md)
+Current build: **v2026.10.25.16** · full history in [CHANGELOG.md](CHANGELOG.md)
 
 ---
 
@@ -25,6 +25,7 @@ Current build: **v2026.10.25.15** · full history in [CHANGELOG.md](CHANGELOG.md
   - Each set goes on the top, bottom, left or right, as a row or a column, with a column count and alignment.
   - Within a set, reorder, hide, rename or re-icon any button.
 - **Compact mode:** any set can sit behind a toggle button, or one switch puts them all there. Each browser remembers which ones are open.
+- **Any set as buttons or chips:** every button set, including device sets, can use the Button or Chip look with the same style options. Sets can **share a row** with any other set, and the main area stays **centred** with an adjustable distance to the buttons around it.
 - **Expandable menus:** a set can collapse to one button showing the current value (for example "Mode · Heat"). Tap it and the full list opens up, down, left or right, floating over the card. Tap outside or press Escape to close it.
 - **Tap to reveal:** keep the card calm. The controls stay folded away (showing just the pill, or the control's own value) until you tap the temperature or a setpoint pill. They can open in place of the big number and fold away again after a number of seconds you choose.
 - **Heating / cooling effects:** make the whole card, the setpoint value, the setpoint pill, the mode button or its icon glow, pulse, or both, in the heat colour while heating and the cool colour while cooling. You set when they run, the glow size, the pulse speed and the colours.

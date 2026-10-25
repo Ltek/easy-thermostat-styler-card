@@ -625,6 +625,15 @@ export class EasyThermostatStylerCardEditor extends LitElement {
       ${this._hint('Groups of buttons. Each set picks its side of the card, its layout, and how it shows: full time, behind a toggle button, or as an expandable menu.')}
       ${this._select('toggles_zone', 'Default location', [['bottom', 'Bottom'], ['top', 'Top'], ['left', 'Left'], ['right', 'Right']], DEFAULTS.toggles_zone)}
       ${this._hint('Where sets go when they have no Side of their own, and where the toggle buttons sit. A set’s own Side always wins.')}
+      ${this._bool('zones.centered', 'Keep the main area centred', true)}
+      ${this._hint('Balances the left and right sides so the temperature and controls stay on the card’s centre, whatever sits beside them.')}
+      ${this._slider('zones.gap', 'Distance from the main area', 0, 48, 1, 12)}
+      ${this._sub('zone-gaps', 'Distance per side', () => html`${this._hint('Overrides the distance above for one side.')}
+        ${(['top', 'bottom', 'left', 'right'] as const).map((k) => {
+          const v = this._get(`zones.${k}`) as number | undefined;
+          const def = (this._get('zones.gap') as number | undefined) ?? 12;
+          return this._sliderRow(k.charAt(0).toUpperCase() + k.slice(1), v ?? def, 0, 48, 1, v !== undefined, (n) => this._put(`zones.${k}`, n));
+        })}`)}
       ${this._bool('compact', 'Compact', false)}
       ${this._hint('Puts every full-time set behind a toggle button, so the card stays small until you open one. Sets shown as expandable menus are already compact and are not changed.')}
       ${this._group('Sets')}
@@ -675,6 +684,41 @@ export class EasyThermostatStylerCardEditor extends LitElement {
     return 'full time';
   }
 
+  /** "Share a row with": own row, or any other set (by id, added on demand). */
+  private _shareRow(s: ButtonSetConfig, i: number): TemplateResult {
+    const sets = this._sets();
+    const label = (x: ButtonSetConfig, k: number) => `${x.name ?? SET_TITLES[x.type]} (#${k + 1})`;
+    const others = sets.map((x, k) => [x, k] as const).filter(([, k]) => k !== i);
+    const curIdx = s.row_with ? sets.findIndex((x) => x.id === s.row_with) : -1;
+    const choose = (v: string) => {
+      const next = sets.map((x) => ({ ...x }));
+      if (v === '') delete next[i]!.row_with;
+      else {
+        const k = Number(v);
+        let id = next[k]!.id;
+        if (!id) {
+          const used = new Set(next.map((x) => x.id).filter(Boolean));
+          let n = 1;
+          while (used.has(`set${n}`)) n++;
+          id = `set${n}`;
+          next[k]!.id = id;
+        }
+        next[i]!.row_with = id;
+      }
+      // Drop ids nobody points at any more (keeps the YAML tidy).
+      const refs = new Set(next.map((x) => x.row_with).filter(Boolean));
+      for (const x of next) if (x.id && !refs.has(x.id)) delete x.id;
+      this._writeSets(next);
+    };
+    return html`${this._selectRow(
+        'Share a row with',
+        curIdx >= 0 ? String(curIdx) : '',
+        [['', 'Own row'], ...others.map(([x, k]) => [String(k), label(x, k)] as Opt)],
+        choose,
+      )}
+      ${curIdx >= 0 ? this._hint('Sits in that set’s row, on its side of the card; this set’s own Side is ignored.') : nothing}`;
+  }
+
   private _moveSet(i: number, d: number): void {
     const sets = this._sets();
     const j = i + d;
@@ -716,6 +760,7 @@ export class EasyThermostatStylerCardEditor extends LitElement {
       ${(s.align ?? 'stretch') === 'stretch' && s.type !== 'chips'
         ? this._sliderRow('Columns', s.columns ?? 0, 0, 8, 1, s.columns !== undefined, (v) => put('columns', v, 0), (n) => (n ? String(n) : 'Auto'))
         : nothing}
+      ${this._shareRow(s, i)}
       ${this._group('Display')}
       ${this._selectRow(
         'Show',
@@ -945,7 +990,18 @@ export class EasyThermostatStylerCardEditor extends LitElement {
     const col = (k: keyof typeof cur, label: string, seed: string) =>
       this._colorRow(`${base}.${k}`, label, cur[k] as string | undefined, isSet ? 'Card default' : 'Automatic', seed, (v) => put(k, v));
     return html`
-      ${this._group('Size', true)}
+      ${this._group('Look', true)}
+      ${this._selectRow(
+        'Look',
+        String(cur.look ?? ''),
+        [
+          ['', isSet ? `Card default (${this._config!.buttons?.look === 'chip' ? 'Chip' : this._config!.buttons?.look === 'button' ? 'Button' : setIndex !== undefined && this._sets()[setIndex]?.type === 'chips' ? 'Chip' : 'Button'})` : 'Built-in (Chips for device sets, buttons for the rest)'],
+          ['button', 'Button'],
+          ['chip', 'Chip'],
+        ],
+        (v) => put('look', v || undefined),
+      )}
+      ${this._group('Size')}
       ${sl('scale', 'Scale', 50, 200, (n) => `${n}%`, 5, 100)}
       ${this._hint(isSet ? 'Scales every button in this set. Card default comes from Button style.' : 'Scales every button in every set. Each set can override it under “Button style for this set”.')}
       ${this._group('Shape')}
