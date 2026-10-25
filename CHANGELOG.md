@@ -1,5 +1,16 @@
 # Changelog
 
+## v2026.10.25.18
+
+- **Editor layout follows the design guide everywhere**, like the Text panel: each panel has a short hint and its main fields, then flat collapsible sections, with group subtitles only inside a section.
+  - **Thermostat**: Show · Layout.
+  - **Setpoint control**: the control's own section (Wheel / Stepper: placement & size, buttons, wheel; Bar: placement, colours, handles), Value flags, Ticks markers & range, Show controls, Heat / Cool.
+  - **Button sets**: the add buttons and set list come first. Layout & spacing (default location, centring, distance for all sides or per side) and Compact move below the list as sections. An opened set has Name, then Buttons in this set · Placement · Display · Button style for this set.
+  - **Button style**: Look & size · Shape · Content · Colours: inactive · Colours: active · Frosted glass.
+  - **Background**: Base fill · Moving background (motion, Sync to Air Movement) · Colours by state · Finish.
+  - **Heating & Cooling Effects**: Parts · When · Look.
+- No settings changed; existing cards are unaffected.
+
 ## v2026.10.25.17
 
 - **Buttons are their own items now**, and any set can hold any mix:

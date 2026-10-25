@@ -376,28 +376,23 @@ export class EasyThermostatStylerCardEditor extends LitElement {
       ${this._selector('Entity', { entity: { domain: 'climate' } }, c.entity, (v) => this._put('entity', v || undefined))}
       <div class="etce-row">
         <label class="lbl">Name</label>
-        <input
-          type="text"
-          .value=${c.name ?? ''}
-          placeholder="Entity name"
-          @change=${(e: Event) => this._put('name', (e.target as HTMLInputElement).value || undefined)}
-        />
+        <input type="text" .value=${c.name ?? ''} placeholder="Entity name" @change=${(e: Event) => this._put('name', (e.target as HTMLInputElement).value || undefined)} />
       </div>
-      ${this._group('Show')}
-      <div class="etce-checks">
-        ${this._bool('show_name', 'Name', DEFAULTS.show_name)} ${this._bool('show_status', 'Status', DEFAULTS.show_status)}
-        ${this._bool('show_humidity', 'Humidity', DEFAULTS.show_humidity)}
-        ${this._bool('show_current', 'Current temperature', DEFAULTS.show_current)}
-        ${this._bool('show_pills', 'Setpoint pills', DEFAULTS.show_pills)}
-      </div>
-      ${this._group('Layout')}
-      ${this._select('core_align', 'Align', [['left', 'Left'], ['center', 'Center'], ['right', 'Right']], DEFAULTS.core_align)}
-      ${this._select(
-        'status_position',
-        'Status',
-        [['above', 'Above the temperature'], ['beside', 'Beside the temperature'], ['below', 'Below the temperature']],
-        DEFAULTS.status_position,
-      )}
+      ${this._sub('th-show', 'Show', () => html`
+        <div class="etce-checks">
+          ${this._bool('show_name', 'Name', DEFAULTS.show_name)} ${this._bool('show_status', 'Status', DEFAULTS.show_status)}
+          ${this._bool('show_humidity', 'Humidity', DEFAULTS.show_humidity)}
+          ${this._bool('show_current', 'Current temperature', DEFAULTS.show_current)}
+          ${this._bool('show_pills', 'Setpoint pills', DEFAULTS.show_pills)}
+        </div>`)}
+      ${this._sub('th-layout', 'Layout', () => html`
+        ${this._select('core_align', 'Align', [['left', 'Left'], ['center', 'Center'], ['right', 'Right']], DEFAULTS.core_align)}
+        ${this._select(
+          'status_position',
+          'Status',
+          [['above', 'Above the temperature'], ['beside', 'Beside the temperature'], ['below', 'Below the temperature']],
+          DEFAULTS.status_position,
+        )}`)}
     `;
   }
 
@@ -433,6 +428,7 @@ export class EasyThermostatStylerCardEditor extends LitElement {
 
   private _setpointBody(): TemplateResult {
     const control = (this._get('setpoint.control') as string) ?? DEFAULTS.control;
+    const name = control === 'wheel' ? 'Wheel' : control === 'stepper' ? 'Stepper' : 'Bar';
     return html`
       ${this._hint('How you change the target temperature. The wheel scrolls through values; the bar drags heat and cool handles.')}
       ${this._select(
@@ -442,25 +438,27 @@ export class EasyThermostatStylerCardEditor extends LitElement {
         DEFAULTS.control,
       )}
       ${control === 'wheel' || control === 'stepper'
-        ? html`
+        ? this._sub('sp-ctl', name, () => html`
+            ${this._group('Placement & size', true)}
             ${this._select('setpoint.position', 'Position', [['left', 'Left'], ['right', 'Right'], ['center', 'Center (below)']], DEFAULTS.position)}
             ${this._slider('setpoint.scale', 'Size', 40, 250, 5, DEFAULTS.scale, (n) => `${n}%`)}
             ${this._hint('Size scales the controls only; the current temperature has its own size under Text.')}
+            ${this._group('Buttons')}
             ${this._nudgeSelect(control)}
             ${control === 'wheel'
-              ? html`${this._slider('setpoint.neighbors', 'Next values shown', 0, 3, 1, DEFAULTS.neighbors, (n) => String(n))}
+              ? html`${this._group('Wheel')}
+                ${this._slider('setpoint.neighbors', 'Next values shown', 0, 3, 1, DEFAULTS.neighbors, (n) => String(n))}
                 ${this._select('setpoint.wheel_style', 'Centre value', [['bubble', 'Bubble'], ['pill', 'Pill (like the setpoint pills)']], DEFAULTS.wheel_style)}`
-              : nothing}
-          `
+              : nothing}`)
         : nothing}
       ${control === 'bar' ? this._barBody() : nothing}
-      ${control !== 'none' ? this._revealBody() : nothing}
-      ${this._group('Heat / Cool')}
-      ${this._slider('setpoint.min_gap', 'Minimum gap', 0, 10, 0.5, this._defaultGap(), (n) => `${n}°`)}
+      ${control !== 'none' ? this._sub('sp-reveal', 'Show controls', () => this._revealBody()) : nothing}
+      ${this._sub('sp-hc', 'Heat / Cool', () => html`
+        ${this._slider('setpoint.min_gap', 'Minimum gap', 0, 10, 0.5, this._defaultGap(), (n) => `${n}°`)}
+        ${this._hint('In Heat / Cool the two setpoints stay at least this far apart; dragging one pushes the other.')}`)}
     `;
   }
 
-  /** − / + placement; the wheel defaults to Right, the stepper to Either side. */
   private _nudgeSelect(control: string): TemplateResult {
     const def = control === 'stepper' ? 'around' : 'right';
     const raw = this._get('setpoint.nudge') as string | undefined;
@@ -481,7 +479,6 @@ export class EasyThermostatStylerCardEditor extends LitElement {
     const tap = (this._get('setpoint.reveal') ?? DEFAULTS.reveal) === 'tap';
     const secs = (this._get('setpoint.hide_after') as number | undefined) ?? DEFAULTS.hide_after;
     return html`
-      ${this._group('Show controls')}
       ${this._select('setpoint.reveal', 'Controls', [['always', 'Always shown'], ['tap', 'Shown when tapped']], DEFAULTS.reveal)}
       ${this._hint(
         tap
@@ -536,62 +533,27 @@ export class EasyThermostatStylerCardEditor extends LitElement {
   }
 
   private _barBody(): TemplateResult {
+    return html`${this._sub('sp-bar', 'Bar', () => this._barLook())}
+      ${this._sub('sp-flags', 'Value flags', () => this._barFlags())}
+      ${this._sub('sp-markers', 'Ticks, markers & range', () => this._barMarkers())}`;
+  }
+
+  private _barFlags(): TemplateResult {
     const b = DEFAULTS.bar;
-    const look = (this._get('setpoint.bar.look') as string) ?? b.look;
-    const stops = (this._get('setpoint.bar.stops') as string[] | undefined) ?? ['#2b9af9', '#7ccf8a', '#ff8100'];
     return html`
-      ${this._select(
-        'setpoint.bar.position',
-        'Position',
-        [['below', 'Below (horizontal)'], ['above', 'Above (horizontal)'], ['left', 'Left (vertical)'], ['right', 'Right (vertical)']],
-        b.position,
-      )}
-      ${['left', 'right'].includes(String(this._get('setpoint.bar.position') ?? ''))
-        ? this._slider('setpoint.bar.length', 'Height', 100, 400, 10, 200)
-        : nothing}
-      ${this._select('setpoint.bar.look', 'Look', [['zones', 'Heat / comfort / cool zones'], ['gradient', 'Gradient']], b.look)}
-      ${look === 'gradient'
-        ? html`<div class="etce-row">
-            <label class="lbl">Gradient (cold → hot)</label>
-            <div class="etce-stops">
-              ${stops.map(
-                (s, i) => html`<input
-                  type="color"
-                  .value=${s}
-                  @change=${(e: Event) => {
-                    const next = [...stops];
-                    next[i] = (e.target as HTMLInputElement).value;
-                    this._put('setpoint.bar.stops', next);
-                  }}
-                />`,
-              )}
-            </div>
-          </div>`
-        : html`${this._color('setpoint.bar.heat_color', 'Heat zone', 'Theme heat', '#ff8100')}
-          ${this._color('setpoint.bar.comfort_color', 'Comfort zone', 'Green', '#4caf50')}
-          ${this._color('setpoint.bar.cool_color', 'Cool zone', 'Theme cool', '#2b9af9')}`}
-      ${this._slider('setpoint.bar.height', 'Thickness', 6, 40, 1, b.height)}
-      ${this._select(
-        'setpoint.bar.handle_shape',
-        'Handle',
-        [['round', 'Round'], ['square', 'Square'], ['diamond', 'Diamond'], ['line', 'Line']],
-        b.handle_shape,
-      )}
-      ${this._color('setpoint.bar.handle_color', 'Handle fill', 'White', '#ffffff')}
-      ${this._check('Handle border', this._get('setpoint.bar.handle_border_color') !== 'none', (on) =>
-        this._put('setpoint.bar.handle_border_color', on ? undefined : 'none'),
-      )}
-      ${this._get('setpoint.bar.handle_border_color') !== 'none'
-        ? this._color('setpoint.bar.handle_border_color', 'Handle border colour', 'Heat / cool colour', '#ffffff')
-        : nothing}
-      ${this._group('Value flags')}
       ${this._bool('setpoint.bar.flags', 'Show value flags on the handles', b.flags)}
       ${(this._get('setpoint.bar.flags') ?? b.flags)
         ? html`${this._sidePlacement('flag_position', 'Flag placement', 'above', 'left')}
           ${this._color('setpoint.bar.flag_color', 'Flag colour', 'Heat / cool colour', '#ff8100')}
           ${this._color('setpoint.bar.flag_text_color', 'Flag text colour', 'White', '#ffffff')}`
         : nothing}
-      ${this._group('Markers')}
+    `;
+  }
+
+  private _barMarkers(): TemplateResult {
+    const b = DEFAULTS.bar;
+    return html`
+      ${this._group('Ticks & markers', true)}
       ${this._bool('setpoint.bar.show_current', 'Current temperature marker', b.show_current)}
       ${this._slider('setpoint.bar.ticks', 'Tick every', 0, 10, 0.5, b.ticks, (n) => (n ? `${n}°` : 'Off'))}
       ${this._slider('setpoint.bar.labels', 'Label every', 0, 20, 1, b.labels, (n) => (n ? `${n}°` : 'Off'))}
@@ -616,6 +578,61 @@ export class EasyThermostatStylerCardEditor extends LitElement {
     `;
   }
 
+  private _barLook(): TemplateResult {
+    const b = DEFAULTS.bar;
+    const look = (this._get('setpoint.bar.look') as string) ?? b.look;
+    const stops = (this._get('setpoint.bar.stops') as string[] | undefined) ?? ['#2b9af9', '#7ccf8a', '#ff8100'];
+    return html`
+      ${this._group('Placement', true)}
+      ${this._select(
+        'setpoint.bar.position',
+        'Position',
+        [['below', 'Below (horizontal)'], ['above', 'Above (horizontal)'], ['left', 'Left (vertical)'], ['right', 'Right (vertical)']],
+        b.position,
+      )}
+      ${['left', 'right'].includes(String(this._get('setpoint.bar.position') ?? ''))
+        ? this._slider('setpoint.bar.length', 'Height', 100, 400, 10, 200)
+        : nothing}
+      ${this._slider('setpoint.bar.height', 'Thickness', 6, 40, 1, b.height)}
+      ${this._group('Colours')}
+      ${this._select('setpoint.bar.look', 'Look', [['zones', 'Heat / comfort / cool zones'], ['gradient', 'Gradient']], b.look)}
+      ${look === 'gradient'
+        ? html`<div class="etce-row">
+            <label class="lbl">Gradient (cold → hot)</label>
+            <div class="etce-stops">
+              ${stops.map(
+                (s, i) => html`<input
+                  type="color"
+                  .value=${s}
+                  @change=${(e: Event) => {
+                    const next = [...stops];
+                    next[i] = (e.target as HTMLInputElement).value;
+                    this._put('setpoint.bar.stops', next);
+                  }}
+                />`,
+              )}
+            </div>
+          </div>`
+        : html`${this._color('setpoint.bar.heat_color', 'Heat zone', 'Theme heat', '#ff8100')}
+          ${this._color('setpoint.bar.comfort_color', 'Comfort zone', 'Green', '#4caf50')}
+          ${this._color('setpoint.bar.cool_color', 'Cool zone', 'Theme cool', '#2b9af9')}`}
+      ${this._group('Handles')}
+      ${this._select(
+        'setpoint.bar.handle_shape',
+        'Handle',
+        [['round', 'Round'], ['square', 'Square'], ['diamond', 'Diamond'], ['line', 'Line']],
+        b.handle_shape,
+      )}
+      ${this._color('setpoint.bar.handle_color', 'Handle fill', 'White', '#ffffff')}
+      ${this._check('Handle border', this._get('setpoint.bar.handle_border_color') !== 'none', (on) =>
+        this._put('setpoint.bar.handle_border_color', on ? undefined : 'none'),
+      )}
+      ${this._get('setpoint.bar.handle_border_color') !== 'none'
+        ? this._color('setpoint.bar.handle_border_color', 'Handle border colour', 'Heat / cool colour', '#ffffff')
+        : nothing}
+    `;
+  }
+
   // ---- button sets --------------------------------------------------------------
 
   private _setsBody(): TemplateResult {
@@ -629,20 +646,6 @@ export class EasyThermostatStylerCardEditor extends LitElement {
     };
     return html`
       ${this._hint('Groups of buttons. Each set picks its side of the card, its layout, and how it shows: full time, behind a toggle button, or as an expandable menu.')}
-      ${this._select('toggles_zone', 'Default location', [['bottom', 'Bottom'], ['top', 'Top'], ['left', 'Left'], ['right', 'Right']], DEFAULTS.toggles_zone)}
-      ${this._hint('Where sets go when they have no Side of their own, and where the toggle buttons sit. A set’s own Side always wins.')}
-      ${this._bool('zones.centered', 'Keep the main area centred', true)}
-      ${this._hint('Balances the left and right sides so the temperature and controls stay on the card’s centre, whatever sits beside them.')}
-      ${this._slider('zones.gap', 'Distance from the main area', 0, 48, 1, 12)}
-      ${this._sub('zone-gaps', 'Distance per side', () => html`${this._hint('Overrides the distance above for one side.')}
-        ${(['top', 'bottom', 'left', 'right'] as const).map((k) => {
-          const v = this._get(`zones.${k}`) as number | undefined;
-          const def = (this._get('zones.gap') as number | undefined) ?? 12;
-          return this._sliderRow(k.charAt(0).toUpperCase() + k.slice(1), v ?? def, 0, 48, 1, v !== undefined, (n) => this._put(`zones.${k}`, n));
-        })}`)}
-      ${this._bool('compact', 'Compact', false)}
-      ${this._hint('Puts every full-time set behind a toggle button, so the card stays small until you open one. Sets shown as expandable menus are already compact and are not changed.')}
-      ${this._group('Sets')}
       <div class="etce-addbar">
         ${(['hvac', 'preset', 'fan_mode', 'custom'] as SetType[]).map(
           (t) => html`<button class="etce-add" @click=${() => add(t)}>+ ${SET_TITLES[t]}</button>`,
@@ -687,6 +690,24 @@ export class EasyThermostatStylerCardEditor extends LitElement {
             ${open ? html`<div class="etce-sedit">${this._setEditor(s, i)}</div>` : nothing}`;
         })}
       </div>
+      ${this._sub('sets-layout', 'Layout & spacing', () => html`
+        ${this._group('Location', true)}
+        ${this._select('toggles_zone', 'Default location', [['bottom', 'Bottom'], ['top', 'Top'], ['left', 'Left'], ['right', 'Right']], DEFAULTS.toggles_zone)}
+        ${this._hint('Where sets go when they have no Side of their own, and where the toggle buttons sit. A set’s own Side always wins.')}
+        ${this._group('Centring')}
+        ${this._bool('zones.centered', 'Keep the main area centred', true)}
+        ${this._hint('Balances the left and right sides so the temperature and controls stay on the card’s centre, whatever sits beside them.')}
+        ${this._group('Distance from the main area')}
+        ${this._slider('zones.gap', 'All sides', 0, 48, 1, 12)}
+        ${(['top', 'bottom', 'left', 'right'] as const).map((k) => {
+          const v = this._get(`zones.${k}`) as number | undefined;
+          const def = (this._get('zones.gap') as number | undefined) ?? 12;
+          return this._sliderRow(k.charAt(0).toUpperCase() + k.slice(1), v ?? def, 0, 48, 1, v !== undefined, (n) => this._put(`zones.${k}`, n));
+        })}
+        ${this._hint('Top, Bottom, Left and Right override “All sides” for one side; ↺ puts it back.')}`)}
+      ${this._sub('sets-compact', 'Compact', () => html`
+        ${this._bool('compact', 'Put every full-time set behind a toggle button', false)}
+        ${this._hint('Keeps the card small until you open a set. Sets shown as expandable menus are already compact and are not changed.')}`)}
     `;
   }
 
@@ -770,7 +791,9 @@ export class EasyThermostatStylerCardEditor extends LitElement {
         <label class="lbl">Name</label>
         <input type="text" .value=${s.name ?? ''} placeholder=${SET_TITLES[s.type]} @change=${(e: Event) => put('name', (e.target as HTMLInputElement).value || undefined)} />
       </div>
-      ${this._group('Placement')}
+      ${this._sub(`set-${i}-buttons`, 'Buttons in this set', () => this._buttonsEditor(s, i))}
+      ${this._sub(`set-${i}-place`, 'Placement', () => html`
+      ${this._group('Side & layout', true)}
       ${this._selectRow(
         'Side',
         s.zone ?? '',
@@ -786,8 +809,9 @@ export class EasyThermostatStylerCardEditor extends LitElement {
       ${(s.align ?? 'stretch') === 'stretch' && s.type !== 'chips'
         ? this._sliderRow('Columns', s.columns ?? 0, 0, 8, 1, s.columns !== undefined, (v) => put('columns', v, 0), (n) => (n ? String(n) : 'Auto'))
         : nothing}
-      ${this._shareRow(s, i)}
-      ${this._group('Display')}
+      ${this._group('Row')}
+      ${this._shareRow(s, i)}`)}
+      ${this._sub(`set-${i}-display`, 'Display', () => html`
       ${this._selectRow(
         'Show',
         s.display ?? 'always',
@@ -806,8 +830,7 @@ export class EasyThermostatStylerCardEditor extends LitElement {
         : nothing}
       ${(s.display ?? 'always') === 'toggle' || (this._config!.compact && s.display !== 'menu')
         ? this._selector('Toggle icon', { icon: {} }, s.toggle_icon, (v) => put('toggle_icon', v || undefined))
-        : nothing}
-      ${this._sub(`set-${i}-buttons`, 'Buttons in this set', () => this._buttonsEditor(s, i))}
+        : nothing}`)}
       ${this._sub(`set-${i}-style`, 'Button style for this set', () => html`${this._buttonStyleEditor(`sets.${i}.style`, true, i)}${this._copyStyle(i)}`)}
     `;
   }
@@ -1132,12 +1155,12 @@ export class EasyThermostatStylerCardEditor extends LitElement {
     const blur = c.frost_blur ?? c.background?.frost_blur;
     return html`${this._hint('The look of every button. Each button set can override any of these under “Button style for this set”.')}
       ${this._buttonStyleEditor('buttons', false)}
-      ${this._group('Frosted glass')}
-      ${this._check('Frosted glass controls', on, (v) => writeFrost('frosted', v))}
-      ${this._hint('Buttons, menus, chips, toggles, setpoint pills and the wheel’s setpoint bubble turn see-through with a blur. Best over a moving background or an image.')}
-      ${on
-        ? this._sliderRow('Blur', blur ?? BG_DEFAULTS.frost_blur, 0, 40, 1, blur !== undefined, (v) => writeFrost('frost_blur', v))
-        : nothing}`;
+      ${this._sub('bs-frost', 'Frosted glass', () => html`
+        ${this._check('Frosted glass controls', on, (v) => writeFrost('frosted', v))}
+        ${this._hint('Buttons, menus, chips, toggles, setpoint pills and the wheel’s setpoint bubble turn see-through with a blur. Best over a moving background or an image.')}
+        ${on
+          ? this._sliderRow('Blur', blur ?? BG_DEFAULTS.frost_blur, 0, 40, 1, blur !== undefined, (v) => writeFrost('frost_blur', v))
+          : nothing}`)}`;
   }
 
   private _buttonStyleEditor(base: string, isSet: boolean, setIndex?: number): TemplateResult {
@@ -1160,8 +1183,15 @@ export class EasyThermostatStylerCardEditor extends LitElement {
     };
     const col = (k: keyof typeof cur, label: string, seed: string) =>
       this._colorRow(`${base}.${k}`, label, cur[k] as string | undefined, isSet ? 'Card default' : 'Automatic', seed, (v) => put(k, v));
+    let first = true;
+    const section = (id: string, title: string, body: () => TemplateResult) => {
+      if (!isSet) return this._sub(`bs-${id}`, title, body);
+      const out = html`${this._group(title, first)}${body()}`;
+      first = false;
+      return out;
+    };
     return html`
-      ${this._group('Look', true)}
+      ${section('look', 'Look & size', () => html`
       ${this._selectRow(
         'Look',
         String(cur.look ?? ''),
@@ -1172,25 +1202,25 @@ export class EasyThermostatStylerCardEditor extends LitElement {
         ],
         (v) => put('look', v || undefined),
       )}
-      ${this._group('Size')}
       ${sl('scale', 'Scale', 50, 200, (n) => `${n}%`, 5, 100)}
-      ${this._hint(isSet ? 'Scales every button in this set. Card default comes from Button style.' : 'Scales every button in every set. Each set can override it under “Button style for this set”.')}
-      ${this._group('Shape')}
+      ${this._hint(isSet ? 'Scales every button in this set. Card default comes from Button style.' : 'Scales every button in every set. Each set can override it under “Button style for this set”.')}`)}
+      ${section('shape', 'Shape', () => html`
       ${sel('variant', 'Style', [['tonal', 'Tonal (tinted)'], ['filled', 'Filled'], ['outlined', 'Outlined'], ['ghost', 'Ghost']])}
       ${sl('radius', 'Corner radius', 0, 40)} ${sl('height', 'Min height', 0, 120)} ${sl('min_width', 'Min width', 0, 200)}
-      ${sl('gap', 'Spacing', 0, 32)} ${sl('border_width', 'Border width', 0, 6)}
-      ${this._group('Content')}
+      ${sl('gap', 'Spacing', 0, 32)} ${sl('border_width', 'Border width', 0, 6)}`)}
+      ${section('content', 'Content', () => html`
       ${sel('content', 'Show', [['icon_label', 'Icon and label'], ['icon', 'Icon only'], ['label', 'Label only']])}
       ${sel('icon_position', 'Icon', [['top', 'Above label'], ['left', 'Left of label']])}
       ${sl('icon_size', 'Icon size', 10, 48)} ${sl('font_size', 'Text size', 8, 28)}
       ${sl('icon_gap', 'Icon to text spacing', 0, 30, undefined, 1, 4)}
       ${sel('font_weight' as keyof typeof cur, 'Text weight', [['300', 'Light'], ['400', 'Regular'], ['500', 'Medium'], ['600', 'Semibold'], ['700', 'Bold']])}
-      ${this._group('Colors — inactive')}
-      ${col('background', 'Background', '#2a2a2a')} ${col('color', 'Text & icon', '#cccccc')} ${col('border_color', 'Border', '#555555')}
-      ${this._group('Colors — active')}
+      `)}
+      ${section('inactive', 'Colours: inactive', () => html`
+      ${col('background', 'Background', '#2a2a2a')} ${col('color', 'Text & icon', '#cccccc')} ${col('border_color', 'Border', '#555555')}`)}
+      ${section('active', 'Colours: active', () => html`
       ${this._hint('Unset = the mode’s own color (heat orange, cool blue…), or the theme primary for presets and fan.')}
       ${col('active_background', 'Background', '#ff8100')} ${col('active_color', 'Text & icon', '#ffffff')}
-      ${col('active_border_color', 'Border', '#ff8100')}
+      ${col('active_border_color', 'Border', '#ff8100')}`)}
     `;
   }
 
@@ -1248,21 +1278,20 @@ export class EasyThermostatStylerCardEditor extends LitElement {
     };
     return html`
       ${this._hint('Make parts of the card glow or pulse in the heat colour while heating and the cool colour while cooling.')}
-      ${this._group('Parts', true)}
-      ${FX_TARGETS.map((t) => this._selectRow(FX_LABELS[t], fxMode(c, t), opts, (v) => write(t, v)))}
-      ${this._group('When')}
+      ${this._sub('fx-parts', 'Parts', () => html`${FX_TARGETS.map((t) => this._selectRow(FX_LABELS[t], fxMode(c, t), opts, (v) => write(t, v)))}`)}
+      ${this._sub('fx-when', 'When', () => html`
       ${this._select(
         'effects.when',
         'Active',
         [['running', 'Only while heating or cooling'], ['mode', 'Whenever the mode is Heat or Cool']],
         FX_DEFAULTS.when,
       )}
-      ${this._hint('“Only while heating or cooling” follows what the system is doing right now; the other also lights up while it waits at the setpoint.')}
-      ${this._group('Look')}
+      ${this._hint('“Only while heating or cooling” follows what the system is doing right now; the other also lights up while it waits at the setpoint.')}`)}
+      ${this._sub('fx-look', 'Look', () => html`
       ${this._slider('effects.size', 'Glow size', 2, 60, 1, FX_DEFAULTS.size)}
       ${this._slider('effects.speed', 'Pulse speed', 0.6, 8, 0.2, FX_DEFAULTS.speed, (n) => `${n.toFixed(1)}s`)}
       ${this._color('effects.heat_color', 'Heating colour', 'Theme heat', '#ff8100')}
-      ${this._color('effects.cool_color', 'Cooling colour', 'Theme cool', '#2b9af9')}
+      ${this._color('effects.cool_color', 'Cooling colour', 'Theme cool', '#2b9af9')}`)}
     `;
   }
 
@@ -1281,25 +1310,27 @@ export class EasyThermostatStylerCardEditor extends LitElement {
     const pct = (n: number) => `${n}%`;
     return html`
       ${this._hint('The card’s surface. A moving background follows what the thermostat is doing: heat rises, cold sinks, a fan swirls, idle barely drifts.')}
-      ${this._group('Base', true)}
+      ${this._sub('bg-base', 'Base fill', () => html`
       ${this._selectRow('Fill', fill, [['color', 'Colour'], ['gradient', 'Gradient'], ['image', 'Image']], (v) => put('fill', v, 'color'))}
       ${fill === 'color'
         ? this._colorRow('background.color', 'Colour', b.color ?? (c.card?.background as string | undefined), 'Theme card', '#1c1c1c', writeColor, { transparent: true })
         : nothing}
       ${fill === 'gradient' ? this._gradientEditor() : nothing}
-      ${fill === 'image' ? this._imageEditor() : nothing}
-
-      ${this._group('Moving background')}
+      ${fill === 'image' ? this._imageEditor() : nothing}`)}
+      ${this._sub('bg-move', 'Moving background', () => html`
       ${this._selectRow('Style', style, BG_STYLES.map(([v, n]) => [v, n] as Opt), (v) => put('style', v, 'none'))}
       ${style !== 'none'
         ? html`
             ${this._hint(BG_STYLES.find(([v]) => v === style)?.[2] ?? '')}
+            ${this._group('Motion')}
             ${this._slider('background.strength', 'Strength', 0, 100, 5, BG_DEFAULTS.strength, pct)}
             ${this._slider('background.speed', 'Speed', 25, 300, 5, BG_DEFAULTS.speed, pct)}
             ${this._bool('background.follow_gap', 'Follow the work', BG_DEFAULTS.follow_gap)}
             ${this._hint('Moves faster and glows stronger the further the room is from the setpoint, and settles as it gets close.')}
             ${this._select('background.off', 'When off', [['calm', 'A calm, near-still background'], ['none', 'No moving background']], BG_DEFAULTS.off)}
-            ${this._selector('Sync to Air Movement', { entity: {} }, b.air_entity ?? b.fan_entity, (v) => {
+            ${this._select('background.quality', 'Quality', [['smooth', 'Smooth'], ['light', 'Light (older tablets)']], BG_DEFAULTS.quality)}
+            ${this._group('Sync to Air Movement')}
+            ${this._selector('Entity', { entity: {} }, b.air_entity ?? b.fan_entity, (v) => {
               let next = setPath(c as Record<string, unknown>, 'background.fan_entity', undefined);
               next = setPath(next, 'background.air_entity', v || undefined);
               this._emit(next as CardConfig);
@@ -1322,16 +1353,13 @@ export class EasyThermostatStylerCardEditor extends LitElement {
                   </div>
                   ${this._hint('For raw numbers only, e.g. 1200 for a 1200 CFM airflow sensor. Leave empty and percentages, number entities and speed names work on their own.')}`
               : nothing}
-            ${this._sub('bg-colours', 'Colours by state', () => this._bgColours())}
-            ${this._select('background.quality', 'Quality', [['smooth', 'Smooth'], ['light', 'Light (older tablets)']], BG_DEFAULTS.quality)}
           `
-        : nothing}
-
-      ${this._group('Finish')}
+        : nothing}`)}
+      ${style !== 'none' ? this._sub('bg-colours', 'Colours by state', () => this._bgColours()) : nothing}
+      ${this._sub('bg-finish', 'Finish', () => html`
       ${this._slider('background.scrim', 'Lighten / darken', -60, 60, 5, 0, (n) => (n > 0 ? `Darken ${n}%` : n < 0 ? `Lighten ${-n}%` : 'None'))}
       ${this._slider('background.vignette', 'Vignette', 0, 100, 5, 0, pct)}
-      ${this._slider('background.grain', 'Grain', 0, 100, 5, 0, pct)}
-
+      ${this._slider('background.grain', 'Grain', 0, 100, 5, 0, pct)}`)}
     `;
   }
 
@@ -1380,7 +1408,7 @@ export class EasyThermostatStylerCardEditor extends LitElement {
     const own = this._config!.background?.colors ?? {};
     return html`${this._hint('Two colours per state. Unset follows your theme’s heat, cool and fan colours.')}
       ${BG_STATES.map(
-        ([k, label]) => html`<div class="etce-group">${label}</div>
+        ([k, label], n) => html`<div class="etce-group ${n === 0 ? 'first' : ''}">${label}</div>
           ${this._colorRow(`bg-${k}-main`, 'Main', own[k]?.main, 'Automatic', /^#/.test(BG_PALETTE[k].main) ? BG_PALETTE[k].main : k.includes('cool') ? '#2b9af9' : k === 'fan' ? '#00bfa5' : '#ff8100', (v) =>
             this._put(`background.colors.${k}.main`, v),
           )}

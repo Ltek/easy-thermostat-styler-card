@@ -853,7 +853,13 @@ describe('editor', () => {
     const { root } = await editor({});
     expect(root.querySelector('.etce')).not.toBeNull();
     expect(root.querySelectorAll('details.etce-sec').length).toBe(9);
-    expect(root.querySelectorAll('details.etce-sec summary')[1]!.textContent).toContain('Quick Preset Templates');
+    expect(root.querySelectorAll('details.etce-sec > summary')[1]!.textContent).toContain('Quick Preset Templates');
+    // Design guide: like Text, every panel body is a hint and fields, then flat
+    // sub-panels; group subtitles live only inside sub-panels / set editors.
+    for (const d of root.querySelectorAll<HTMLDetailsElement>('details.etce-sec')) {
+      const loose = [...d.querySelector(':scope > .etce-body')!.children].filter((k) => k.classList.contains('etce-group'));
+      expect(loose.map((k) => k.textContent), d.querySelector('summary')!.textContent!.trim()).toEqual([]);
+    }
   });
 
   it('a checkbox writes only when it differs from the default', async () => {

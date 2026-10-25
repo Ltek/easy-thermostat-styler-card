@@ -6,7 +6,7 @@ https://github.com/Ltek/easy-thermostat-styler-card
 
 [![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=Ltek&repository=easy-thermostat-styler-card&category=plugin)
 
-Current build: **v2026.10.25.17** · full history in [CHANGELOG.md](CHANGELOG.md)
+Current build: **v2026.10.25.18** · full history in [CHANGELOG.md](CHANGELOG.md)
 
 ---
 
