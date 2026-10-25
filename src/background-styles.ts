@@ -276,8 +276,9 @@ export const backgroundStyles = css`
   }
   ha-card.frosted :is(.btn, .mt, .tgl, .hc-switch) {
     background: var(--etc-b-bg, rgba(255, 255, 255, 0.08));
-    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+    box-shadow: inset 0 0 0 var(--etc-b-ring, 1px) rgba(255, 255, 255, 0.12);
   }
+  ha-card.frosted .btn.active { box-shadow: inset 0 0 0 var(--etc-b-aring, var(--etc-b-ring, 1px)) rgba(255, 255, 255, 0.12); }
   ha-card.frosted .round { background: rgba(255, 255, 255, 0.06); }
   /* The wheel's setpoint bubble: tinted glass in the heat / cool color. */
   ha-card.frosted .bubble {

@@ -162,8 +162,8 @@ export const EDITOR_CSS = `
         /* An opened set / button is a heading, not a box: no border and no inset,
            so its sections and fields sit exactly where every other panel's do
            (one box deep). It keeps the top divider like a closed flat row. */
-        .etce-sub.etce-rowsub[open] { border: none; border-top: 1px solid var(--ltek-c-border-soft); border-radius: 0; margin: 0; }
-        .etce-sub.etce-rowsub > .etce-sub-body { padding: 0 0 var(--ltek-sp-3); }
+        .etce-sub.etce-rowsub[open] { border: 1px solid var(--accent-color, var(--ltek-c-accent)); border-radius: var(--ltek-r-ctrl); margin: var(--ltek-sp-1) 0; }
+        .etce-sub.etce-rowsub > .etce-sub-body { padding: 0 var(--ltek-sp-2) var(--ltek-sp-2); }
         .etce-sub.etce-rowsub[open] > summary { border-bottom: 1px solid var(--ltek-c-border-soft); margin-bottom: var(--ltek-sp-2); }
         .etce-test { border: 1px dashed var(--ltek-c-border); border-radius: var(--ltek-r-panel); padding: var(--ltek-sp-2) var(--ltek-sp-6); }
         .etce-test.on { border-color: var(--ltek-c-warning); background: color-mix(in srgb, var(--ltek-c-warning) 8%, transparent); }

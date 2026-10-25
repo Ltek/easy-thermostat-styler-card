@@ -790,12 +790,12 @@ describe('card render', () => {
     expect(modes('Text & Icon')[0]).toEqual(['Automatic', 'Theme Color', 'Custom Color', 'Custom CSS']);
   });
 
-  it('editor: an opened set / button is a flat heading, not a nested box', async () => {
+  it('editor: an opened set / button gets the accent border with a small inset', async () => {
     const { EDITOR_CSS } = await import('../src/editor/editor-css');
     const rule = /\.etce-sub\.etce-rowsub\[open\]\s*\{([^}]*)\}/.exec(EDITOR_CSS)?.[1] ?? '';
-    expect(rule).toMatch(/border:\s*none/);
-    expect(rule).toMatch(/margin:\s*0/);
-    expect(/\.etce-sub\.etce-rowsub > \.etce-sub-body\s*\{\s*padding:\s*0 0 /.test(EDITOR_CSS)).toBe(true);
+    // Open: the accent border every section gets, but only a small inset (no deep nesting).
+    expect(rule).toMatch(/border:\s*1px solid var\(--accent-color/);
+    expect(/\.etce-sub\.etce-rowsub > \.etce-sub-body\s*\{\s*padding:\s*0 var\(--ltek-sp-2\)/.test(EDITOR_CSS)).toBe(true);
   });
 
   it('editor: every background / fill color offers Transparent and every border offers None, everywhere', async () => {
@@ -825,6 +825,15 @@ describe('card render', () => {
       }
       el.remove();
     }
+  });
+
+  it('Border: None also removes the Frosted Glass rim', async () => {
+    const { root } = await mount({ frosted: true, sets: [{ type: 'hvac', style: { border_color: 'transparent' } }, { type: 'preset', style: { active_border_color: 'transparent' } }] });
+    const hv = root.querySelector<HTMLElement>('.set.t-hvac')!, pr = root.querySelector<HTMLElement>('.set.t-preset')!;
+    expect(hv.style.getPropertyValue('--etc-b-ring')).toBe('0px');
+    expect(hv.style.getPropertyValue('--etc-b-aring')).toBe('0px');
+    expect(pr.style.getPropertyValue('--etc-b-ring')).toBe('');
+    expect(pr.style.getPropertyValue('--etc-b-aring')).toBe('0px');
   });
 
   it('hvac set full-time; preset/fan behind toggles that remember state', async () => {

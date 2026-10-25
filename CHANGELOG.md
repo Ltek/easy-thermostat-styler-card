@@ -1,5 +1,10 @@
 # Changelog
 
+## v2026.10.25.23
+
+- **Fixed**: with Frosted Glass on, a button whose Border was set to None still showed a thin edge. That was Frosted Glass's own glass rim, not the border. Border: None now removes the rim too (inactive and active separately).
+- **Editor**: an opened set, and an opened button inside it, get the theme accent border like every other open section, with only a small inset so the contents don't step in further.
+
 ## v2026.10.25.22
 
 - **Transparent and None everywhere they belong.** Every background or fill color offers **Transparent**, and every border offers **None**:

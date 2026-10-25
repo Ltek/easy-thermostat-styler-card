@@ -55,6 +55,9 @@ export function buttonVars(style: ButtonStyle): StyleVars {
     '--etc-b-bg': style.background,
     '--etc-b-fg': style.color,
     '--etc-b-bc': style.border_color,
+    // Border: None also switches off Frosted Glass's thin rim.
+    '--etc-b-ring': style.border_color === 'transparent' ? '0px' : undefined,
+    '--etc-b-aring': (style.active_border_color ?? style.border_color) === 'transparent' ? '0px' : undefined,
     '--etc-b-abg': style.active_background,
     '--etc-b-afg': style.active_color,
     '--etc-b-abc': style.active_border_color,

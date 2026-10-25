@@ -559,7 +559,7 @@ function Qt(r) {
 function L(r) {
   return Qt({ ...r, state: !0, attribute: !1 });
 }
-const He = "2026.10.25.22", At = "easy-thermostat-styler-card", Ft = "easy-thermostat-styler-card-editor", De = [
+const He = "2026.10.25.23", At = "easy-thermostat-styler-card", Ft = "easy-thermostat-styler-card-editor", De = [
   "name",
   "status",
   "current",
@@ -1174,6 +1174,9 @@ function Ae(r) {
     "--etc-b-bg": r.background,
     "--etc-b-fg": r.color,
     "--etc-b-bc": r.border_color,
+    // Border: None also switches off Frosted Glass's thin rim.
+    "--etc-b-ring": r.border_color === "transparent" ? "0px" : void 0,
+    "--etc-b-aring": (r.active_border_color ?? r.border_color) === "transparent" ? "0px" : void 0,
     "--etc-b-abg": r.active_background,
     "--etc-b-afg": r.active_color,
     "--etc-b-abc": r.active_border_color
@@ -1378,8 +1381,8 @@ const ci = `
         /* An opened set / button is a heading, not a box: no border and no inset,
            so its sections and fields sit exactly where every other panel's do
            (one box deep). It keeps the top divider like a closed flat row. */
-        .etce-sub.etce-rowsub[open] { border: none; border-top: 1px solid var(--ltek-c-border-soft); border-radius: 0; margin: 0; }
-        .etce-sub.etce-rowsub > .etce-sub-body { padding: 0 0 var(--ltek-sp-3); }
+        .etce-sub.etce-rowsub[open] { border: 1px solid var(--accent-color, var(--ltek-c-accent)); border-radius: var(--ltek-r-ctrl); margin: var(--ltek-sp-1) 0; }
+        .etce-sub.etce-rowsub > .etce-sub-body { padding: 0 var(--ltek-sp-2) var(--ltek-sp-2); }
         .etce-sub.etce-rowsub[open] > summary { border-bottom: 1px solid var(--ltek-c-border-soft); margin-bottom: var(--ltek-sp-2); }
         .etce-test { border: 1px dashed var(--ltek-c-border); border-radius: var(--ltek-r-panel); padding: var(--ltek-sp-2) var(--ltek-sp-6); }
         .etce-test.on { border-color: var(--ltek-c-warning); background: color-mix(in srgb, var(--ltek-c-warning) 8%, transparent); }
@@ -4365,8 +4368,9 @@ const nr = Gt`
   }
   ha-card.frosted :is(.btn, .mt, .tgl, .hc-switch) {
     background: var(--etc-b-bg, rgba(255, 255, 255, 0.08));
-    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+    box-shadow: inset 0 0 0 var(--etc-b-ring, 1px) rgba(255, 255, 255, 0.12);
   }
+  ha-card.frosted .btn.active { box-shadow: inset 0 0 0 var(--etc-b-aring, var(--etc-b-ring, 1px)) rgba(255, 255, 255, 0.12); }
   ha-card.frosted .round { background: rgba(255, 255, 255, 0.06); }
   /* The wheel's setpoint bubble: tinted glass in the heat / cool color. */
   ha-card.frosted .bubble {

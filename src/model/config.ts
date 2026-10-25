@@ -7,7 +7,7 @@
 // untouched card never rewrites its YAML. Rendering defaults live in code
 // (`DEFAULTS` below), never in the stored config.
 
-export const CARD_VERSION = '2026.10.25.22';
+export const CARD_VERSION = '2026.10.25.23';
 export const CARD_TYPE = 'easy-thermostat-styler-card';
 export const EDITOR_TYPE = 'easy-thermostat-styler-card-editor';
 
