@@ -559,7 +559,7 @@ function Xt(a) {
 function R(a) {
   return Xt({ ...a, state: !0, attribute: !1 });
 }
-const Oe = "2026.10.25.14", yt = "easy-thermostat-styler-card", Pt = "easy-thermostat-styler-card-editor", Le = [
+const Oe = "2026.10.25.15", yt = "easy-thermostat-styler-card", Pt = "easy-thermostat-styler-card-editor", Le = [
   "name",
   "status",
   "current",
@@ -2139,6 +2139,8 @@ It replaces this card’s layout, setpoint control and styling. Your device chip
       m.open_in
     )}
             ${this._hint("“In place of the current temperature” swaps the big number for the controls while they are open.")}
+            ${this._bool("setpoint.hide_pills_open", "Hide the setpoint pill while the controls are open", !1)}
+            ${this._hint("The control already shows the setpoint. In Heat / Cool a small heat/cool switch appears on the control instead. Tap the wheel (without dragging) to close it.")}
             ${this._bool("setpoint.hide_at_target", "Hide the setpoint once the room reaches it", !1)}
             ${this._hint("While closed, only the current temperature shows once it matches the setpoint; until then the setpoint shows beside it. Tap the temperature to open the controls at any time.")}
             ${this._sliderRow(
@@ -4093,7 +4095,7 @@ const Zr = 500, ee = class ee extends Z {
       const i = t.currentTarget;
       i.hasPointerCapture?.(t.pointerId) && i.releasePointerCapture(t.pointerId);
       const r = this._sp.edit;
-      r && r[r.active]?.value !== e.startValue && this._sp.commit(r);
+      r && r[r.active]?.value !== e.startValue ? this._sp.commit(r) : this._tapMode() && this._revealed && Math.abs(t.clientY - e.startY) < 6 && this._setRevealed(!1);
     }, this._wheelKey = (t) => {
       const e = this._sp.edit;
       e && (t.key === "ArrowUp" || t.key === "ArrowRight" ? (t.preventDefault(), this._sp.commit(X(e, 1))) : (t.key === "ArrowDown" || t.key === "ArrowLeft") && (t.preventDefault(), this._sp.commit(X(e, -1))));
@@ -4297,7 +4299,7 @@ const Zr = 500, ee = class ee extends Z {
       ${(e.show_humidity ?? m.show_humidity) && t.humidity !== null ? c`<div class="humidity"><ha-icon icon="mdi:water-outline"></ha-icon>${Math.round(t.humidity)}%</div>` : h}
       ${lt === "beside" && ct !== h ? c`<div class="cur-row">${re}${ct}</div>` : re}
       ${lt === "below" ? ct : h}
-      ${(e.show_pills ?? m.show_pills) && s?.available && !w ? this._renderPills(s, x, f) : h}
+      ${(e.show_pills ?? m.show_pills) && s?.available && !w && !(b && f && i.hide_pills_open) ? this._renderPills(s, x, f) : h}
     </div>`;
     return c`<div class="core al-${n} pos-${o}">
       ${P && u ? P : h}
@@ -4381,7 +4383,7 @@ const Zr = 500, ee = class ee extends Z {
       @click=${() => this._sp.commit(X(t, -1))}
     >
       <ha-icon icon="mdi:minus"></ha-icon>
-    </button>`, l = (this._config?.show_pills ?? m.show_pills) === !1 && t.heat && t.cool ? c`<div class="hc-switch" role="group" aria-label="Setpoint">
+    </button>`, l = ((this._config?.show_pills ?? m.show_pills) === !1 || this._tapMode() && this._revealed && !!this._config?.setpoint?.hide_pills_open) && t.heat && t.cool ? c`<div class="hc-switch" role="group" aria-label="Setpoint">
             ${["heat", "cool"].map(
       (w) => c`<button
                 class="hc ${w} ${t.active === w ? "on" : ""}"

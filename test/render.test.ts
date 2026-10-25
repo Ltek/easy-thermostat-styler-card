@@ -543,6 +543,29 @@ describe('card render', () => {
     expect(pr.style.getPropertyValue('--etc-b-igap')).toBe('10px');
   });
 
+  it('tap mode: hide the pill while the controls are open; tapping the wheel closes', async () => {
+    const cfg = { setpoint: { reveal: 'tap', collapsed: 'hidden', open_in: 'current', hide_pills_open: true } };
+    const { root, el } = await mount(cfg);
+    expect(root.querySelector('.pill.heat')).not.toBeNull(); // closed: pill shows
+    root.querySelector<HTMLButtonElement>('button.current')!.click();
+    await el.updateComplete;
+    expect(root.querySelector('.in-current .wheel')).not.toBeNull();
+    expect(root.querySelector('.pills')).toBeNull();
+    const col = root.querySelector<HTMLElement>('.wheel-col')!;
+    col.dispatchEvent(new PointerEvent('pointerdown', { clientY: 100, pointerId: 1 }));
+    col.dispatchEvent(new PointerEvent('pointerup', { clientY: 101, pointerId: 1 }));
+    await el.updateComplete;
+    expect(root.querySelector('.wheel')).toBeNull();
+    expect(root.querySelector('.pill.heat')).not.toBeNull();
+    document.body.innerHTML = '';
+    // Heat/Cool: the switch stands in for the pills while open
+    const h = fakeHass([climate('heat_cool', { ...RICH, target_temp_low: 68, target_temp_high: 75 })]);
+    const d = await mount(cfg, h);
+    d.root.querySelector<HTMLButtonElement>('button.current')!.click();
+    await d.el.updateComplete;
+    expect(d.root.querySelectorAll('.hc-switch .hc')).toHaveLength(2);
+  });
+
   it('hvac set full-time; preset/fan behind toggles that remember state', async () => {
     const { root, calls, el } = await mount({});
     expect(root.querySelectorAll('.set.t-hvac .btn')).toHaveLength(4);

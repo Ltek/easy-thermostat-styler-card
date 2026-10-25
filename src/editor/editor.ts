@@ -504,6 +504,8 @@ export class EasyThermostatStylerCardEditor extends LitElement {
               DEFAULTS.open_in,
             )}
             ${this._hint('“In place of the current temperature” swaps the big number for the controls while they are open.')}
+            ${this._bool('setpoint.hide_pills_open', 'Hide the setpoint pill while the controls are open', false)}
+            ${this._hint('The control already shows the setpoint. In Heat / Cool a small heat/cool switch appears on the control instead. Tap the wheel (without dragging) to close it.')}
             ${this._bool('setpoint.hide_at_target', 'Hide the setpoint once the room reaches it', false)}
             ${this._hint('While closed, only the current temperature shows once it matches the setpoint; until then the setpoint shows beside it. Tap the temperature to open the controls at any time.')}
             ${this._sliderRow('Close after', secs, 0, 60, 1, this._get('setpoint.hide_after') !== undefined, (v) => this._put('setpoint.hide_after', v, DEFAULTS.hide_after), (n) =>

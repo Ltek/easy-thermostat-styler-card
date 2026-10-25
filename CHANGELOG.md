@@ -1,5 +1,10 @@
 # Changelog
 
+## v2026.10.25.15
+
+- **Hide the setpoint pill while the controls are open** (Setpoint control → Show controls, with "Shown when tapped"). The pill shows while the controls are closed and hides while the wheel, stepper or bar is open, since the control already shows the setpoint. In Heat / Cool, a small heat/cool switch appears on the control so you can still pick which setpoint to change.
+- In tap mode, a **plain tap on the wheel** (without dragging) now closes the controls.
+
 ## v2026.10.25.14
 
 - **Button scale** (Button style → Size): scale every button in every set, or override it for one set under "Button style for this set". The size, padding, corners, icon, text and spacing all scale together.

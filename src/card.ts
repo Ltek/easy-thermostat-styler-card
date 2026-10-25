@@ -414,7 +414,9 @@ export class EasyThermostatStylerCard extends LitElement {
         : nothing}
       ${statusPos === 'beside' && status !== nothing ? html`<div class="cur-row">${currentTpl}${status}</div>` : currentTpl}
       ${statusPos === 'below' ? status : nothing}
-      ${(c.show_pills ?? DEFAULTS.show_pills) && edit?.available && !atTarget ? this._renderPills(edit, fromPills, open) : nothing}
+      ${(c.show_pills ?? DEFAULTS.show_pills) && edit?.available && !atTarget && !(tap && open && sp.hide_pills_open)
+        ? this._renderPills(edit, fromPills, open)
+        : nothing}
     </div>`;
 
     return html`<div class="core al-${align} pos-${position}">
@@ -525,7 +527,11 @@ export class EasyThermostatStylerCard extends LitElement {
 
     // Heat/Cool with the pills hidden: the pills normally pick which setpoint
     // is edited, so put a small heat/cool switch on the control instead.
-    const pillsHidden = (this._config?.show_pills ?? DEFAULTS.show_pills) === false;
+    // Pills hidden (always, or while the tapped-open controls show): the
+    // control gets its own heat/cool switch in Heat / Cool.
+    const pillsHidden =
+      (this._config?.show_pills ?? DEFAULTS.show_pills) === false ||
+      (this._tapMode() && this._revealed && !!this._config?.setpoint?.hide_pills_open);
     const sw =
       pillsHidden && edit.heat && edit.cool
         ? html`<div class="hc-switch" role="group" aria-label="Setpoint">
@@ -632,6 +638,8 @@ export class EasyThermostatStylerCard extends LitElement {
     if (el.hasPointerCapture?.(ev.pointerId)) el.releasePointerCapture(ev.pointerId);
     const edit = this._sp.edit;
     if (edit && edit[edit.active]?.value !== drag.startValue) this._sp.commit(edit);
+    // A plain tap (no drag) on the wheel closes tapped-open controls.
+    else if (this._tapMode() && this._revealed && Math.abs(ev.clientY - drag.startY) < 6) this._setRevealed(false);
   };
 
   private _wheelKey = (ev: KeyboardEvent): void => {

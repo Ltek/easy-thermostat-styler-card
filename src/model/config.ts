@@ -7,7 +7,7 @@
 // untouched card never rewrites its YAML. Rendering defaults live in code
 // (`DEFAULTS` below), never in the stored config.
 
-export const CARD_VERSION = '2026.10.25.14';
+export const CARD_VERSION = '2026.10.25.15';
 export const CARD_TYPE = 'easy-thermostat-styler-card';
 export const EDITOR_TYPE = 'easy-thermostat-styler-card-editor';
 
@@ -197,6 +197,8 @@ export interface SetpointConfig {
   hide_after?: number;
   /** Tap mode: while closed, hide the setpoint once the room has reached it. */
   hide_at_target?: boolean;
+  /** Tap mode: hide the setpoint pills while the controls are open (the control shows the setpoint). */
+  hide_pills_open?: boolean;
 }
 
 export type FxValue = 'none' | 'glow' | 'pulse' | 'both';
