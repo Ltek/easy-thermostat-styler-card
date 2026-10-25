@@ -180,6 +180,43 @@ export class EasyThermostatStylerCardEditor extends LitElement {
     </details>`;
   }
 
+  /** A list row that is itself a sub-panel: the row is the summary (icon,
+   *  name, tag, action buttons, chevron) and its settings open right under it,
+   *  exactly like every other section. Action buttons don't toggle it. */
+  private _rowSub(
+    open: boolean,
+    onToggle: (open: boolean) => void,
+    head: { icon: string; name: string; tag?: string; off?: boolean; cls?: string },
+    actions: TemplateResult,
+    body: () => TemplateResult,
+  ): TemplateResult {
+    return html`<details
+      class="etce-sub etce-rowsub ${head.cls ?? ''} ${head.off ? 'off' : ''}"
+      ?open=${open}
+      @toggle=${(e: Event) => {
+        e.stopPropagation();
+        const o = (e.currentTarget as HTMLDetailsElement).open;
+        if (o !== open) onToggle(o);
+      }}
+    >
+      <summary>
+        <ha-icon class="etce-sicon" icon=${head.icon}></ha-icon>
+        <span class="etce-sname">${head.name}</span>
+        ${head.tag ? html`<span class="etce-stag">${head.tag}</span>` : nothing}
+        <span
+          class="etce-sctl"
+          @click=${(e: Event) => {
+            // Buttons here act on the row; they must not open / close it.
+            if ((e.target as HTMLElement).closest('button')) e.preventDefault();
+          }}
+          >${actions}</span
+        >
+        <ha-icon class="chev" icon="mdi:chevron-down"></ha-icon>
+      </summary>
+      <div class="etce-sub-body">${open ? body() : nothing}</div>
+    </details>`;
+  }
+
   private _group(title: string, first = false): TemplateResult {
     return html`<div class="etce-group ${first ? 'first' : ''}">${title}</div>`;
   }
@@ -651,43 +688,39 @@ export class EasyThermostatStylerCardEditor extends LitElement {
           (t) => html`<button class="etce-add" @click=${() => add(t)}>+ ${SET_TITLES[t]}</button>`,
         )}
       </div>
-      <div class="etce-slist">
+      <div class="etce-rows">
         ${sets.map((s, i) => {
           const count = (s.items?.length ?? 0) + (s.chips?.length ?? 0);
           const supported = isBuiltin(s.type) ? availableOptions(entity, s.type).length > 0 || count > 0 : true;
           const protectedSet = isBuiltin(s.type) && sets.filter((x) => x.type === s.type).length === 1;
           const open = this._set === i;
-          return html`<div class="etce-srow ${s.hidden ? 'off' : ''} ${open ? 'open' : ''}">
-              <ha-icon class="etce-sicon" icon=${SET_ICONS[s.type]}></ha-icon>
-              <span class="etce-sname" @click=${() => (this._set = open ? null : i)}>${s.name ?? SET_TITLES[s.type]}</span>
-              <span class="etce-stag"
-                >${supported ? `${s.zone ?? this._defaultZone()} · ${this._displayTag(s)}` : 'not on this entity'}</span
-              >
-              <div class="etce-sctl">
-                <button class="etce-act" title="Edit" @click=${() => (this._set = open ? null : i)}><ha-icon icon="mdi:pencil"></ha-icon></button>
-                <button class="etce-act" title="Move up" ?disabled=${i === 0} @click=${() => this._moveSet(i, -1)}>
-                  <ha-icon icon="mdi:arrow-up"></ha-icon>
-                </button>
-                <button class="etce-act" title="Move down" ?disabled=${i === sets.length - 1} @click=${() => this._moveSet(i, 1)}>
-                  <ha-icon icon="mdi:arrow-down"></ha-icon>
-                </button>
-                <button class="etce-act" title="Duplicate" @click=${() => this._duplicateSet(i)}>
-                  <ha-icon icon="mdi:content-copy"></ha-icon>
-                </button>
-                <button class="etce-act etce-eye ${s.hidden ? 'off' : ''}" title=${s.hidden ? 'Show' : 'Hide'} @click=${() => this._patchSet(i, 'hidden', !s.hidden, false)}>
-                  <ha-icon icon=${s.hidden ? 'mdi:eye-off-outline' : 'mdi:eye-outline'}></ha-icon>
-                </button>
-                <button
-                  class="etce-act del"
-                  title=${protectedSet ? 'Built-in set: hide it instead' : 'Delete'}
-                  ?disabled=${protectedSet}
-                  @click=${() => this._deleteSet(i)}
-                >
-                  <ha-icon icon="mdi:trash-can-outline"></ha-icon>
-                </button>
-              </div>
-            </div>
-            ${open ? html`<div class="etce-sedit">${this._setEditor(s, i)}</div>` : nothing}`;
+          return this._rowSub(
+            open,
+            (o) => (this._set = o ? i : null),
+            {
+              icon: SET_ICONS[s.type],
+              name: s.name ?? SET_TITLES[s.type],
+              tag: supported ? `${s.zone ?? this._defaultZone()} · ${this._displayTag(s)}` : 'not on this entity',
+              off: s.hidden,
+              cls: 'set-row',
+            },
+            html`<button class="etce-act" title="Move up" ?disabled=${i === 0} @click=${() => this._moveSet(i, -1)}>
+                <ha-icon icon="mdi:arrow-up"></ha-icon>
+              </button>
+              <button class="etce-act" title="Move down" ?disabled=${i === sets.length - 1} @click=${() => this._moveSet(i, 1)}>
+                <ha-icon icon="mdi:arrow-down"></ha-icon>
+              </button>
+              <button class="etce-act" title="Duplicate" @click=${() => this._duplicateSet(i)}>
+                <ha-icon icon="mdi:content-copy"></ha-icon>
+              </button>
+              <button class="etce-act etce-eye ${s.hidden ? 'off' : ''}" title=${s.hidden ? 'Show' : 'Hide'} @click=${() => this._patchSet(i, 'hidden', !s.hidden, false)}>
+                <ha-icon icon=${s.hidden ? 'mdi:eye-off-outline' : 'mdi:eye-outline'}></ha-icon>
+              </button>
+              <button class="etce-act del" title=${protectedSet ? 'Built-in set: hide it instead' : 'Delete'} ?disabled=${protectedSet} @click=${() => this._deleteSet(i)}>
+                <ha-icon icon="mdi:trash-can-outline"></ha-icon>
+              </button>`,
+            () => this._setEditor(s, i),
+          );
         })}
       </div>
       ${this._sub('sets-layout', 'Layout & spacing', () => html`
@@ -847,32 +880,26 @@ export class EasyThermostatStylerCardEditor extends LitElement {
       this._patchSet(i, 'order', next);
     };
     return html`${this._hint('Built-in buttons from the thermostat: order, hide, rename and re-icon them. They can’t be deleted.')}
-      <div class="etce-blist">
+      <div class="etce-rows">
         ${values.map((v, k) => {
           const o = s.options?.[v] ?? {};
           const id = `${i}:${v}`;
-          return html`<div class="etce-brow ${o.hide ? 'off' : ''}">
-              <ha-icon class="etce-sicon" icon=${o.icon ?? MODE_ICONS[v.toLowerCase()] ?? 'mdi:circle-medium'}></ha-icon>
-              <span class="etce-sname" @click=${() => (this._chip = this._chip === id ? null : id)}>${o.name ?? prettify(v)}</span>
-              <div class="etce-sctl">
-                <button class="etce-act" title="Edit" @click=${() => (this._chip = this._chip === id ? null : id)}><ha-icon icon="mdi:pencil"></ha-icon></button>
-                <button class="etce-act" ?disabled=${k === 0} @click=${() => move(k, -1)}><ha-icon icon="mdi:arrow-up"></ha-icon></button>
-                <button class="etce-act" ?disabled=${k === values.length - 1} @click=${() => move(k, 1)}><ha-icon icon="mdi:arrow-down"></ha-icon></button>
-                <button class="etce-act etce-eye ${o.hide ? 'off' : ''}" @click=${() => this._patchSet(i, `options.${v}.hide`, !o.hide, false)}>
-                  <ha-icon icon=${o.hide ? 'mdi:eye-off-outline' : 'mdi:eye-outline'}></ha-icon>
-                </button>
+          return this._rowSub(
+            this._chip === id,
+            (open) => (this._chip = open ? id : null),
+            { icon: o.icon ?? MODE_ICONS[v.toLowerCase()] ?? 'mdi:circle-medium', name: o.name ?? prettify(v), off: o.hide, cls: 'item-row' },
+            html`<button class="etce-act" title="Move up" ?disabled=${k === 0} @click=${() => move(k, -1)}><ha-icon icon="mdi:arrow-up"></ha-icon></button>
+              <button class="etce-act" title="Move down" ?disabled=${k === values.length - 1} @click=${() => move(k, 1)}><ha-icon icon="mdi:arrow-down"></ha-icon></button>
+              <button class="etce-act etce-eye ${o.hide ? 'off' : ''}" title=${o.hide ? 'Show' : 'Hide'} @click=${() => this._patchSet(i, `options.${v}.hide`, !o.hide, false)}>
+                <ha-icon icon=${o.hide ? 'mdi:eye-off-outline' : 'mdi:eye-outline'}></ha-icon>
+              </button>`,
+            () => html`<div class="etce-row">
+                <label class="lbl">Label</label>
+                <input type="text" .value=${o.name ?? ''} placeholder=${prettify(v)} @change=${(e: Event) => this._patchSet(i, `options.${v}.name`, (e.target as HTMLInputElement).value || undefined)} />
               </div>
-            </div>
-            ${this._chip === id
-              ? html`<div class="etce-sedit">
-                  <div class="etce-row">
-                    <label class="lbl">Label</label>
-                    <input type="text" .value=${o.name ?? ''} placeholder=${prettify(v)} @change=${(e: Event) => this._patchSet(i, `options.${v}.name`, (e.target as HTMLInputElement).value || undefined)} />
-                  </div>
-                  ${this._selector('Icon', { icon: {} }, o.icon, (val) => this._patchSet(i, `options.${v}.icon`, val || undefined))}
-                  ${this._copyTo(i, { kind: 'mode', source: s.type as ModeSource, value: v, name: o.name, icon: o.icon })}
-                </div>`
-              : nothing}`;
+              ${this._selector('Icon', { icon: {} }, o.icon, (val) => this._patchSet(i, `options.${v}.icon`, val || undefined))}
+              ${this._copyTo(i, { kind: 'mode', source: s.type as ModeSource, value: v, name: o.name, icon: o.icon })}`,
+          );
         })}
       </div>`;
   }
@@ -959,7 +986,7 @@ export class EasyThermostatStylerCardEditor extends LitElement {
         <button class="etce-add" @click=${() => add('device', true)}>+ RF fan</button>
         <button class="etce-add" @click=${() => add('action')}>+ Action</button>
       </div>
-      <div class="etce-blist">
+      <div class="etce-rows">
         ${items.map((it, k) => {
           const id = `item:${i}:${k}`;
           const open = this._chip === id;
@@ -978,28 +1005,25 @@ export class EasyThermostatStylerCardEditor extends LitElement {
             this._writeItems(i, next);
           };
           const { name, icon, tag } = this._itemSummary(it);
-          return html`<div class="etce-brow ${it.hide ? 'off' : ''}">
-              <ha-icon class="etce-sicon" icon=${icon}></ha-icon>
-              <span class="etce-sname" @click=${() => (this._chip = open ? null : id)}>${name}</span>
-              <span class="etce-stag">${tag}</span>
-              <div class="etce-sctl">
-                <button class="etce-act" title="Edit" @click=${() => (this._chip = open ? null : id)}><ha-icon icon="mdi:pencil"></ha-icon></button>
-                <button class="etce-act" title="Move up" ?disabled=${k === 0} @click=${() => move(-1)}><ha-icon icon="mdi:arrow-up"></ha-icon></button>
-                <button class="etce-act" title="Move down" ?disabled=${k === items.length - 1} @click=${() => move(1)}><ha-icon icon="mdi:arrow-down"></ha-icon></button>
-                <button class="etce-act" title="Duplicate" @click=${() => {
-                  const next = [...items];
-                  next.splice(k + 1, 0, structuredClone(it));
-                  this._writeItems(i, next);
-                }}><ha-icon icon="mdi:content-copy"></ha-icon></button>
-                <button class="etce-act etce-eye ${it.hide ? 'off' : ''}" title=${it.hide ? 'Show' : 'Hide'} @click=${() => upd('hide', !it.hide, false)}>
-                  <ha-icon icon=${it.hide ? 'mdi:eye-off-outline' : 'mdi:eye-outline'}></ha-icon>
-                </button>
-                <button class="etce-act del" title="Delete" @click=${() => this._writeItems(i, items.filter((_, x) => x !== k))}>
-                  <ha-icon icon="mdi:trash-can-outline"></ha-icon>
-                </button>
-              </div>
-            </div>
-            ${open ? html`<div class="etce-sedit">${this._itemFields(it, upd)}${this._copyTo(i, it)}</div>` : nothing}`;
+          return this._rowSub(
+            open,
+            (o) => (this._chip = o ? id : null),
+            { icon, name, tag, off: it.hide, cls: 'item-row' },
+            html`<button class="etce-act" title="Move up" ?disabled=${k === 0} @click=${() => move(-1)}><ha-icon icon="mdi:arrow-up"></ha-icon></button>
+              <button class="etce-act" title="Move down" ?disabled=${k === items.length - 1} @click=${() => move(1)}><ha-icon icon="mdi:arrow-down"></ha-icon></button>
+              <button class="etce-act" title="Duplicate" @click=${() => {
+                const next = [...items];
+                next.splice(k + 1, 0, structuredClone(it));
+                this._writeItems(i, next);
+              }}><ha-icon icon="mdi:content-copy"></ha-icon></button>
+              <button class="etce-act etce-eye ${it.hide ? 'off' : ''}" title=${it.hide ? 'Show' : 'Hide'} @click=${() => upd('hide', !it.hide, false)}>
+                <ha-icon icon=${it.hide ? 'mdi:eye-off-outline' : 'mdi:eye-outline'}></ha-icon>
+              </button>
+              <button class="etce-act del" title="Delete" @click=${() => this._writeItems(i, items.filter((_, x) => x !== k))}>
+                <ha-icon icon="mdi:trash-can-outline"></ha-icon>
+              </button>`,
+            () => html`${this._itemFields(it, upd)}${this._copyTo(i, it)}`,
+          );
         })}
       </div>
     `;

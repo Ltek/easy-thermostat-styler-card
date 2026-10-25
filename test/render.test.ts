@@ -627,7 +627,7 @@ describe('card render', () => {
       panel.open = true;
       panel.dispatchEvent(new Event('toggle'));
       await el.updateComplete;
-      panel.querySelectorAll<HTMLButtonElement>('.etce-srow .etce-act[title="Edit"]')[1]!.click();
+      panel.querySelectorAll<HTMLButtonElement>('details.etce-rowsub.set-row > summary')[1]!.click();
       await el.updateComplete;
       const row = [...panel.querySelectorAll('.etce-row')].find((r) => r.textContent!.includes('Share a row with'))!;
       const sel = row.querySelector('select')!;
@@ -697,7 +697,7 @@ describe('card render', () => {
       panel.dispatchEvent(new Event('toggle'));
       await el.updateComplete;
       const openSet = async (k: number) => {
-        panel.querySelectorAll<HTMLButtonElement>('.etce-slist > .etce-srow .etce-act[title="Edit"]')[k]!.click();
+        panel.querySelectorAll<HTMLButtonElement>('details.etce-rowsub.set-row > summary')[k]!.click();
         await el.updateComplete;
         const sub = [...panel.querySelectorAll<HTMLDetailsElement>('details.etce-sub')].find((d) => d.querySelector('summary')!.textContent!.includes('Buttons in this set'))!;
         sub.open = true;
@@ -710,10 +710,10 @@ describe('card render', () => {
 
     it('editor: the only Mode set cannot be deleted; a duplicate can', async () => {
       const { el, panel, events } = await editorOn({ sets: [{ type: 'hvac' }, { type: 'custom', name: 'Buttons 1' }] });
-      const del = () => [...panel.querySelectorAll<HTMLButtonElement>('.etce-slist > .etce-srow .etce-act.del')];
+      const del = () => [...panel.querySelectorAll<HTMLButtonElement>('details.etce-rowsub.set-row > summary .etce-act.del')];
       expect(del()[0]!.disabled).toBe(true);
       expect(del()[1]!.disabled).toBe(false);
-      panel.querySelectorAll<HTMLButtonElement>('.etce-slist > .etce-srow .etce-act[title="Duplicate"]')[0]!.click();
+      panel.querySelectorAll<HTMLButtonElement>('details.etce-rowsub.set-row > summary .etce-act[title="Duplicate"]')[0]!.click();
       await el.updateComplete;
       expect((events.at(-1)!.sets as { type: string; name?: string }[]).map((s) => [s.type, s.name])).toEqual([
         ['hvac', undefined],
@@ -732,7 +732,7 @@ describe('card render', () => {
       sub = [...el.shadowRoot!.querySelectorAll<HTMLDetailsElement>('details.etce-sub')].find((d) => d.querySelector('summary')!.textContent!.includes('Buttons in this set'))!;
       [...sub.querySelectorAll<HTMLButtonElement>('.etce-add')].find((b) => b.textContent!.includes('Action'))!.click();
       await el.updateComplete;
-      sub.querySelectorAll<HTMLButtonElement>('.etce-brow .etce-act[title="Duplicate"]')[0]!.click();
+      sub.querySelectorAll<HTMLButtonElement>('details.etce-rowsub.item-row > summary .etce-act[title="Duplicate"]')[0]!.click();
       await el.updateComplete;
       const items = (events.at(-1)!.sets as { items?: { kind: string }[] }[])[1]!.items!;
       expect(items.map((x) => x.kind)).toEqual(['device', 'device', 'action']);
@@ -741,7 +741,7 @@ describe('card render', () => {
     it('editor: an older device-only set becomes a Buttons set with the same chip look on first edit', async () => {
       const { el, events, openSet } = await editorOn({ sets: [{ type: 'chips', chips: [{ type: 'entity', entity: 'sensor.hum' }] }] });
       const sub = await openSet(0);
-      sub.querySelectorAll<HTMLButtonElement>('.etce-brow .etce-act[title="Duplicate"]')[0]!.click();
+      sub.querySelectorAll<HTMLButtonElement>('details.etce-rowsub.item-row > summary .etce-act[title="Duplicate"]')[0]!.click();
       await el.updateComplete;
       expect((events.at(-1)!.sets as unknown[])[0]).toEqual({
         type: 'custom',
@@ -756,7 +756,7 @@ describe('card render', () => {
 
     it('editor: copy style to another set', async () => {
       const { el, panel, events } = await editorOn({ sets: [{ type: 'hvac', style: { radius: 3, look: 'chip' } }, { type: 'preset' }] });
-      panel.querySelectorAll<HTMLButtonElement>('.etce-slist > .etce-srow .etce-act[title="Edit"]')[0]!.click();
+      panel.querySelectorAll<HTMLButtonElement>('details.etce-rowsub.set-row > summary')[0]!.click();
       await el.updateComplete;
       const sel = [...panel.querySelectorAll('.etce-row')].find((r) => r.textContent!.includes('Copy this style to'))!.querySelector('select')!;
       sel.value = '1';

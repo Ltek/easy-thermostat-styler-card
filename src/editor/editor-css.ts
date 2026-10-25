@@ -151,6 +151,14 @@ export const EDITOR_CSS = `
         .etce-stops { display: flex; gap: var(--ltek-sp-2); align-items: center; flex-wrap: wrap; }
         .etce-stops input[type="color"] { width: 44px; height: 30px; padding: 0; border: none; background: none; cursor: pointer; }
         .etce-full { width: 100%; }
+        /* Row sub-panels (a set, a button): same flat section as every other,
+           with the row's name in normal case and its actions before the chevron. */
+        .etce-rows { display: flex; flex-direction: column; margin-bottom: var(--ltek-sp-3); }
+        .etce-rowsub > summary { text-transform: none; letter-spacing: normal; color: var(--ltek-c-text); font-weight: var(--ltek-fw-normal); }
+        .etce-rowsub[open] > summary .etce-sname { color: var(--accent-color, var(--ltek-c-accent)); font-weight: var(--ltek-fw-semibold); }
+        .etce-rowsub > summary .etce-sctl { margin-left: auto; flex-wrap: nowrap; }
+        .etce-rowsub > summary .chev { margin-left: var(--ltek-sp-2); }
+        .etce-rowsub.off > summary .etce-sname, .etce-rowsub.off > summary .etce-sicon { opacity: .45; }
         .etce-test { border: 1px dashed var(--ltek-c-border); border-radius: var(--ltek-r-panel); padding: var(--ltek-sp-2) var(--ltek-sp-6); }
         .etce-test.on { border-color: var(--ltek-c-warning); background: color-mix(in srgb, var(--ltek-c-warning) 8%, transparent); }
         .etce-test .etce-hint { margin: 0 0 var(--ltek-sp-1); }

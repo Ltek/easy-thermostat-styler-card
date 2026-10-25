@@ -1,5 +1,9 @@
 # Changelog
 
+## v2026.10.25.19
+
+- **Editor**: each button set, and each button inside a set, is now a collapsible section like every other section in the editor. Its row (icon, name, details, then the move / duplicate / hide / delete buttons and the chevron) is the heading, and its settings open directly under it instead of in a separate indented box. Only one set opens at a time, and the row's buttons act without opening or closing it.
+
 ## v2026.10.25.18
 
 - **Editor layout follows the design guide everywhere**, like the Text panel: each panel has a short hint and its main fields, then flat collapsible sections, with group subtitles only inside a section.
