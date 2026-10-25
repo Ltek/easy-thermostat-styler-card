@@ -7,7 +7,7 @@
 // untouched card never rewrites its YAML. Rendering defaults live in code
 // (`DEFAULTS` below), never in the stored config.
 
-export const CARD_VERSION = '2026.10.25.19';
+export const CARD_VERSION = '2026.10.25.20';
 export const CARD_TYPE = 'easy-thermostat-styler-card';
 export const EDITOR_TYPE = 'easy-thermostat-styler-card-editor';
 
@@ -122,6 +122,8 @@ export interface ChipConfig {
   show_state?: boolean;
   /** rf_fan: how the speed reads — `4`, `4/10` or `40%`. */
   speed_format?: 'number' | 'fraction' | 'percent';
+  /** Hide the button while the value is off, 0, none, idle, closed, unavailable… */
+  hide_when_off?: boolean;
   tap?: ChipTap;
   hold?: ChipHold;
   /** Card config shown in the pop-up (tap: popup). Default for rf_fan:
@@ -197,9 +199,9 @@ export interface BarConfig {
   flags?: boolean;
   handle_shape?: 'round' | 'square' | 'line' | 'diamond';
   handle_color?: string;
-  /** Handle outline: a colour, or 'none' for no border. Unset = heat / cool colour. */
+  /** Handle outline: a color, or 'none' for no border. Unset = heat / cool color. */
   handle_border_color?: string;
-  /** Value flags: background and text colour (unset = heat / cool colour, white). */
+  /** Value flags: background and text color (unset = heat / cool color, white). */
   flag_color?: string;
   flag_text_color?: string;
   /** Where the flags sit: above / below a horizontal bar, left / right of a vertical one. */
@@ -221,7 +223,7 @@ export interface SetpointConfig {
   neighbors?: number; // 0–3
   /** − / + placement. 'beside' is the older name for 'right'. */
   nudge?: 'right' | 'left' | 'above' | 'below' | 'stacked' | 'around' | 'hidden' | 'beside';
-  /** Wheel centre: the gradient bubble, or the same pill as the setpoint pills. */
+  /** Wheel center: the gradient bubble, or the same pill as the setpoint pills. */
   wheel_style?: 'bubble' | 'pill';
   min_gap?: number;
   bar?: BarConfig;
@@ -265,7 +267,7 @@ export type BgStateKey = 'heating' | 'cooling' | 'idle_heat' | 'idle_cool' | 'fa
 /** The card's surface: a base fill plus an optional moving layer. */
 export interface BackgroundConfig {
   fill?: 'color' | 'gradient' | 'image';
-  /** Base colour (four-mode or 'transparent'); unset = theme card colour. */
+  /** Base color (four-mode or 'transparent'); unset = theme card color. */
   color?: string;
   gradient?: { type?: 'linear' | 'radial'; angle?: number; stops?: string[] };
   image?: { url?: string; fit?: 'cover' | 'contain' | 'tile'; blur?: number; darken?: number };
@@ -320,7 +322,7 @@ export interface CardConfig {
   buttons?: ButtonStyle;
   text?: Partial<Record<TextRole, TextStyle>>;
   card?: CardSurface;
-  /** Space between the button areas and the main area, and keeping it centred. */
+  /** Space between the button areas and the main area, and keeping it centered. */
   zones?: {
     centered?: boolean;
     gap?: number;

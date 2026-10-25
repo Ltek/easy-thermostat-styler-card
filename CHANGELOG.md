@@ -1,5 +1,13 @@
 # Changelog
 
+## v2026.10.25.20
+
+- **US English** throughout the card, editor and docs: color, center, centered, centering.
+- **Title Case** for every panel title, section title, subtitle, field label, checkbox and dropdown choice in the editor. Hints stay as sentences; names you type stay as written.
+- **Button colors**: every button **Background** (inactive and active) now offers **Transparent**, and every **Border** offers **None**.
+- **Device / sensor buttons: Hide When Off, 0 or None.** The button hides while its value is off, 0, none, idle, closed or unavailable, and comes back when there's something to show.
+- **Centered temperature**: with Align set to Center, the number itself is now centered and the unit (°F) hangs to its right, instead of the number and unit being centered together, which left the number slightly to the left. Turn **Keep the Main Area Centered** on (Button Sets → Layout & Spacing) when there are buttons on one side, so the main area stays on the card's center.
+
 ## v2026.10.25.19
 
 - **Editor**: each button set, and each button inside a set, is now a collapsible section like every other section in the editor. Its row (icon, name, details, then the move / duplicate / hide / delete buttons and the chevron) is the heading, and its settings open directly under it instead of in a separate indented box. Only one set opens at a time, and the row's buttons act without opening or closing it.
@@ -8,10 +16,10 @@
 
 - **Editor layout follows the design guide everywhere**, like the Text panel: each panel has a short hint and its main fields, then flat collapsible sections, with group subtitles only inside a section.
   - **Thermostat**: Show · Layout.
-  - **Setpoint control**: the control's own section (Wheel / Stepper: placement & size, buttons, wheel; Bar: placement, colours, handles), Value flags, Ticks markers & range, Show controls, Heat / Cool.
-  - **Button sets**: the add buttons and set list come first. Layout & spacing (default location, centring, distance for all sides or per side) and Compact move below the list as sections. An opened set has Name, then Buttons in this set · Placement · Display · Button style for this set.
-  - **Button style**: Look & size · Shape · Content · Colours: inactive · Colours: active · Frosted glass.
-  - **Background**: Base fill · Moving background (motion, Sync to Air Movement) · Colours by state · Finish.
+  - **Setpoint control**: the control's own section (Wheel / Stepper: placement & size, buttons, wheel; Bar: placement, colors, handles), Value flags, Ticks markers & range, Show controls, Heat / Cool.
+  - **Button sets**: the add buttons and set list come first. Layout & spacing (default location, centering, distance for all sides or per side) and Compact move below the list as sections. An opened set has Name, then Buttons in this set · Placement · Display · Button style for this set.
+  - **Button style**: Look & size · Shape · Content · Colors: inactive · Colors: active · Frosted glass.
+  - **Background**: Base fill · Moving background (motion, Sync to Air Movement) · Colors by state · Finish.
   - **Heating & Cooling Effects**: Parts · When · Look.
 - No settings changed; existing cards are unaffected.
 
@@ -32,7 +40,7 @@
 
 - **Look: Button / Chip** for every set (Button style, and per set). Mode, preset and fan buttons, and expandable-menu buttons, can be chips. Device sets can be full buttons in any variant, with each item's icon and "name · value" as the label. Turn off **Show name** on an item for value only.
 - **Share a row with** (every set): Own row, or any other set by name. The set then sits in that set's row and on its side of the card. Removing the link also tidies away the internal id.
-- **Keep the main area centred** (on by default): with buttons on only one side, the temperature and controls no longer shift off-centre. On a card too narrow to balance both sides, it falls back to the old layout instead of squeezing the middle.
+- **Keep the main area centered** (on by default): with buttons on only one side, the temperature and controls no longer shift off-center. On a card too narrow to balance both sides, it falls back to the old layout instead of squeezing the middle.
 - **Distance from the main area**: a card-wide slider, plus **Distance per side** for top, bottom, left and right.
 
 ## v2026.10.25.15
@@ -44,13 +52,13 @@
 
 - **Button scale** (Button style → Size): scale every button in every set, or override it for one set under "Button style for this set". The size, padding, corners, icon, text and spacing all scale together.
 - **Icon to text spacing** (Button style → Content): the gap between a button's icon and its label. It works for tiles, icon-left buttons, menu buttons and chips.
-- **Fixed**: button contents weren't centred. The icon and text in expandable-menu buttons sat to the left, and chips were slightly off-centre. Every button type now centres its icon and text.
+- **Fixed**: button contents weren't centered. The icon and text in expandable-menu buttons sat to the left, and chips were slightly off-center. Every button type now centers its icon and text.
 - **Test mode switches off when the editor closes.** It's no longer saved with the card; it lives only in the open editor. A test mode saved by v2026.10.24.13 is removed the next time the card is saved.
 
 ## v2026.10.24.13
 
 - **Test mode** (top of the editor): Off, Heating, Cooling, Idle, Fan / air movement, System off, or Cycle through all (6 s each).
-  - The card acts as if it were in that state: effects, moving background, status and colours. The temperature and setpoints shown stay real.
+  - The card acts as if it were in that state: effects, moving background, status and colors. The temperature and setpoints shown stay real.
   - A small **TEST** badge shows which state is being simulated.
   - Like the AlertTicker card's, it only runs while you edit the dashboard. The live card ignores it, so saving with it on is harmless.
 - **Editor**: opening a panel now closes the others (sub-panels keep their own state).
@@ -78,31 +86,31 @@
   - a select (its position in the list)
 
   While it shows air moving, the background swirls at that speed. Cards set up with the earlier fan picker keep working.
-- **Frosted glass** moved to the **Button style** panel, since it styles controls, not the background. It now also covers the wheel's **setpoint bubble**, which becomes tinted glass in the heat or cool colour. Existing frosted cards keep working.
+- **Frosted glass** moved to the **Button style** panel, since it styles controls, not the background. It now also covers the wheel's **setpoint bubble**, which becomes tinted glass in the heat or cool color. Existing frosted cards keep working.
 - **Effects**: the When and Look settings are always shown. Before, they were hidden while every part was Off, which the background templates set, so the panel looked empty.
 
 ## v2026.10.24.10
 
 - **Background** panel.
-  - **Fill:** theme card colour, transparent, theme / custom / CSS colour, a gradient (2–4 colours, linear or radial, any angle), or an image (fill, fit or tile, with blur and darken).
+  - **Fill:** theme card color, transparent, theme / custom / CSS color, a gradient (2–4 colors, linear or radial, any angle), or an image (fill, fit or tile, with blur and darken).
   - **Moving background**, nine styles: Liquid Plasma, Lava Lamp, Aurora, Thermal Flow, Heat Shimmer / Frost, Embers / Snow, Breathing Core, Mesh Gradient, Glow Beam.
     - **It follows the system:** heating rises, cooling sinks, idle drifts very slowly, off is near-still (or none).
     - **Fan:** Fan Only, or a chosen ceiling fan while it runs, swirls with soft rotating blades at the fan's speed.
-    - **Colours by state:** two colours each for heating, cooling, idle (heat), idle (cool), fan and off. They default to your theme's heat, cool and fan colours and cross-fade when the state changes.
+    - **Colors by state:** two colors each for heating, cooling, idle (heat), idle (cool), fan and off. They default to your theme's heat, cool and fan colors and cross-fade when the state changes.
     - **Follow the work:** faster and stronger the further the room is from the setpoint.
     - **Strength**, **speed**, and **quality** (a lighter setting for older tablets).
     - It pauses when the card is off screen or the tab is hidden, and stops when the device asks for reduced motion.
   - **Finish:** lighten / darken scrim, vignette, grain.
   - **Frosted controls:** buttons, pills, chips, toggles and menus become see-through glass, with an adjustable blur.
-- The card colour moved from the Card panel to Background. Existing cards look the same.
+- The card color moved from the Card panel to Background. Existing cards look the same.
 - New templates: **Lava Lamp**, **Northern Lights** and **Frosted Glass**. Templates keep your own background image.
 - README: a "Moving backgrounds" gallery with 13 screenshots, frozen mid-motion.
 
 ## v2026.10.24.9
 
 - **Fixed**: the gradient didn't show on a vertical setpoint bar.
-- **Handle border**: on or off. When on, it has a colour (four-mode; unset follows the heat / cool colour).
-- **Value flags**: flag colour and flag text colour, plus **flag placement**: above or below a horizontal bar, left or right of a vertical one.
+- **Handle border**: on or off. When on, it has a color (four-mode; unset follows the heat / cool color).
+- **Value flags**: flag color and flag text color, plus **flag placement**: above or below a horizontal bar, left or right of a vertical one.
 - **Ticks & labels placement**: below or above a horizontal bar, right or left of a vertical one. This is independent of the flags. If both are on the same side, the flags sit outside the labels so nothing overlaps.
 - New README screenshot: vertical gradient bar with the flags on the right.
 
@@ -110,14 +118,14 @@
 
 - **Effects** panel: choose Off, Glow, Pulse or Glow + pulse for each of:
   - the **entire card**
-  - the **setpoint value** (wheel centre, stepper number or bar handle)
+  - the **setpoint value** (wheel center, stepper number or bar handle)
   - the **setpoint pill**
   - the **mode button**
   - the **mode icon**
 
-  They use the heat colour while heating and the cool colour while cooling.
+  They use the heat color while heating and the cool color while cooling.
   - **Active**: only while the system is actually heating or cooling, or whenever the mode is Heat or Cool, including while idle.
-  - **Glow size**, **pulse speed**, and **heating / cooling colours** (four-mode).
+  - **Glow size**, **pulse speed**, and **heating / cooling colors** (four-mode).
   - Animations stop when the device asks for reduced motion.
 - The old "Glow while heating or cooling" switch (Card panel) moved into Effects as "Entire card". Existing cards look the same.
 - Templates use effects now: Mission Control glows the setpoint and mode button, Tap & Go pulses the pill and mode icon, Wall Tablet pulses the card, and Neon glows and pulses everything.
@@ -131,14 +139,14 @@
 ## v2026.10.24.6
 
 - **Screenshots in the README**: every Quick Preset Template plus six feature shots (open menu, tap to reveal closed and open, setpoint bar, vertical bar, fan chips). They're rendered from the built card in a real browser on every publish (`npm run screenshots`), so the gallery always matches the current build.
-- **New template "Signature"** replaces "Ecosee" so the name doesn't clash with another card. The thermostat name is hidden, the status (Idle / Heating / Cooling) sits beside the current temperature, and the wheel's centre value is a pill like the setpoint pills.
-- **Slim Strip** is now centred.
+- **New template "Signature"** replaces "Ecosee" so the name doesn't clash with another card. The thermostat name is hidden, the status (Idle / Heating / Cooling) sits beside the current temperature, and the wheel's center value is a pill like the setpoint pills.
+- **Slim Strip** is now centered.
 - New option **Status** (Thermostat → Layout): above, beside or below the current temperature.
-- New option **Centre value** for the wheel (Setpoint control): bubble or pill.
+- New option **Center value** for the wheel (Setpoint control): bubble or pill.
 
 ## v2026.10.24.5
 
-- **Centering fixed**: with Align set to Center, the temperature and the wheel or stepper beside it are now centred together as one group. Before, the temperature block stretched and pushed the control to the edge.
+- **Centering fixed**: with Align set to Center, the temperature and the wheel or stepper beside it are now centered together as one group. Before, the temperature block stretched and pushed the control to the edge.
 - **Tap to reveal** (Setpoint control → Show controls → "Shown when tapped"):
   - **Open by tapping:** the setpoint pill, the current temperature, or either one.
   - **While closed show:** the control's own value (the wheel bubble, the stepper number, or a read-only bar, any of which you can also tap), or nothing at all.
@@ -195,5 +203,5 @@ First build.
   - a card-wide button style, overridable per set with the same options
   - nine text elements
   - card surface settings
-  - four-mode colours everywhere
+  - four-mode colors everywhere
 - Visual editor in the Ltek panel style. Only the settings you change are saved.

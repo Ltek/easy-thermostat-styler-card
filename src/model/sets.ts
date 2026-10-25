@@ -190,7 +190,7 @@ export function toSetViews(hass: HomeAssistant, config: CardConfig): SetView[] {
       }
     }
     // The older device-only set.
-    for (const chip of set.chips ?? []) tiles.push({ kind: 'device', chip });
+    for (const chip of set.chips ?? []) if (!(chip.hide_when_off && valueIsOff(hass, chip.entity))) tiles.push({ kind: 'device', chip });
     // Buttons added by the user, in any set.
     for (const it of set.items ?? []) {
       if (it.hide) continue;
@@ -199,6 +199,7 @@ export function toSetViews(hass: HomeAssistant, config: CardConfig): SetView[] {
         tiles.push({ kind: 'mode', source: it.source, option: modeOption(it.source, it.value, it.name, it.icon) });
       } else if (it.kind === 'device') {
         const { kind: _k, hide: _h, ...chip } = it;
+        if (it.hide_when_off && valueIsOff(hass, it.entity)) continue;
         tiles.push({ kind: 'device', chip: chip as ChipConfig });
       } else {
         tiles.push({ kind: 'action', item: it, label: it.name ?? actionLabel(hass, it), icon: it.icon ?? actionIcon(it) });
@@ -231,6 +232,18 @@ export function toSetViews(hass: HomeAssistant, config: CardConfig): SetView[] {
 /** Open away from the edge the set sits on: top → down, bottom → up, left → right, right → left. */
 export function defaultMenuDirection(zone: Zone): 'down' | 'up' | 'left' | 'right' {
   return zone === 'bottom' ? 'up' : zone === 'left' ? 'right' : zone === 'right' ? 'left' : 'down';
+}
+
+const OFF_WORDS = new Set(['off', 'none', 'idle', 'closed', 'false', 'no', 'standby', 'stopped', 'not_home', 'unavailable', 'unknown', '']);
+
+/** "Nothing to show": off, 0 (or less), none, idle, closed, unavailable… */
+export function valueIsOff(hass: HomeAssistant, entityId: string): boolean {
+  const e = hass.states[entityId];
+  if (!e) return true;
+  const s = String(e.state).trim().toLowerCase();
+  if (OFF_WORDS.has(s)) return true;
+  const n = Number(s);
+  return s !== '' && Number.isFinite(n) && n <= 0;
 }
 
 const ACTION_ICONS = { script: 'mdi:script-text-play-outline', scene: 'mdi:palette-outline', service: 'mdi:flash-outline' };

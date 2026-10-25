@@ -5,7 +5,7 @@ import { BG_DEFAULTS, bgItems, type BgView } from '../model/background';
 
 // The card's background layers, all behind the content (.grid):
 //   .bg-base   image (+ darken)       — full strength, not state-driven
-//   .bg        the moving style       — state colours, direction, speed
+//   .bg        the moving style       — state colors, direction, speed
 //   .bg-finish scrim, vignette, grain — readability on top of both
 
 const sparkles = Array.from({ length: 14 }, (_, i) => ({

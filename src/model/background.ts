@@ -6,18 +6,18 @@ import { num } from './parse';
 // Moving backgrounds. A pure resolver turns hass + config into a BgView:
 // which style, which state (heating / cooling / idle / fan / off), which way
 // it moves (heat rises, cold sinks, fan swirls), how fast and how strong.
-// Colours and rates reach the stylesheet as custom properties only.
+// Colors and rates reach the stylesheet as custom properties only.
 
 export const BG_STYLES: [BgStyle, string, string][] = [
   ['none', 'None', ''],
   ['plasma', 'Liquid Plasma', 'Soft glowing blobs that drift and blend into each other.'],
   ['lava', 'Lava Lamp', 'Molten blobs that merge and split, rising from a pool.'],
   ['aurora', 'Aurora', 'Ribbons of light flowing across the card.'],
-  ['flow', 'Thermal Flow', 'Bands of colour streaming up while heating and down while cooling.'],
+  ['flow', 'Thermal Flow', 'Bands of color streaming up while heating and down while cooling.'],
   ['shimmer', 'Heat Shimmer / Frost', 'Rising heat haze, or cold mist sinking with sparkles.'],
   ['particles', 'Embers / Snow', 'Sparks floating up, or snowflakes drifting down.'],
   ['core', 'Breathing Core', 'A glow behind the temperature that slowly swells.'],
-  ['mesh', 'Mesh Gradient', 'Large soft colour fields that slowly orbit and blend.'],
+  ['mesh', 'Mesh Gradient', 'Large soft color fields that slowly orbit and blend.'],
   ['beam', 'Glow Beam', 'A soft diagonal beam of light that drifts.'],
 ];
 
@@ -201,7 +201,7 @@ export function frosted(config: CardConfig): boolean {
   return !!(config.frosted ?? config.background?.frosted);
 }
 
-/** The card's base fill: colour (or transparent) or a gradient. Unset = theme. */
+/** The card's base fill: color (or transparent) or a gradient. Unset = theme. */
 export function baseFill(config: CardConfig): string | undefined {
   const b: BackgroundConfig = config.background ?? {};
   const stops = b.gradient?.stops?.filter(Boolean) ?? [];

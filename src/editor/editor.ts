@@ -80,6 +80,31 @@ const KIND_ICON: Record<ButtonItem['kind'], string> = { mode: 'mdi:thermostat', 
 
 type Opt = [string, string];
 
+const SMALL = new Set(['a', 'an', 'the', 'and', 'or', 'nor', 'of', 'to', 'in', 'on', 'at', 'by', 'for', 'with', 'from', 'as', 'per', 'via', 'vs']);
+
+/** Title Case for titles, labels, subtitles and dropdown choices (not hints).
+ *  Words that already carry capitals (HVAC, RF, °F) are left alone; small words
+ *  stay lower case except at the start or after "(", ":", "·", "—", "/". */
+export function tc(s: string): string {
+  let start = true;
+  return s
+    .split(/(\s+)/)
+    .map((w) => {
+      if (/^\s+$/.test(w) || w === '') return w;
+      const m = /^([^A-Za-z]*)([A-Za-z].*)$/.exec(w);
+      let out = w;
+      if (m) {
+        const [, pre, rest] = m as unknown as [string, string, string];
+        const lower = rest.toLowerCase();
+        const keepSmall = !start && !pre.includes('(') && SMALL.has(lower.replace(/[^a-z]/g, ''));
+        out = /[A-Z]/.test(rest.slice(1)) || keepSmall ? w : pre + rest.charAt(0).toUpperCase() + rest.slice(1);
+      }
+      start = /[(:·—/]$/.test(w) || /^[(:·—/]+$/.test(w);
+      return out;
+    })
+    .join('');
+}
+
 export class EasyThermostatStylerCardEditor extends LitElement {
   static override styles = [
     unsafeCSS(EDITOR_CSS),
@@ -168,14 +193,14 @@ export class EasyThermostatStylerCardEditor extends LitElement {
   private _panel(id: string, icon: string, title: string, body: TemplateResult): TemplateResult {
     this._panels.add(id);
     return html`<details class="etce-sec" ?open=${this._open.has(id)} @toggle=${(e: Event) => this._toggleOpen(id, e, true)}>
-      <summary><ha-icon icon=${icon}></ha-icon>${title}<ha-icon class="chev" icon="mdi:chevron-down"></ha-icon></summary>
+      <summary><ha-icon icon=${icon}></ha-icon>${tc(title)}<ha-icon class="chev" icon="mdi:chevron-down"></ha-icon></summary>
       <div class="etce-body">${body}</div>
     </details>`;
   }
 
   private _sub(id: string, title: string, body: () => TemplateResult): TemplateResult {
     return html`<details class="etce-sub" ?open=${this._open.has(id)} @toggle=${(e: Event) => this._toggleOpen(id, e)}>
-      <summary>${title}<ha-icon class="chev" icon="mdi:chevron-down"></ha-icon></summary>
+      <summary>${tc(title)}<ha-icon class="chev" icon="mdi:chevron-down"></ha-icon></summary>
       <div class="etce-sub-body">${body()}</div>
     </details>`;
   }
@@ -202,7 +227,7 @@ export class EasyThermostatStylerCardEditor extends LitElement {
       <summary>
         <ha-icon class="etce-sicon" icon=${head.icon}></ha-icon>
         <span class="etce-sname">${head.name}</span>
-        ${head.tag ? html`<span class="etce-stag">${head.tag}</span>` : nothing}
+        ${head.tag ? html`<span class="etce-stag">${tc(head.tag)}</span>` : nothing}
         <span
           class="etce-sctl"
           @click=${(e: Event) => {
@@ -218,7 +243,7 @@ export class EasyThermostatStylerCardEditor extends LitElement {
   }
 
   private _group(title: string, first = false): TemplateResult {
-    return html`<div class="etce-group ${first ? 'first' : ''}">${title}</div>`;
+    return html`<div class="etce-group ${first ? 'first' : ''}">${tc(title)}</div>`;
   }
 
   private _hint(text: string): TemplateResult {
@@ -227,7 +252,7 @@ export class EasyThermostatStylerCardEditor extends LitElement {
 
   private _check(label: string, cur: boolean, onChange: (v: boolean) => void): TemplateResult {
     return html`<label class="etce-check"
-      ><input type="checkbox" .checked=${cur} @change=${(e: Event) => onChange((e.target as HTMLInputElement).checked)} />${label}</label
+      ><input type="checkbox" .checked=${cur} @change=${(e: Event) => onChange((e.target as HTMLInputElement).checked)} />${tc(label)}</label
     >`;
   }
 
@@ -236,11 +261,11 @@ export class EasyThermostatStylerCardEditor extends LitElement {
     return this._check(label, cur, (v) => this._put(path, v, def));
   }
 
-  private _selectRow(label: string, cur: string, opts: Opt[], onChange: (v: string) => void): TemplateResult {
+  private _selectRow(label: string, cur: string, opts: Opt[], onChange: (v: string) => void, raw = false): TemplateResult {
     return html`<div class="etce-row">
-      <label class="lbl">${label}</label>
+      <label class="lbl">${tc(label)}</label>
       <select @change=${(e: Event) => onChange((e.target as HTMLSelectElement).value)}>
-        ${opts.map(([v, n]) => html`<option value=${v} ?selected=${v === cur}>${n}</option>`)}
+        ${opts.map(([v, n], k) => html`<option value=${v} ?selected=${v === cur}>${raw && k > 0 ? n : tc(n)}</option>`)}
       </select>
     </div>`;
   }
@@ -261,7 +286,7 @@ export class EasyThermostatStylerCardEditor extends LitElement {
     fmt: (n: number) => string = (n) => `${n}px`,
   ): TemplateResult {
     return html`<div class="etce-row etce-nowrap">
-      <label class="lbl">${label}</label>
+      <label class="lbl">${tc(label)}</label>
       <input
         type="range"
         min=${min}
@@ -296,7 +321,7 @@ export class EasyThermostatStylerCardEditor extends LitElement {
     defaultLabel: string,
     seedHex: string,
     write: (v: string | undefined) => void,
-    opts: { transparent?: boolean } = {},
+    opts: { transparent?: boolean; transparentLabel?: string } = {},
   ): TemplateResult {
     let mode = (this._cmode[id] as ReturnType<typeof colorMode>) || colorMode(cur);
     if (mode === 'transparent' && !opts.transparent) mode = 'css';
@@ -325,17 +350,17 @@ export class EasyThermostatStylerCardEditor extends LitElement {
       else this.requestUpdate(); // css: keep the current value, just show the text field
     };
     return html`<div class="etce-row">
-      <label class="lbl">${label}</label>
+      <label class="lbl">${tc(label)}</label>
       <div class="etce-color">
         <select class="etce-cmode" @change=${(e: Event) => onMode((e.target as HTMLSelectElement).value)}>
           ${[
             ['default', defaultLabel],
-            ...(opts.transparent ? [['transparent', 'Transparent']] : []),
+            ...(opts.transparent ? [['transparent', opts.transparentLabel ?? 'Transparent']] : []),
             ['theme', 'Theme color'],
             ['custom', 'Custom color'],
             ['css', 'Custom CSS'],
           ].map(
-            ([m, n]) => html`<option value=${m!} ?selected=${m === mode}>${n}</option>`,
+            ([m, n]) => html`<option value=${m!} ?selected=${m === mode}>${tc(n!)}</option>`,
           )}
         </select>
         ${field}
@@ -349,7 +374,7 @@ export class EasyThermostatStylerCardEditor extends LitElement {
 
   private _selector(label: string, selector: Record<string, unknown>, value: unknown, onChange: (v: unknown) => void): TemplateResult {
     return html`<div class="etce-row">
-      ${label ? html`<label class="lbl">${label}</label>` : nothing}
+      ${label ? html`<label class="lbl">${tc(label)}</label>` : nothing}
       <ha-selector
         .hass=${this.hass}
         .selector=${selector}
@@ -409,7 +434,7 @@ export class EasyThermostatStylerCardEditor extends LitElement {
   private _thermostatBody(): TemplateResult {
     const c = this._config!;
     return html`
-      ${this._hint('The climate entity this card controls, and what the centre of the card shows.')}
+      ${this._hint('The climate entity this card controls, and what the center of the card shows.')}
       ${this._selector('Entity', { entity: { domain: 'climate' } }, c.entity, (v) => this._put('entity', v || undefined))}
       <div class="etce-row">
         <label class="lbl">Name</label>
@@ -485,7 +510,7 @@ export class EasyThermostatStylerCardEditor extends LitElement {
             ${control === 'wheel'
               ? html`${this._group('Wheel')}
                 ${this._slider('setpoint.neighbors', 'Next values shown', 0, 3, 1, DEFAULTS.neighbors, (n) => String(n))}
-                ${this._select('setpoint.wheel_style', 'Centre value', [['bubble', 'Bubble'], ['pill', 'Pill (like the setpoint pills)']], DEFAULTS.wheel_style)}`
+                ${this._select('setpoint.wheel_style', 'Center value', [['bubble', 'Bubble'], ['pill', 'Pill (like the setpoint pills)']], DEFAULTS.wheel_style)}`
               : nothing}`)
         : nothing}
       ${control === 'bar' ? this._barBody() : nothing}
@@ -581,8 +606,8 @@ export class EasyThermostatStylerCardEditor extends LitElement {
       ${this._bool('setpoint.bar.flags', 'Show value flags on the handles', b.flags)}
       ${(this._get('setpoint.bar.flags') ?? b.flags)
         ? html`${this._sidePlacement('flag_position', 'Flag placement', 'above', 'left')}
-          ${this._color('setpoint.bar.flag_color', 'Flag colour', 'Heat / cool colour', '#ff8100')}
-          ${this._color('setpoint.bar.flag_text_color', 'Flag text colour', 'White', '#ffffff')}`
+          ${this._color('setpoint.bar.flag_color', 'Flag color', 'Heat / cool color', '#ff8100')}
+          ${this._color('setpoint.bar.flag_text_color', 'Flag text color', 'White', '#ffffff')}`
         : nothing}
     `;
   }
@@ -631,11 +656,11 @@ export class EasyThermostatStylerCardEditor extends LitElement {
         ? this._slider('setpoint.bar.length', 'Height', 100, 400, 10, 200)
         : nothing}
       ${this._slider('setpoint.bar.height', 'Thickness', 6, 40, 1, b.height)}
-      ${this._group('Colours')}
+      ${this._group('Colors')}
       ${this._select('setpoint.bar.look', 'Look', [['zones', 'Heat / comfort / cool zones'], ['gradient', 'Gradient']], b.look)}
       ${look === 'gradient'
         ? html`<div class="etce-row">
-            <label class="lbl">Gradient (cold → hot)</label>
+            <label class="lbl">Gradient (Cold → Hot)</label>
             <div class="etce-stops">
               ${stops.map(
                 (s, i) => html`<input
@@ -665,7 +690,7 @@ export class EasyThermostatStylerCardEditor extends LitElement {
         this._put('setpoint.bar.handle_border_color', on ? undefined : 'none'),
       )}
       ${this._get('setpoint.bar.handle_border_color') !== 'none'
-        ? this._color('setpoint.bar.handle_border_color', 'Handle border colour', 'Heat / cool colour', '#ffffff')
+        ? this._color('setpoint.bar.handle_border_color', 'Handle border color', 'Heat / cool color', '#ffffff')
         : nothing}
     `;
   }
@@ -727,9 +752,9 @@ export class EasyThermostatStylerCardEditor extends LitElement {
         ${this._group('Location', true)}
         ${this._select('toggles_zone', 'Default location', [['bottom', 'Bottom'], ['top', 'Top'], ['left', 'Left'], ['right', 'Right']], DEFAULTS.toggles_zone)}
         ${this._hint('Where sets go when they have no Side of their own, and where the toggle buttons sit. A set’s own Side always wins.')}
-        ${this._group('Centring')}
-        ${this._bool('zones.centered', 'Keep the main area centred', true)}
-        ${this._hint('Balances the left and right sides so the temperature and controls stay on the card’s centre, whatever sits beside them.')}
+        ${this._group('Centering')}
+        ${this._bool('zones.centered', 'Keep the main area centered', true)}
+        ${this._hint('Balances the left and right sides so the temperature and controls stay on the card’s center, whatever sits beside them.')}
         ${this._group('Distance from the main area')}
         ${this._slider('zones.gap', 'All sides', 0, 48, 1, 12)}
         ${(['top', 'bottom', 'left', 'right'] as const).map((k) => {
@@ -785,6 +810,7 @@ export class EasyThermostatStylerCardEditor extends LitElement {
         curIdx >= 0 ? String(curIdx) : '',
         [['', 'Own row'], ...others.map(([x, k]) => [String(k), label(x, k)] as Opt)],
         choose,
+        true,
       )}
       ${curIdx >= 0 ? this._hint('Sits in that set’s row, on its side of the card; this set’s own Side is ignored.') : nothing}`;
   }
@@ -948,6 +974,7 @@ export class EasyThermostatStylerCardEditor extends LitElement {
         this._setItems(all, k, [...this._itemsOf(all[k]!), copy]);
         this._writeSets(all);
       },
+      true,
     );
   }
 
@@ -1083,6 +1110,8 @@ export class EasyThermostatStylerCardEditor extends LitElement {
         ${this._check('Show name', ch.show_name ?? true, (v) => upd('show_name', v, true))}
         ${this._check('Show value', ch.show_state ?? true, (v) => upd('show_state', v, true))}
       </div>
+      ${this._check('Hide when off, 0 or none', !!ch.hide_when_off, (v) => upd('hide_when_off', v, false))}
+      ${this._hint('Hides this button while the value is off, 0, none, idle, closed or unavailable, and shows it again when there is something to show.')}
       ${ch.type === 'rf_fan' ? this._rfFanInfo(ch) : nothing}
       ${ch.type === 'rf_fan'
         ? this._selectRow('Speed shows as', ch.speed_format ?? 'number', [['number', 'Number (4)'], ['fraction', 'Fraction (4/10)'], ['percent', 'Percent (40%)']], (v) =>
@@ -1136,6 +1165,7 @@ export class EasyThermostatStylerCardEditor extends LitElement {
           }
           this._writeSets(all);
         },
+        true,
       )}
       ${this._hint('Gives the chosen sets exactly this set’s button style (a set with no style of its own follows the card’s Button style).')}`;
   }
@@ -1206,7 +1236,11 @@ export class EasyThermostatStylerCardEditor extends LitElement {
       return this._sliderRow(label, v ?? inh, min, max, step, v !== undefined, (n) => put(k, n), fmt);
     };
     const col = (k: keyof typeof cur, label: string, seed: string) =>
-      this._colorRow(`${base}.${k}`, label, cur[k] as string | undefined, isSet ? 'Card default' : 'Automatic', seed, (v) => put(k, v));
+      this._colorRow(`${base}.${k}`, label, cur[k] as string | undefined, isSet ? 'Card default' : 'Automatic', seed, (v) => put(k, v), {
+        // Backgrounds can be see-through; borders can be switched off.
+        transparent: /background|border/.test(String(k)),
+        transparentLabel: /border/.test(String(k)) ? 'None' : 'Transparent',
+      });
     let first = true;
     const section = (id: string, title: string, body: () => TemplateResult) => {
       if (!isSet) return this._sub(`bs-${id}`, title, body);
@@ -1239,9 +1273,9 @@ export class EasyThermostatStylerCardEditor extends LitElement {
       ${sl('icon_gap', 'Icon to text spacing', 0, 30, undefined, 1, 4)}
       ${sel('font_weight' as keyof typeof cur, 'Text weight', [['300', 'Light'], ['400', 'Regular'], ['500', 'Medium'], ['600', 'Semibold'], ['700', 'Bold']])}
       `)}
-      ${section('inactive', 'Colours: inactive', () => html`
+      ${section('inactive', 'Colors: inactive', () => html`
       ${col('background', 'Background', '#2a2a2a')} ${col('color', 'Text & icon', '#cccccc')} ${col('border_color', 'Border', '#555555')}`)}
-      ${section('active', 'Colours: active', () => html`
+      ${section('active', 'Colors: active', () => html`
       ${this._hint('Unset = the mode’s own color (heat orange, cool blue…), or the theme primary for presets and fan.')}
       ${col('active_background', 'Background', '#ff8100')} ${col('active_color', 'Text & icon', '#ffffff')}
       ${col('active_border_color', 'Border', '#ff8100')}`)}
@@ -1301,7 +1335,7 @@ export class EasyThermostatStylerCardEditor extends LitElement {
       this._emit(next);
     };
     return html`
-      ${this._hint('Make parts of the card glow or pulse in the heat colour while heating and the cool colour while cooling.')}
+      ${this._hint('Make parts of the card glow or pulse in the heat color while heating and the cool color while cooling.')}
       ${this._sub('fx-parts', 'Parts', () => html`${FX_TARGETS.map((t) => this._selectRow(FX_LABELS[t], fxMode(c, t), opts, (v) => write(t, v)))}`)}
       ${this._sub('fx-when', 'When', () => html`
       ${this._select(
@@ -1314,8 +1348,8 @@ export class EasyThermostatStylerCardEditor extends LitElement {
       ${this._sub('fx-look', 'Look', () => html`
       ${this._slider('effects.size', 'Glow size', 2, 60, 1, FX_DEFAULTS.size)}
       ${this._slider('effects.speed', 'Pulse speed', 0.6, 8, 0.2, FX_DEFAULTS.speed, (n) => `${n.toFixed(1)}s`)}
-      ${this._color('effects.heat_color', 'Heating colour', 'Theme heat', '#ff8100')}
-      ${this._color('effects.cool_color', 'Cooling colour', 'Theme cool', '#2b9af9')}`)}
+      ${this._color('effects.heat_color', 'Heating color', 'Theme heat', '#ff8100')}
+      ${this._color('effects.cool_color', 'Cooling color', 'Theme cool', '#2b9af9')}`)}
     `;
   }
 
@@ -1335,9 +1369,9 @@ export class EasyThermostatStylerCardEditor extends LitElement {
     return html`
       ${this._hint('The card’s surface. A moving background follows what the thermostat is doing: heat rises, cold sinks, a fan swirls, idle barely drifts.')}
       ${this._sub('bg-base', 'Base fill', () => html`
-      ${this._selectRow('Fill', fill, [['color', 'Colour'], ['gradient', 'Gradient'], ['image', 'Image']], (v) => put('fill', v, 'color'))}
+      ${this._selectRow('Fill', fill, [['color', 'Color'], ['gradient', 'Gradient'], ['image', 'Image']], (v) => put('fill', v, 'color'))}
       ${fill === 'color'
-        ? this._colorRow('background.color', 'Colour', b.color ?? (c.card?.background as string | undefined), 'Theme card', '#1c1c1c', writeColor, { transparent: true })
+        ? this._colorRow('background.color', 'Color', b.color ?? (c.card?.background as string | undefined), 'Theme card', '#1c1c1c', writeColor, { transparent: true })
         : nothing}
       ${fill === 'gradient' ? this._gradientEditor() : nothing}
       ${fill === 'image' ? this._imageEditor() : nothing}`)}
@@ -1362,7 +1396,7 @@ export class EasyThermostatStylerCardEditor extends LitElement {
             ${this._hint('Optional. Any entity that says how much air is moving: a fan (%), speed levels, on/off, low / medium / high, or an airflow sensor. While it shows air moving, the background swirls at that speed. Without one, Fan Only mode uses the thermostat’s own fan speed.')}
             ${b.air_entity || b.fan_entity
               ? html`<div class="etce-row">
-                    <label class="lbl">Full speed at</label>
+                    <label class="lbl">Full Speed at</label>
                     <input
                       type="number"
                       min="0"
@@ -1379,7 +1413,7 @@ export class EasyThermostatStylerCardEditor extends LitElement {
               : nothing}
           `
         : nothing}`)}
-      ${style !== 'none' ? this._sub('bg-colours', 'Colours by state', () => this._bgColours()) : nothing}
+      ${style !== 'none' ? this._sub('bg-colors', 'Colors by state', () => this._bgColors()) : nothing}
       ${this._sub('bg-finish', 'Finish', () => html`
       ${this._slider('background.scrim', 'Lighten / darken', -60, 60, 5, 0, (n) => (n > 0 ? `Darken ${n}%` : n < 0 ? `Lighten ${-n}%` : 'None'))}
       ${this._slider('background.vignette', 'Vignette', 0, 100, 5, 0, pct)}
@@ -1395,17 +1429,17 @@ export class EasyThermostatStylerCardEditor extends LitElement {
       ${this._selectRow('Type', g.type ?? 'linear', [['linear', 'Linear'], ['radial', 'Radial']], (v) => this._put('background.gradient.type', v, 'linear'))}
       ${(g.type ?? 'linear') === 'linear' ? this._slider('background.gradient.angle', 'Angle', 0, 360, 5, 135, (n) => `${n}°`) : nothing}
       ${stops.map(
-        (s, i) => html`${this._colorRow(`bg-stop-${i}`, `Colour ${i + 1}`, s, 'Card colour', '#1c2a3a', (v) => {
+        (s, i) => html`${this._colorRow(`bg-stop-${i}`, `Color ${i + 1}`, s, 'Card color', '#1c2a3a', (v) => {
             const next = [...stops];
             next[i] = v ?? 'var(--card-background-color)';
             writeStops(next);
           })}
           ${stops.length > 2
-            ? html`<div class="etce-row"><button class="etce-act del" title="Remove colour" @click=${() => writeStops(stops.filter((_, k) => k !== i))}>
+            ? html`<div class="etce-row"><button class="etce-act del" title="Remove color" @click=${() => writeStops(stops.filter((_, k) => k !== i))}>
                 <ha-icon icon="mdi:trash-can-outline"></ha-icon></button></div>`
             : nothing}`,
       )}
-      ${stops.length < 4 ? html`<div class="etce-addbar"><button class="etce-add" @click=${() => writeStops([...stops, '#000000'])}>+ Colour</button></div>` : nothing}
+      ${stops.length < 4 ? html`<div class="etce-addbar"><button class="etce-add" @click=${() => writeStops([...stops, '#000000'])}>+ Color</button></div>` : nothing}
     `;
   }
 
@@ -1428,11 +1462,11 @@ export class EasyThermostatStylerCardEditor extends LitElement {
     `;
   }
 
-  private _bgColours(): TemplateResult {
+  private _bgColors(): TemplateResult {
     const own = this._config!.background?.colors ?? {};
-    return html`${this._hint('Two colours per state. Unset follows your theme’s heat, cool and fan colours.')}
+    return html`${this._hint('Two colors per state. Unset follows your theme’s heat, cool and fan colors.')}
       ${BG_STATES.map(
-        ([k, label], n) => html`<div class="etce-group ${n === 0 ? 'first' : ''}">${label}</div>
+        ([k, label], n) => html`<div class="etce-group ${n === 0 ? 'first' : ''}">${tc(label)}</div>
           ${this._colorRow(`bg-${k}-main`, 'Main', own[k]?.main, 'Automatic', /^#/.test(BG_PALETTE[k].main) ? BG_PALETTE[k].main : k.includes('cool') ? '#2b9af9' : k === 'fan' ? '#00bfa5' : '#ff8100', (v) =>
             this._put(`background.colors.${k}.main`, v),
           )}

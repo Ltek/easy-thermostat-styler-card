@@ -6,17 +6,17 @@ https://github.com/Ltek/easy-thermostat-styler-card
 
 [![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=Ltek&repository=easy-thermostat-styler-card&category=plugin)
 
-Current build: **v2026.10.25.19** · full history in [CHANGELOG.md](CHANGELOG.md)
+Current build: **v2026.10.25.20** · full history in [CHANGELOG.md](CHANGELOG.md)
 
 ---
 
 ## Features
 
 - **Setpoint control:** pick one per card.
-  - **Wheel:** scroll or drag through values. Place it left, centre or right, set its size, show 0–3 next values either side, and put the − / + buttons beside it, above and below, or hide them.
+  - **Wheel:** scroll or drag through values. Place it left, center or right, set its size, show 0–3 next values either side, and put the − / + buttons beside it, above and below, or hide them.
   - **Stepper:** plain − / + buttons around the value.
   - **Setpoint bar:** heat and cool handles on a track, horizontal above or below the temperature or vertical beside it.
-    - Heat / comfort / cool zones or a colour gradient.
+    - Heat / comfort / cool zones or a color gradient.
     - Value flags above the handles, tick marks and labels, and a current-temperature marker.
     - Four handle shapes and its own range.
   - **None:** display only.
@@ -26,12 +26,12 @@ Current build: **v2026.10.25.19** · full history in [CHANGELOG.md](CHANGELOG.md
   - Within a set, reorder, hide, rename or re-icon any button.
 - **Compact mode:** any set can sit behind a toggle button, or one switch puts them all there. Each browser remembers which ones are open.
 - **Build your own sets:** a set can hold any mix of buttons: mode buttons (any HVAC mode, preset or fan mode), devices and sensors showing their value, and action buttons (script, scene or any service). Mode, Preset and Fan fill themselves from your thermostat; add your own buttons to them or make new sets. Duplicate buttons and sets, copy a button to another set, and copy a set's style to others.
-- **Any set as buttons or chips:** every button set, including device sets, can use the Button or Chip look with the same style options. Sets can **share a row** with any other set, and the main area stays **centred** with an adjustable distance to the buttons around it.
+- **Any set as buttons or chips:** every button set, including device sets, can use the Button or Chip look with the same style options. Sets can **share a row** with any other set, and the main area stays **centered** with an adjustable distance to the buttons around it.
 - **Expandable menus:** a set can collapse to one button showing the current value (for example "Mode · Heat"). Tap it and the full list opens up, down, left or right, floating over the card. Tap outside or press Escape to close it.
 - **Tap to reveal:** keep the card calm. The controls stay folded away (showing just the pill, or the control's own value) until you tap the temperature or a setpoint pill. They can open in place of the big number and fold away again after a number of seconds you choose.
-- **Heating / cooling effects:** make the whole card, the setpoint value, the setpoint pill, the mode button or its icon glow, pulse, or both, in the heat colour while heating and the cool colour while cooling. You set when they run, the glow size, the pulse speed and the colours.
-- **Moving backgrounds:** nine styles: Liquid Plasma, Lava Lamp, Aurora, Thermal Flow, Heat Shimmer / Frost, Embers / Snow, Breathing Core, Mesh Gradient and Glow Beam. Each follows what the system is doing: heat rises, cold sinks, Fan Only, or anything you pick under **Sync to Air Movement** (a fan, speed levels, on/off, low / medium / high, an airflow sensor), swirls at that speed, idle barely drifts. Each state has its own colours, and the motion speeds up the further the room is from the setpoint.
-- **Background fill:** theme, transparent, any colour, a gradient or an image. Add a lighten / darken scrim, vignette and grain.
+- **Heating / cooling effects:** make the whole card, the setpoint value, the setpoint pill, the mode button or its icon glow, pulse, or both, in the heat color while heating and the cool color while cooling. You set when they run, the glow size, the pulse speed and the colors.
+- **Moving backgrounds:** nine styles: Liquid Plasma, Lava Lamp, Aurora, Thermal Flow, Heat Shimmer / Frost, Embers / Snow, Breathing Core, Mesh Gradient and Glow Beam. Each follows what the system is doing: heat rises, cold sinks, Fan Only, or anything you pick under **Sync to Air Movement** (a fan, speed levels, on/off, low / medium / high, an airflow sensor), swirls at that speed, idle barely drifts. Each state has its own colors, and the motion speeds up the further the room is from the setpoint.
+- **Background fill:** theme, transparent, any color, a gradient or an image. Add a lighten / darken scrim, vignette and grain.
 - **Frosted glass controls:** buttons, menus, chips, pills and the wheel's setpoint bubble turn see-through with a blur.
 - **Quick Preset Templates:** nine starting points, each with its own setpoint control, button style and layout: Signature, Mission Control, Tap & Go, Slim Strip, Side Rail, Wall Tablet, Minimal Glass, Neon and Pocket.
 - **Ceiling fan chips:** built in for the [ha-rf-fan](https://github.com/dasimon135/ha-rf-fan) integration.
@@ -40,10 +40,10 @@ Current build: **v2026.10.25.19** · full history in [CHANGELOG.md](CHANGELOG.md
   - Tap opens the [RF Fan card](https://github.com/Ltek/rf-fan-card) in a pop-up; hold toggles the fan or its light.
   - Plain entity chips work for anything else.
 - **Styling:**
-  - One button style for the whole card, which each set can override with the same options: tonal, filled, outlined or ghost, plus shape, content, sizes, and inactive and active colours.
-  - Nine text elements, each with size, weight, colour, case, spacing, italic and opacity.
+  - One button style for the whole card, which each set can override with the same options: tonal, filled, outlined or ghost, plus shape, content, sizes, and inactive and active colors.
+  - Nine text elements, each with size, weight, color, case, spacing, italic and opacity.
   - The card's background, border, corners, padding, and a glow while heating or cooling.
-  - Every colour can follow your theme, be a custom colour, or any CSS.
+  - Every color can follow your theme, be a custom color, or any CSS.
 - **Test mode:** in the editor, make the card act as if it were heating, cooling, idle, on fan or off, or cycle through all of them, to see the effects and moving background. It isn't saved and switches off when you close the editor.
 - **Visual editor:** everything is set in the editor, and YAML is optional. Only the settings you change are saved.
 
@@ -51,8 +51,8 @@ Current build: **v2026.10.25.19** · full history in [CHANGELOG.md](CHANGELOG.md
 ## Quick Preset Templates
 
 <table>
-<tr><td align="center" width="33%"><img src="screenshots/template-signature.png" width="260" alt="Signature" /><br /><sub><b>Signature</b>: Big light number with the status under it, a pill-centred wheel on the right, tinted mode buttons.</sub></td><td align="center" width="33%"><img src="screenshots/template-mission.png" width="260" alt="Mission Control" /><br /><sub><b>Mission Control</b>: Setpoint bar with flags and ticks under the number. Round icon-only modes up top, preset and fan as menus below.</sub></td><td align="center" width="33%"><img src="screenshots/template-tap.png" width="260" alt="Tap & Go" /><br /><sub><b>Tap & Go</b>: Calm until you need it: tap the temperature or a pill and the wheel takes the number’s place, then folds away after 6 s.</sub></td></tr>
-<tr><td align="center" width="33%"><img src="screenshots/template-slim.png" width="260" alt="Slim Strip" /><br /><sub><b>Slim Strip</b>: One short centred row: name and number with a small stepper beside them, every set as a menu.</sub></td><td align="center" width="33%"><img src="screenshots/template-rail.png" width="260" alt="Side Rail" /><br /><sub><b>Side Rail</b>: Modes stacked down the left as outlined circles, a vertical setpoint bar on the right, preset and fan menus below.</sub></td><td align="center" width="33%"><img src="screenshots/template-wall.png" width="260" alt="Wall Tablet" /><br /><sub><b>Wall Tablet</b>: Big and finger-friendly: huge number, large wheel under it with three next values, chunky filled mode tiles.</sub></td></tr>
+<tr><td align="center" width="33%"><img src="screenshots/template-signature.png" width="260" alt="Signature" /><br /><sub><b>Signature</b>: Big light number with the status under it, a pill-centered wheel on the right, tinted mode buttons.</sub></td><td align="center" width="33%"><img src="screenshots/template-mission.png" width="260" alt="Mission Control" /><br /><sub><b>Mission Control</b>: Setpoint bar with flags and ticks under the number. Round icon-only modes up top, preset and fan as menus below.</sub></td><td align="center" width="33%"><img src="screenshots/template-tap.png" width="260" alt="Tap & Go" /><br /><sub><b>Tap & Go</b>: Calm until you need it: tap the temperature or a pill and the wheel takes the number’s place, then folds away after 6 s.</sub></td></tr>
+<tr><td align="center" width="33%"><img src="screenshots/template-slim.png" width="260" alt="Slim Strip" /><br /><sub><b>Slim Strip</b>: One short centered row: name and number with a small stepper beside them, every set as a menu.</sub></td><td align="center" width="33%"><img src="screenshots/template-rail.png" width="260" alt="Side Rail" /><br /><sub><b>Side Rail</b>: Modes stacked down the left as outlined circles, a vertical setpoint bar on the right, preset and fan menus below.</sub></td><td align="center" width="33%"><img src="screenshots/template-wall.png" width="260" alt="Wall Tablet" /><br /><sub><b>Wall Tablet</b>: Big and finger-friendly: huge number, large wheel under it with three next values, chunky filled mode tiles.</sub></td></tr>
 <tr><td align="center" width="33%"><img src="screenshots/template-glass.png" width="260" alt="Minimal Glass" /><br /><sub><b>Minimal Glass</b>: No card background or border, no labels: just the number, a stepper and text-only mode buttons.</sub></td><td align="center" width="33%"><img src="screenshots/template-neon.png" width="260" alt="Neon" /><br /><sub><b>Neon</b>: A cyan-to-pink gradient bar above the number with diamond handles, square filled buttons and an accent border.</sub></td><td align="center" width="33%"><img src="screenshots/template-pocket.png" width="260" alt="Pocket" /><br /><sub><b>Pocket</b>: Phone-sized: small number, tiny stepper on the left, everything else behind round toggles along the top.</sub></td></tr>
 <tr><td align="center" width="33%"><img src="screenshots/template-lava.png" width="260" alt="Lava Lamp" /><br /><sub><b>Lava Lamp</b>: Molten blobs rise while heating and sink while cooling, behind frosted menus and a big light number.</sub></td><td align="center" width="33%"><img src="screenshots/template-aurora.png" width="260" alt="Northern Lights" /><br /><sub><b>Northern Lights</b>: Aurora ribbons that drift with the system, a gradient bar under the number, and ghost buttons.</sub></td><td align="center" width="33%"><img src="screenshots/template-frost.png" width="260" alt="Frosted Glass" /><br /><sub><b>Frosted Glass</b>: A soft light beam behind frosted glass controls, with a vignette and fine grain.</sub></td></tr>
 </table>

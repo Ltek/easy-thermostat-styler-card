@@ -50,7 +50,7 @@ export const TEMPLATES: Template[] = [
   {
     id: 'signature',
     name: 'Signature',
-    hint: 'Big light number with the status under it, a pill-centred wheel on the right, tinted mode buttons.',
+    hint: 'Big light number with the status under it, a pill-centered wheel on the right, tinted mode buttons.',
     icon: 'mdi:thermostat',
     tags: ['pill wheel', 'status below', 'tonal'],
     values: {
@@ -96,9 +96,9 @@ export const TEMPLATES: Template[] = [
   {
     id: 'slim',
     name: 'Slim Strip',
-    hint: 'One short centred row: name and number with a small stepper beside them, every set as a menu.',
+    hint: 'One short centered row: name and number with a small stepper beside them, every set as a menu.',
     icon: 'mdi:view-sequential-outline',
-    tags: ['stepper', 'menus', 'centred'],
+    tags: ['stepper', 'menus', 'centered'],
     values: {
       core_align: 'center',
       show_status: false,

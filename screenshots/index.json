@@ -1,8 +1,8 @@
 {
-  "template-signature": "Signature: Big light number with the status under it, a pill-centred wheel on the right, tinted mode buttons.",
+  "template-signature": "Signature: Big light number with the status under it, a pill-centered wheel on the right, tinted mode buttons.",
   "template-mission": "Mission Control: Setpoint bar with flags and ticks under the number. Round icon-only modes up top, preset and fan as menus below.",
   "template-tap": "Tap & Go: Calm until you need it: tap the temperature or a pill and the wheel takes the number’s place, then folds away after 6 s.",
-  "template-slim": "Slim Strip: One short centred row: name and number with a small stepper beside them, every set as a menu.",
+  "template-slim": "Slim Strip: One short centered row: name and number with a small stepper beside them, every set as a menu.",
   "template-rail": "Side Rail: Modes stacked down the left as outlined circles, a vertical setpoint bar on the right, preset and fan menus below.",
   "template-wall": "Wall Tablet: Big and finger-friendly: huge number, large wheel under it with three next values, chunky filled mode tiles.",
   "template-glass": "Minimal Glass: No card background or border, no labels: just the number, a stepper and text-only mode buttons.",

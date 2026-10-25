@@ -27,7 +27,7 @@ export const cardStyles = css`
   }
   /* ---- heating / cooling effects (model/effects.ts) ----
      fx-on + fx-heat|fx-cool say which side is active; fx-<target>-glow|pulse
-     say which parts glow or pulse. --fx-c is the active colour. */
+     say which parts glow or pulse. --fx-c is the active color. */
   ha-card {
     --fx-size: 18px;
     --fx-speed: 2.4s;
@@ -44,7 +44,7 @@ export const cardStyles = css`
   ha-card.fx-card-pulse { animation: etc-fx-card var(--fx-speed) ease-in-out infinite; }
   ha-card.fx-card-glow.fx-card-pulse { animation-name: etc-fx-card-strong; }
 
-  /* Setpoint value: the wheel centre, the stepper number, the bar handle. */
+  /* Setpoint value: the wheel center, the stepper number, the bar handle. */
   ha-card.fx-heat.fx-setpoint-glow :is(.bubble.heat, .wheel-pill.heat, .handle.heat),
   ha-card.fx-cool.fx-setpoint-glow :is(.bubble.cool, .wheel-pill.cool, .handle.cool) { box-shadow: var(--fx-shadow); }
   ha-card.fx-heat.fx-setpoint-glow .stepper.heat .sv,
@@ -117,8 +117,8 @@ export const cardStyles = css`
       'bottom bottom bottom';
     gap: 0;
   }
-  /* Keep the main area centred: both side columns as wide as the wider side
-     (--side-w is measured), so the temperature stays on the card's centre. */
+  /* Keep the main area centered: both side columns as wide as the wider side
+     (--side-w is measured), so the temperature stays on the card's center. */
   .grid.centered.has-sides {
     grid-template-columns: minmax(0, var(--side-w, auto)) minmax(min-content, 1fr) minmax(0, var(--side-w, auto));
   }
@@ -206,6 +206,10 @@ export const cardStyles = css`
     font-variant-numeric: tabular-nums;
     margin: 4px 0;
   }
+  /* Centered: the number is centered and the unit hangs to its right, so the
+     unit doesn't push the number off center. */
+  .core.al-center .current { position: relative; }
+  .core.al-center .current > .unit { position: absolute; left: 100%; top: 0.08em; margin-left: 2px; }
   .current.eq-heating { color: var(--etc-t-cur-c, color-mix(in srgb, var(--etc-heat) 35%, var(--etc-fg))); }
   .current.eq-cooling { color: var(--etc-t-cur-c, color-mix(in srgb, var(--etc-cool) 35%, var(--etc-fg))); }
   .unit {
@@ -335,7 +339,7 @@ export const cardStyles = css`
     line-height: 1.1;
   }
   .bubble.cool, .stepper.cool .sv { --c: var(--etc-cool); }
-  /* Wheel centre as a pill (same look as the setpoint pills, scaled with the wheel). */
+  /* Wheel center as a pill (same look as the setpoint pills, scaled with the wheel). */
   .wheel-pill {
     font-size: calc(var(--etc-t-wv-fs, 28px) * var(--etc-scale, 1));
     padding: calc(6px * var(--etc-scale, 1)) calc(18px * var(--etc-scale, 1));

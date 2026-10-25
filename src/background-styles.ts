@@ -1,11 +1,11 @@
 import { css } from 'lit';
 
-// Moving backgrounds (components/background.ts). Static stylesheet; colours,
+// Moving backgrounds (components/background.ts). Static stylesheet; colors,
 // opacity and speed arrive as --etc-bg-a / --etc-bg-b / --etc-bg-op / --bg-rate.
 // Animation moves only transform and opacity; blurs are fixed (never animated).
 // Every duration is divided by --bg-rate, so one number speeds the whole style.
 
-// Registered so a state change cross-fades the colours instead of snapping.
+// Registered so a state change cross-fades the colors instead of snapping.
 const reg = (globalThis as { CSS?: { registerProperty?: (d: object) => void } }).CSS;
 for (const [name, syntax, initialValue] of [
   ['--etc-bg-a', '<color>', 'transparent'],
@@ -279,7 +279,7 @@ export const backgroundStyles = css`
     box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
   }
   ha-card.frosted .round { background: rgba(255, 255, 255, 0.06); }
-  /* The wheel's setpoint bubble: tinted glass in the heat / cool colour. */
+  /* The wheel's setpoint bubble: tinted glass in the heat / cool color. */
   ha-card.frosted .bubble {
     background: color-mix(in srgb, var(--c) 32%, rgba(255, 255, 255, 0.06));
     box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--c) 60%, rgba(255, 255, 255, 0.25));

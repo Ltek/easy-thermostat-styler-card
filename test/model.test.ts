@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { normalizeConfig, setPath, getPath } from '../src/model/config';
-import { toSetViews, orderOptions, optionCall, configuredSets, actionCall } from '../src/model/sets';
+import { toSetViews, orderOptions, optionCall, configuredSets, actionCall, valueIsOff } from '../src/model/sets';
 import { resolveButtonStyle, buttonVars, textVars, BUTTON_DEFAULTS } from '../src/model/style';
 import { barRange, barTicks, toFraction, fromFraction, nearestHandle } from '../src/model/bar';
 import { toChipView, chipToggleCall, defaultPopupCard, formatRemaining, spinSeconds, speedCount, naturalLevelOf } from '../src/model/chips';
@@ -345,7 +345,7 @@ describe('moving background', () => {
     const flat = view('heat', { temperature: 72, current_temperature: 64, hvac_action: 'heating' }, { follow_gap: false });
     expect(toBgView(flat.hass, flat.cfg, flat.v)!.rate).toBe(toBgView(near.hass, { ...near.cfg, background: { style: 'plasma', follow_gap: false } }, near.v)!.rate);
   });
-  it('idle drifts very slowly; speed and strength scale it; own colours win', () => {
+  it('idle drifts very slowly; speed and strength scale it; own colors win', () => {
     const idle = view('heat', { temperature: 72, hvac_action: 'idle' }, { speed: 200, strength: 50, colors: { idle_heat: { main: '#123456' } } });
     const bv = toBgView(idle.hass, idle.cfg, idle.v)!;
     expect(bv).toMatchObject({ state: 'idle_heat', dir: 'up', rate: 0.75, opacity: 0.28, main: '#123456' });
@@ -357,7 +357,7 @@ describe('moving background', () => {
     expect(bgItems('particles', 'light')).toHaveLength(10);
     expect(bgItems('flow', 'smooth')).toEqual([]);
   });
-  it('base fill: colour, gradient (needs 2 stops), legacy card.background', () => {
+  it('base fill: color, gradient (needs 2 stops), legacy card.background', () => {
     expect(baseFill({ ...base, background: { fill: 'gradient', gradient: { type: 'radial', stops: ['#000', '#fff'] } } })).toBe('radial-gradient(circle at 50% 40%, #000, #fff)');
     expect(baseFill({ ...base, background: { fill: 'gradient', gradient: { stops: ['#000'] } } })).toBeUndefined();
     expect(baseFill({ ...base, card: { background: '#111' } })).toBe('#111');
@@ -447,5 +447,22 @@ describe('buttons as their own items', () => {
   it('normalize drops incomplete items', () => {
     const n = normalizeConfig({ ...base, sets: [{ type: 'custom', items: [{ kind: 'mode', source: 'hvac' }, { kind: 'device', entity: '' }, { kind: 'action' }, { kind: 'nope' }] }] });
     expect(n.sets).toEqual([{ type: 'custom', items: [{ kind: 'action' }] }]);
+  });
+});
+
+describe('hide device button when off', () => {
+  const st = (id: string, state: string) => ({ entity_id: id, state, attributes: {} });
+  const { hass } = fakeHass([climate('heat', { ...RICH, temperature: 68 }), st('sensor.a', '0'), st('sensor.b', '640'), st('fan.c', 'off'), st('sensor.d', 'none'), st('sensor.e', 'unavailable')]);
+  it('valueIsOff', () => {
+    expect(['sensor.a', 'fan.c', 'sensor.d', 'sensor.e', 'sensor.missing'].map((id) => valueIsOff(hass, id))).toEqual([true, true, true, true, true]);
+    expect(valueIsOff(hass, 'sensor.b')).toBe(false);
+  });
+  it('only buttons that ask for it are hidden', () => {
+    const v = toSetViews(hass, { ...base, sets: [{ type: 'custom', items: [
+      { kind: 'device', type: 'entity', entity: 'sensor.a', hide_when_off: true },
+      { kind: 'device', type: 'entity', entity: 'sensor.b', hide_when_off: true },
+      { kind: 'device', type: 'entity', entity: 'fan.c' },
+    ] }] });
+    expect(v[0]!.tiles.map((x) => (x.kind === 'device' ? x.chip.entity : ''))).toEqual(['sensor.b', 'fan.c']);
   });
 });

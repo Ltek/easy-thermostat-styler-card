@@ -249,7 +249,7 @@ export class EasyThermostatStylerCard extends LitElement {
     const real = toClimateView(this.hass, c);
     this._syncCycleTimer();
     const test = currentTest(this._testMode(), this._cycle);
-    // Status, colours, effects and background follow the simulated state;
+    // Status, colors, effects and background follow the simulated state;
     // the temperature and setpoints shown stay real.
     const view = test ? { ...simulateView(real, test), currentTemp: real.currentTemp, setpoints: real.setpoints } : real;
     const fxView = test ? simulateView(real, test) : real;
@@ -331,7 +331,7 @@ export class EasyThermostatStylerCard extends LitElement {
     return out;
   }
 
-  /** Measure the side areas so "keep the main area centred" can balance them. */
+  /** Measure the side areas so "keep the main area centered" can balance them. */
   private _sideRO?: ResizeObserver;
 
   protected override updated(): void {
@@ -541,7 +541,7 @@ export class EasyThermostatStylerCard extends LitElement {
     const value = formatTemp(e.value, edit.unit);
     return html`<button class="collapsed" aria-label="Show temperature controls" @click=${openIt}>
       ${control === 'wheel'
-        ? this._wheelCentre(edit.active, value)
+        ? this._wheelCenter(edit.active, value)
         : html`<span class="sv" style=${styleMap({ '--c': edit.active === 'cool' ? 'var(--etc-cool)' : 'var(--etc-heat)' })}
             >${value}</span
           >`}
@@ -682,13 +682,13 @@ export class EasyThermostatStylerCard extends LitElement {
       @wheel=${this._wheelScroll}
     >
       ${above.map(nb)}
-      ${this._wheelCentre(side, formatTemp(e.value, edit.unit))}
+      ${this._wheelCenter(side, formatTemp(e.value, edit.unit))}
       ${below.map(nb)}
     </div>`;
     return lay('wheel', col);
   }
 
-  private _wheelCentre(side: Setpoint, value: string): TemplateResult {
+  private _wheelCenter(side: Setpoint, value: string): TemplateResult {
     if ((this._config?.setpoint?.wheel_style ?? DEFAULTS.wheel_style) === 'pill') {
       return html`<div class="pill wheel-pill ${side}">
         <ha-icon icon=${side === 'heat' ? 'mdi:fire' : 'mdi:snowflake'}></ha-icon>${value}

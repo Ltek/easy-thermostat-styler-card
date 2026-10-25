@@ -39,7 +39,7 @@ export interface Tick {
   label: boolean;
 }
 
-/** Minor ticks every `every`, labelled every `labels` (both in degrees). */
+/** Minor ticks every `every`, labeled every `labels` (both in degrees). */
 export function barTicks(r: BarRange, every: number, labels: number): Tick[] {
   const step = every > 0 ? every : labels > 0 ? labels : 0;
   if (step <= 0) return [];

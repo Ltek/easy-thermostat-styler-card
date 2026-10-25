@@ -179,7 +179,7 @@ describe('card render', () => {
     });
   });
 
-  it('centered core: the info block does not stretch (the whole row centres)', async () => {
+  it('centered core: the info block does not stretch (the whole row centers)', async () => {
     const { root } = await mount({});
     const styles = (root.host.constructor as unknown as { styles: { cssText: string } | { cssText: string }[] }).styles;
     const css = (Array.isArray(styles) ? styles : [styles]).map((s) => s.cssText).join('\n');
@@ -197,7 +197,7 @@ describe('card render', () => {
     expect(kids.indexOf('status')).toBeGreaterThan(kids.indexOf('current'));
   });
 
-  it('wheel centre can be a pill (live and collapsed)', async () => {
+  it('wheel center can be a pill (live and collapsed)', async () => {
     const { root, el } = await mount({ setpoint: { wheel_style: 'pill' } });
     expect(root.querySelector('.wheel .wheel-pill.heat')!.textContent).toContain('68');
     expect(root.querySelector('.wheel .bubble')).toBeNull();
@@ -225,7 +225,7 @@ describe('card render', () => {
   describe('effects', () => {
     const cls = (root: ShadowRoot) => [...root.querySelector('ha-card')!.classList].filter((c) => c.startsWith('fx-')).sort();
 
-    it('heating: chosen parts get glow/pulse classes in the heat colour; legacy card.glow still works', async () => {
+    it('heating: chosen parts get glow/pulse classes in the heat color; legacy card.glow still works', async () => {
       const a = await mount({ effects: { setpoint: 'both', pill: 'pulse', mode_button: 'glow', mode_icon: 'pulse' } });
       expect(cls(a.root)).toEqual(
         ['fx-on', 'fx-heat', 'fx-card-glow', 'fx-setpoint-glow', 'fx-setpoint-pulse', 'fx-pill-pulse', 'fx-mode_button-glow', 'fx-mode_icon-pulse'].sort(),
@@ -245,7 +245,7 @@ describe('card render', () => {
       expect(cls(b.root)).toContain('fx-pill-glow');
     });
 
-    it('size, speed and colours are custom properties', async () => {
+    it('size, speed and colors are custom properties', async () => {
       const { root } = await mount({ effects: { card: 'pulse', size: 30, speed: 1.5, heat_color: 'var(--error-color)' } });
       const card = root.querySelector<HTMLElement>('ha-card')!;
       expect(card.style.getPropertyValue('--fx-size')).toBe('30px');
@@ -261,7 +261,7 @@ describe('card render', () => {
       await el.updateComplete;
       const events: Record<string, unknown>[] = [];
       el.addEventListener('config-changed', (e) => events.push((e as CustomEvent).detail.config));
-      const panel = [...el.shadowRoot!.querySelectorAll<HTMLDetailsElement>('details.etce-sec')].find((d) => d.querySelector('summary')!.textContent!.trim() === 'Heating & Cooling Effects')!;
+      const panel = [...el.shadowRoot!.querySelectorAll<HTMLDetailsElement>('details.etce-sec')].find((d) => d.querySelector('summary')!.textContent!.trim().toLowerCase() === 'heating & cooling effects')!;
       panel.open = true;
       panel.dispatchEvent(new Event('toggle'));
       await el.updateComplete;
@@ -276,7 +276,7 @@ describe('card render', () => {
     });
   });
 
-  it('bar: flag placement follows the orientation; handle border and flag colours are custom properties', async () => {
+  it('bar: flag placement follows the orientation; handle border and flag colors are custom properties', async () => {
     const h = fakeHass([climate('heat', { ...RICH, temperature: 70 })]);
     const a = await mount({ setpoint: { control: 'bar', bar: { flag_position: 'below', handle_border_color: 'none', flag_color: '#123456', flag_text_color: 'var(--primary-text-color)' } } }, h);
     expect(a.root.querySelector('.bar.flags-below')).not.toBeNull();
@@ -307,7 +307,7 @@ describe('card render', () => {
   });
 
   describe('background', () => {
-    it('no style: no moving layer; base colour and gradient fill', async () => {
+    it('no style: no moving layer; base color and gradient fill', async () => {
       const a = await mount({ background: { color: 'transparent' } });
       expect(a.root.querySelector('.bg')).toBeNull();
       expect(a.root.querySelector<HTMLElement>('ha-card')!.style.getPropertyValue('--etc-card-bg')).toBe('transparent');
@@ -320,7 +320,7 @@ describe('card render', () => {
       expect(c.root.querySelector<HTMLElement>('ha-card')!.style.getPropertyValue('--etc-card-bg')).toBe('#222222');
     });
 
-    it('every style renders behind the content, heating rises with heat colours', async () => {
+    it('every style renders behind the content, heating rises with heat colors', async () => {
       for (const style of ['plasma', 'lava', 'aurora', 'flow', 'shimmer', 'particles', 'core', 'mesh', 'beam']) {
         document.body.innerHTML = '';
         const { root } = await mount({ background: { style } });
@@ -357,7 +357,7 @@ describe('card render', () => {
       expect(card.style.getPropertyValue('--frost')).toBe('20px');
     });
 
-    it('editor: setting the colour here clears the older card.background', async () => {
+    it('editor: setting the color here clears the older card.background', async () => {
       const el = document.createElement('easy-thermostat-styler-card-editor') as EasyThermostatStylerCardEditor;
       el.hass = fakeHass([climate('heat', { ...RICH, temperature: 68 })]).hass;
       el.setConfig({ ...base, card: { background: '#222222', radius: 4 } } as never);
@@ -365,7 +365,7 @@ describe('card render', () => {
       await el.updateComplete;
       const events: Record<string, unknown>[] = [];
       el.addEventListener('config-changed', (e) => events.push((e as CustomEvent).detail.config));
-      const panel = [...el.shadowRoot!.querySelectorAll<HTMLDetailsElement>('details.etce-sec')].find((d) => d.querySelector('summary')!.textContent!.trim() === 'Background')!;
+      const panel = [...el.shadowRoot!.querySelectorAll<HTMLDetailsElement>('details.etce-sec')].find((d) => d.querySelector('summary')!.textContent!.trim().toLowerCase() === 'background')!;
       panel.open = true;
       panel.dispatchEvent(new Event('toggle'));
       await el.updateComplete;
@@ -392,7 +392,7 @@ describe('card render', () => {
     }
     const fx = panel('Heating & Cooling Effects');
     expect(fx.querySelectorAll('.etce-row').length).toBeGreaterThanOrEqual(10); // 5 parts + when + look
-    expect(fx.textContent).toContain('Glow size');
+    expect(fx.textContent!.toLowerCase()).toContain('glow size');
   });
 
   it('frosted glass: top level, older background.frosted still works, wheel bubble included', async () => {
@@ -600,7 +600,7 @@ describe('card render', () => {
       expect(root.querySelectorAll('.set').length).toBe(3);
     });
 
-    it('distance and centring are set on the grid', async () => {
+    it('distance and centering are set on the grid', async () => {
       const { root } = await mount({ zones: { gap: 4, left: 20 }, sets: [{ type: 'hvac', zone: 'right' }] });
       const g = root.querySelector<HTMLElement>('.grid')!;
       expect(g.classList.contains('centered')).toBe(true);
@@ -623,19 +623,19 @@ describe('card render', () => {
         events.push((e as CustomEvent).detail.config);
         el.setConfig((e as CustomEvent).detail.config);
       });
-      const panel = [...el.shadowRoot!.querySelectorAll<HTMLDetailsElement>('details.etce-sec')].find((d) => d.querySelector('summary')!.textContent!.trim() === 'Button sets')!;
+      const panel = [...el.shadowRoot!.querySelectorAll<HTMLDetailsElement>('details.etce-sec')].find((d) => d.querySelector('summary')!.textContent!.trim().toLowerCase() === 'button sets')!;
       panel.open = true;
       panel.dispatchEvent(new Event('toggle'));
       await el.updateComplete;
       panel.querySelectorAll<HTMLButtonElement>('details.etce-rowsub.set-row > summary')[1]!.click();
       await el.updateComplete;
-      const row = [...panel.querySelectorAll('.etce-row')].find((r) => r.textContent!.includes('Share a row with'))!;
+      const row = [...panel.querySelectorAll('.etce-row')].find((r) => r.textContent!.toLowerCase().includes('share a row with'))!;
       const sel = row.querySelector('select')!;
       sel.value = '0';
       sel.dispatchEvent(new Event('change'));
       expect((events.at(-1)!.sets as unknown[])).toEqual([{ type: 'hvac', id: 'set1' }, { type: 'preset', row_with: 'set1' }]);
       await el.updateComplete;
-      const sel2 = [...panel.querySelectorAll('.etce-row')].find((r) => r.textContent!.includes('Share a row with'))!.querySelector('select')!;
+      const sel2 = [...panel.querySelectorAll('.etce-row')].find((r) => r.textContent!.toLowerCase().includes('share a row with'))!.querySelector('select')!;
       sel2.value = '';
       sel2.dispatchEvent(new Event('change'));
       expect((events.at(-1)!.sets as unknown[])).toEqual([{ type: 'hvac' }, { type: 'preset' }]);
@@ -692,14 +692,14 @@ describe('card render', () => {
         events.push((e as CustomEvent).detail.config);
         el.setConfig((e as CustomEvent).detail.config);
       });
-      const panel = [...el.shadowRoot!.querySelectorAll<HTMLDetailsElement>('details.etce-sec')].find((d) => d.querySelector('summary')!.textContent!.trim() === 'Button sets')!;
+      const panel = [...el.shadowRoot!.querySelectorAll<HTMLDetailsElement>('details.etce-sec')].find((d) => d.querySelector('summary')!.textContent!.trim().toLowerCase() === 'button sets')!;
       panel.open = true;
       panel.dispatchEvent(new Event('toggle'));
       await el.updateComplete;
       const openSet = async (k: number) => {
         panel.querySelectorAll<HTMLButtonElement>('details.etce-rowsub.set-row > summary')[k]!.click();
         await el.updateComplete;
-        const sub = [...panel.querySelectorAll<HTMLDetailsElement>('details.etce-sub')].find((d) => d.querySelector('summary')!.textContent!.includes('Buttons in this set'))!;
+        const sub = [...panel.querySelectorAll<HTMLDetailsElement>('details.etce-sub')].find((d) => d.querySelector('summary')!.textContent!.toLowerCase().includes('buttons in this set'))!;
         sub.open = true;
         sub.dispatchEvent(new Event('toggle'));
         await el.updateComplete;
@@ -726,11 +726,11 @@ describe('card render', () => {
     it('editor: add a device and an action, duplicate a button, copy a built-in button to another set', async () => {
       const { el, events, openSet } = await editorOn({ sets: [{ type: 'hvac' }, { type: 'custom', name: 'Buttons 1' }] });
       let sub = await openSet(1);
-      [...sub.querySelectorAll<HTMLButtonElement>('.etce-add')].find((b) => b.textContent!.includes('Device'))!.click();
+      [...sub.querySelectorAll<HTMLButtonElement>('.etce-add')].find((b) => b.textContent!.toLowerCase().includes('device'))!.click();
       await el.updateComplete;
       expect((events.at(-1)!.sets as { items?: unknown[] }[])[1]!.items).toEqual([{ kind: 'device', type: 'entity', entity: 'sensor.hum' }]);
-      sub = [...el.shadowRoot!.querySelectorAll<HTMLDetailsElement>('details.etce-sub')].find((d) => d.querySelector('summary')!.textContent!.includes('Buttons in this set'))!;
-      [...sub.querySelectorAll<HTMLButtonElement>('.etce-add')].find((b) => b.textContent!.includes('Action'))!.click();
+      sub = [...el.shadowRoot!.querySelectorAll<HTMLDetailsElement>('details.etce-sub')].find((d) => d.querySelector('summary')!.textContent!.toLowerCase().includes('buttons in this set'))!;
+      [...sub.querySelectorAll<HTMLButtonElement>('.etce-add')].find((b) => b.textContent!.toLowerCase().includes('action'))!.click();
       await el.updateComplete;
       sub.querySelectorAll<HTMLButtonElement>('details.etce-rowsub.item-row > summary .etce-act[title="Duplicate"]')[0]!.click();
       await el.updateComplete;
@@ -758,11 +758,36 @@ describe('card render', () => {
       const { el, panel, events } = await editorOn({ sets: [{ type: 'hvac', style: { radius: 3, look: 'chip' } }, { type: 'preset' }] });
       panel.querySelectorAll<HTMLButtonElement>('details.etce-rowsub.set-row > summary')[0]!.click();
       await el.updateComplete;
-      const sel = [...panel.querySelectorAll('.etce-row')].find((r) => r.textContent!.includes('Copy this style to'))!.querySelector('select')!;
+      const sel = [...panel.querySelectorAll('.etce-row')].find((r) => r.textContent!.toLowerCase().includes('copy this style to'))!.querySelector('select')!;
       sel.value = '1';
       sel.dispatchEvent(new Event('change'));
       expect((events.at(-1)!.sets as unknown[])[1]).toEqual({ type: 'preset', style: { radius: 3, look: 'chip' } });
     });
+  });
+
+  it('editor: button Background offers Transparent and Border offers None', async () => {
+    const el = document.createElement('easy-thermostat-styler-card-editor') as EasyThermostatStylerCardEditor;
+    el.hass = fakeHass([climate('heat', { ...RICH, temperature: 68 })]).hass;
+    el.setConfig(base as never);
+    document.body.appendChild(el);
+    await el.updateComplete;
+    const panel = [...el.shadowRoot!.querySelectorAll<HTMLDetailsElement>('details.etce-sec')].find((d) => d.querySelector('summary')!.textContent!.trim() === 'Button Style')!;
+    panel.open = true;
+    panel.dispatchEvent(new Event('toggle'));
+    await el.updateComplete;
+    for (const d of panel.querySelectorAll<HTMLDetailsElement>('details.etce-sub')) {
+      d.open = true;
+      d.dispatchEvent(new Event('toggle'));
+    }
+    await el.updateComplete;
+    const modes = (label: string) =>
+      [...panel.querySelectorAll('.etce-row')].filter((r) => r.querySelector('label')!.textContent!.trim() === label).map((r) => [...r.querySelectorAll<HTMLOptionElement>('select.etce-cmode option')].map((o) => o.textContent!.trim()));
+    expect(modes('Background')).toEqual([
+      ['Automatic', 'Transparent', 'Theme Color', 'Custom Color', 'Custom CSS'],
+      ['Automatic', 'Transparent', 'Theme Color', 'Custom Color', 'Custom CSS'],
+    ]);
+    expect(modes('Border')[0]).toEqual(['Automatic', 'None', 'Theme Color', 'Custom Color', 'Custom CSS']);
+    expect(modes('Text & Icon')[0]).toEqual(['Automatic', 'Theme Color', 'Custom Color', 'Custom CSS']);
   });
 
   it('hvac set full-time; preset/fan behind toggles that remember state', async () => {
@@ -864,7 +889,7 @@ describe('editor', () => {
 
   it('a checkbox writes only when it differs from the default', async () => {
     const { root, events, el } = await editor({});
-    const cb = [...root.querySelectorAll<HTMLInputElement>('.etce-check input')].find((i) => i.parentElement!.textContent!.includes('Humidity'))!;
+    const cb = [...root.querySelectorAll<HTMLInputElement>('.etce-check input')].find((i) => i.parentElement!.textContent!.toLowerCase().includes('humidity'))!;
     cb.checked = false;
     cb.dispatchEvent(new Event('change'));
     expect(events.at(-1)).toEqual({ ...base, show_humidity: false });
@@ -880,7 +905,7 @@ describe('editor', () => {
     (root.querySelectorAll('details.etce-sec')[3] as HTMLDetailsElement).open = true;
     root.querySelectorAll('details.etce-sec')[3]!.dispatchEvent(new Event('toggle'));
     await el.updateComplete;
-    const add = [...root.querySelectorAll<HTMLButtonElement>('.etce-add')].find((b) => b.textContent!.trim() === '+ Buttons')!;
+    const add = [...root.querySelectorAll<HTMLButtonElement>('.etce-add')].find((b) => b.textContent!.trim().toLowerCase() === '+ buttons')!;
     add.click();
     const sets = events.at(-1)!.sets as { type: string; name?: string }[];
     expect(sets.map((s) => s.type)).toEqual(['hvac', 'preset', 'fan_mode', 'custom']);
