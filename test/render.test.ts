@@ -790,6 +790,14 @@ describe('card render', () => {
     expect(modes('Text & Icon')[0]).toEqual(['Automatic', 'Theme Color', 'Custom Color', 'Custom CSS']);
   });
 
+  it('editor: an opened set / button is a flat heading, not a nested box', async () => {
+    const { EDITOR_CSS } = await import('../src/editor/editor-css');
+    const rule = /\.etce-sub\.etce-rowsub\[open\]\s*\{([^}]*)\}/.exec(EDITOR_CSS)?.[1] ?? '';
+    expect(rule).toMatch(/border:\s*none/);
+    expect(rule).toMatch(/margin:\s*0/);
+    expect(/\.etce-sub\.etce-rowsub > \.etce-sub-body\s*\{\s*padding:\s*0 0 /.test(EDITOR_CSS)).toBe(true);
+  });
+
   it('hvac set full-time; preset/fan behind toggles that remember state', async () => {
     const { root, calls, el } = await mount({});
     expect(root.querySelectorAll('.set.t-hvac .btn')).toHaveLength(4);

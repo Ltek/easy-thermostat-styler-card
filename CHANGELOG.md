@@ -1,5 +1,9 @@
 # Changelog
 
+## v2026.10.25.21
+
+- **Editor (Button Sets)**: an opened set, and an opened button inside it, no longer draws its own bordered, indented box. Its sections and fields now sit exactly where every other panel's do: one box deep and the same distance from the panel edge as in Background or Text. Before, they were two or three boxes deep.
+
 ## v2026.10.25.20
 
 - **US English** throughout the card, editor and docs: color, center, centered, centering.

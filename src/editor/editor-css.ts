@@ -159,6 +159,12 @@ export const EDITOR_CSS = `
         .etce-rowsub > summary .etce-sctl { margin-left: auto; flex-wrap: nowrap; }
         .etce-rowsub > summary .chev { margin-left: var(--ltek-sp-2); }
         .etce-rowsub.off > summary .etce-sname, .etce-rowsub.off > summary .etce-sicon { opacity: .45; }
+        /* An opened set / button is a heading, not a box: no border and no inset,
+           so its sections and fields sit exactly where every other panel's do
+           (one box deep). It keeps the top divider like a closed flat row. */
+        .etce-sub.etce-rowsub[open] { border: none; border-top: 1px solid var(--ltek-c-border-soft); border-radius: 0; margin: 0; }
+        .etce-sub.etce-rowsub > .etce-sub-body { padding: 0 0 var(--ltek-sp-3); }
+        .etce-sub.etce-rowsub[open] > summary { border-bottom: 1px solid var(--ltek-c-border-soft); margin-bottom: var(--ltek-sp-2); }
         .etce-test { border: 1px dashed var(--ltek-c-border); border-radius: var(--ltek-r-panel); padding: var(--ltek-sp-2) var(--ltek-sp-6); }
         .etce-test.on { border-color: var(--ltek-c-warning); background: color-mix(in srgb, var(--ltek-c-warning) 8%, transparent); }
         .etce-test .etce-hint { margin: 0 0 var(--ltek-sp-1); }
