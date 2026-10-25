@@ -11,6 +11,7 @@ import {
   EDITOR_TYPE,
   normalizeConfig,
   type CardConfig,
+  type ChipConfig,
   type Zone,
 } from './model/config';
 import { EQUIPMENT_LABEL, formatTemp, toClimateView, type ClimateView } from './model/climate';
@@ -25,7 +26,7 @@ import {
   type TempAdjustModel,
 } from './model/setpoint';
 import { SetpointController } from './model/setpoint-controller';
-import { MODE_ICONS, optionCall, toSetViews, type SetView } from './model/sets';
+import { MODE_ICONS, actionCall, optionCall, toSetViews, type SetView, type Tile } from './model/sets';
 import { buttonVars, resolveButtonStyle, surfaceVars, textVars } from './model/style';
 import { barRange, barTicks, fromFraction, nearestHandle, toFraction } from './model/bar';
 import {
@@ -186,10 +187,15 @@ export class EasyThermostatStylerCard extends LitElement {
     const ids = [c.entity];
     const air = airEntity(c);
     if (air) ids.push(air);
-    for (const s of c.sets ?? []) for (const ch of s.chips ?? []) ids.push(ch.entity);
+    const devs = (s: NonNullable<CardConfig['sets']>[number]) => [
+      ...(s.chips ?? []),
+      ...(s.items ?? []).filter((it) => it.kind === 'device'),
+    ] as ChipConfig[];
+    for (const s of c.sets ?? []) for (const ch of devs(s)) ids.push(ch.entity);
+    for (const s of c.sets ?? []) for (const it of s.items ?? []) if (it.kind === 'action' && it.entity) ids.push(it.entity);
     if (this.hass) {
       for (const s of c.sets ?? [])
-        for (const ch of s.chips ?? []) {
+        for (const ch of devs(s)) {
           if (ch.type !== 'rf_fan') continue;
           const v = toChipView(this.hass, ch, 0);
           if (v.lightEntity) ids.push(v.lightEntity);
@@ -883,8 +889,7 @@ export class EasyThermostatStylerCard extends LitElement {
   private _renderSet(s: SetView): TemplateResult {
     const style = resolveButtonStyle(this._config?.buttons, s.config.style);
     const look = style.look ?? (s.type === 'chips' ? 'chip' : 'button');
-    // Device items as buttons tile like the other sets.
-    const grid = (s.type !== 'chips' || look === 'button') && s.orientation === 'row' && s.align === 'stretch';
+    const grid = look === 'button' && s.orientation === 'row' && s.align === 'stretch';
     const layout: Record<string, string> = { ...buttonVars(style) };
     if (grid) {
       layout['grid-template-columns'] = s.columns
@@ -902,30 +907,23 @@ export class EasyThermostatStylerCard extends LitElement {
       [`ip-${style.icon_position}`]: true,
       [`look-${look}`]: true,
     };
-    if (s.type === 'chips') {
-      const chips = (s.config.chips ?? []).map((ch, i) => toChipView(this.hass!, ch, i));
-      return html`<div class=${classMap(cls)} style=${styleMap(layout)} role="group" aria-label=${s.title}>
-        ${chips.map((v) => this._renderChip(v, style.content, look))}
-      </div>`;
-    }
     const showIcon = style.content !== 'label';
     const showLabel = style.content !== 'icon';
     return html`<div class=${classMap(cls)} style=${styleMap(layout)} role="group" aria-label=${s.title}>
-      ${s.options.map(
-        (o) => html`<button
-          class="btn ${o.active ? 'active' : ''}"
+      ${s.tiles.map((t, i) => {
+        if (t.kind === 'device') return this._renderChip(toChipView(this.hass!, t.chip, i), style.content, look);
+        const o = t.kind === 'mode' ? t.option : { label: t.label, icon: t.icon, active: false, color: 'var(--primary-color)' };
+        return html`<button
+          class="btn ${o.active ? 'active' : ''} ${t.kind === 'action' ? 'act' : ''}"
           style=${styleMap({ '--c': o.color })}
-          aria-pressed=${o.active}
+          aria-pressed=${t.kind === 'mode' ? String(o.active) : nothing}
           title=${o.label}
-          @click=${() => {
-            const call = optionCall(s.type, this._config!.entity, o.value);
-            if (call) this._call(call);
-          }}
+          @click=${() => this._tileTap(t)}
         >
           ${showIcon ? html`<ha-icon icon=${o.icon}></ha-icon>` : nothing}
           ${showLabel ? html`<span class="lbl">${o.label}</span>` : nothing}
-        </button>`,
-      )}
+        </button>`;
+      })}
     </div>`;
   }
 
@@ -935,9 +933,21 @@ export class EasyThermostatStylerCard extends LitElement {
     return html`<div class="menus z-${zone}">${sets.map((s) => this._renderMenu(s))}</div>`;
   }
 
+  /** Tap on a mode or action button (device buttons have their own gestures). */
+  private _tileTap(t: Tile): void {
+    const call =
+      t.kind === 'mode' ? optionCall(t.source, this._config!.entity, t.option.value) : t.kind === 'action' ? actionCall(t.item) : null;
+    if (call) this._call(call);
+    this._fire('haptic', 'light');
+  }
+
   private _renderMenu(s: SetView): TemplateResult {
     const style = resolveButtonStyle(this._config?.buttons, s.config.style);
-    const active = s.options.find((o) => o.active);
+    // Menu button: the active mode, else the first device's value.
+    const firstDev = s.tiles.find((t) => t.kind === 'device') as Extract<Tile, { kind: 'device' }> | undefined;
+    const devView = firstDev ? toChipView(this.hass!, firstDev.chip, 0) : null;
+    const activeMode = s.options.find((o) => o.active);
+    const active = activeMode ?? (s.options.length === 0 && devView ? { label: devView.state, icon: devView.icon, color: 'var(--primary-color)' } : undefined);
     const showIcon = style.content !== 'label';
     const open = this._menu === s.key;
     const native = typeof HTMLElement !== 'undefined' && 'showPopover' in HTMLElement.prototype;
@@ -966,17 +976,27 @@ export class EasyThermostatStylerCard extends LitElement {
         @toggle=${(ev: Event) => this._menuToggled(s, ev)}
         @keydown=${this._menuKey}
       >
-        ${s.options.map(
-          (o) => html`<button
+        ${s.tiles.map((t, i) => {
+          if (t.kind === 'device') {
+            const v = toChipView(this.hass!, t.chip, i);
+            return html`<button class="mi dev ${v.on ? 'on' : ''}" role="option" @click=${() => {
+                this._chipTap(v);
+                this._closeMenus();
+              }}>
+              ${showIcon ? html`<ha-icon icon=${v.icon}></ha-icon>` : nothing}<span>${v.name}</span><span class="mi-val">${v.state}</span>
+            </button>`;
+          }
+          const o = t.kind === 'mode' ? t.option : { label: t.label, icon: t.icon, active: false, color: 'var(--primary-color)' };
+          return html`<button
             class="mi ${o.active ? 'active' : ''}"
             role="option"
             aria-selected=${o.active}
             style=${styleMap({ '--c': o.color })}
-            @click=${() => this._pickMenu(s, o.value)}
+            @click=${() => this._pickMenu(t)}
           >
             ${showIcon ? html`<ha-icon icon=${o.icon}></ha-icon>` : nothing}<span>${o.label}</span>
-          </button>`,
-        )}
+          </button>`;
+        })}
       </div>
     </div>`;
   }
@@ -1036,10 +1056,8 @@ export class EasyThermostatStylerCard extends LitElement {
     this._menu = null;
   }
 
-  private _pickMenu(s: SetView, value: string): void {
-    const call = optionCall(s.type, this._config!.entity, value);
-    if (call) this._call(call);
-    this._fire('haptic', 'light');
+  private _pickMenu(t: Tile): void {
+    this._tileTap(t);
     this._closeMenus();
   }
 

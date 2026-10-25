@@ -109,7 +109,7 @@ describe('card render', () => {
     const row = root.querySelector('.zone.bottom .menus')!;
     expect(row.querySelectorAll('.menu')).toHaveLength(2); // both menus share one row
     const trigger = root.querySelector<HTMLButtonElement>('.menu .mt')!;
-    expect(trigger.querySelector('.mt-name')!.textContent).toBe('Mode');
+    expect(trigger.querySelector('.mt-name')).toBeNull(); // set name hidden by default
     expect(trigger.querySelector('.mt-value')!.textContent).toBe('Heat');
     expect(root.querySelector('.menu')!.classList.contains('d-up')).toBe(true);
     trigger.click();
@@ -642,6 +642,129 @@ describe('card render', () => {
     });
   });
 
+  describe('buttons as items', () => {
+    it('mixed set renders and each kind does its job', async () => {
+      const h = fakeHass([climate('heat', { ...RICH, temperature: 68 }), { entity_id: 'sensor.hum', state: '48', attributes: {} }]);
+      const { root, calls } = await mount(
+        {
+          sets: [
+            {
+              type: 'custom',
+              items: [
+                { kind: 'mode', source: 'hvac', value: 'cool' },
+                { kind: 'device', type: 'entity', entity: 'sensor.hum', show_name: false },
+                { kind: 'action', action: 'script', entity: 'script.boost', name: 'Boost' },
+              ],
+            },
+          ],
+        },
+        h,
+      );
+      const btns = [...root.querySelectorAll<HTMLButtonElement>('.set.t-custom > button')];
+      expect(btns.map((b) => b.classList.contains('dev') ? 'device' : b.classList.contains('act') ? 'action' : 'mode')).toEqual(['mode', 'device', 'action']);
+      btns[0]!.click();
+      expect(calls.at(-1)).toEqual({ domain: 'climate', service: 'set_hvac_mode', data: { entity_id: 'climate.t', hvac_mode: 'cool' } });
+      btns[2]!.click();
+      expect(calls.at(-1)).toEqual({ domain: 'script', service: 'turn_on', data: { entity_id: 'script.boost' } });
+      expect(btns[1]!.textContent).toContain('48');
+    });
+
+    it('menu with mixed buttons: trigger shows the active mode; devices show their value in the list', async () => {
+      const h = fakeHass([climate('heat', { ...RICH, temperature: 68 }), { entity_id: 'sensor.hum', state: '48', attributes: {} }]);
+      const { root, el } = await mount({ sets: [{ type: 'custom', display: 'menu', items: [{ kind: 'mode', source: 'hvac', value: 'heat' }, { kind: 'device', type: 'entity', entity: 'sensor.hum' }] }] }, h);
+      expect(root.querySelector('.mt .mt-value')!.textContent).toBe('Heat');
+      root.querySelector<HTMLButtonElement>('.mt')!.click();
+      await el.updateComplete;
+      expect(root.querySelector('.mi.dev .mi-val')!.textContent).toBe('48');
+      document.body.innerHTML = '';
+      const d = await mount({ sets: [{ type: 'custom', display: 'menu', items: [{ kind: 'device', type: 'entity', entity: 'sensor.hum' }] }] }, h);
+      expect(d.root.querySelector('.mt .mt-value')!.textContent).toBe('48'); // no mode: first device's value
+    });
+
+    const editorOn = async (cfg: Record<string, unknown>) => {
+      const el = document.createElement('easy-thermostat-styler-card-editor') as EasyThermostatStylerCardEditor;
+      el.hass = fakeHass([climate('heat', { ...RICH, temperature: 68 }), { entity_id: 'sensor.hum', state: '48', attributes: {} }]).hass;
+      el.setConfig({ ...base, ...cfg } as never);
+      document.body.appendChild(el);
+      await el.updateComplete;
+      const events: Record<string, unknown>[] = [];
+      el.addEventListener('config-changed', (e) => {
+        events.push((e as CustomEvent).detail.config);
+        el.setConfig((e as CustomEvent).detail.config);
+      });
+      const panel = [...el.shadowRoot!.querySelectorAll<HTMLDetailsElement>('details.etce-sec')].find((d) => d.querySelector('summary')!.textContent!.trim() === 'Button sets')!;
+      panel.open = true;
+      panel.dispatchEvent(new Event('toggle'));
+      await el.updateComplete;
+      const openSet = async (k: number) => {
+        panel.querySelectorAll<HTMLButtonElement>('.etce-slist > .etce-srow .etce-act[title="Edit"]')[k]!.click();
+        await el.updateComplete;
+        const sub = [...panel.querySelectorAll<HTMLDetailsElement>('details.etce-sub')].find((d) => d.querySelector('summary')!.textContent!.includes('Buttons in this set'))!;
+        sub.open = true;
+        sub.dispatchEvent(new Event('toggle'));
+        await el.updateComplete;
+        return sub;
+      };
+      return { el, panel, events, openSet };
+    };
+
+    it('editor: the only Mode set cannot be deleted; a duplicate can', async () => {
+      const { el, panel, events } = await editorOn({ sets: [{ type: 'hvac' }, { type: 'custom', name: 'Buttons 1' }] });
+      const del = () => [...panel.querySelectorAll<HTMLButtonElement>('.etce-slist > .etce-srow .etce-act.del')];
+      expect(del()[0]!.disabled).toBe(true);
+      expect(del()[1]!.disabled).toBe(false);
+      panel.querySelectorAll<HTMLButtonElement>('.etce-slist > .etce-srow .etce-act[title="Duplicate"]')[0]!.click();
+      await el.updateComplete;
+      expect((events.at(-1)!.sets as { type: string; name?: string }[]).map((s) => [s.type, s.name])).toEqual([
+        ['hvac', undefined],
+        ['hvac', 'Mode copy'],
+        ['custom', 'Buttons 1'],
+      ]);
+      expect(del()[0]!.disabled).toBe(false); // two Mode sets now: either may go
+    });
+
+    it('editor: add a device and an action, duplicate a button, copy a built-in button to another set', async () => {
+      const { el, events, openSet } = await editorOn({ sets: [{ type: 'hvac' }, { type: 'custom', name: 'Buttons 1' }] });
+      let sub = await openSet(1);
+      [...sub.querySelectorAll<HTMLButtonElement>('.etce-add')].find((b) => b.textContent!.includes('Device'))!.click();
+      await el.updateComplete;
+      expect((events.at(-1)!.sets as { items?: unknown[] }[])[1]!.items).toEqual([{ kind: 'device', type: 'entity', entity: 'sensor.hum' }]);
+      sub = [...el.shadowRoot!.querySelectorAll<HTMLDetailsElement>('details.etce-sub')].find((d) => d.querySelector('summary')!.textContent!.includes('Buttons in this set'))!;
+      [...sub.querySelectorAll<HTMLButtonElement>('.etce-add')].find((b) => b.textContent!.includes('Action'))!.click();
+      await el.updateComplete;
+      sub.querySelectorAll<HTMLButtonElement>('.etce-brow .etce-act[title="Duplicate"]')[0]!.click();
+      await el.updateComplete;
+      const items = (events.at(-1)!.sets as { items?: { kind: string }[] }[])[1]!.items!;
+      expect(items.map((x) => x.kind)).toEqual(['device', 'device', 'action']);
+    });
+
+    it('editor: an older device-only set becomes a Buttons set with the same chip look on first edit', async () => {
+      const { el, events, openSet } = await editorOn({ sets: [{ type: 'chips', chips: [{ type: 'entity', entity: 'sensor.hum' }] }] });
+      const sub = await openSet(0);
+      sub.querySelectorAll<HTMLButtonElement>('.etce-brow .etce-act[title="Duplicate"]')[0]!.click();
+      await el.updateComplete;
+      expect((events.at(-1)!.sets as unknown[])[0]).toEqual({
+        type: 'custom',
+        style: { look: 'chip' },
+        align: 'center',
+        items: [
+          { kind: 'device', type: 'entity', entity: 'sensor.hum' },
+          { kind: 'device', type: 'entity', entity: 'sensor.hum' },
+        ],
+      });
+    });
+
+    it('editor: copy style to another set', async () => {
+      const { el, panel, events } = await editorOn({ sets: [{ type: 'hvac', style: { radius: 3, look: 'chip' } }, { type: 'preset' }] });
+      panel.querySelectorAll<HTMLButtonElement>('.etce-slist > .etce-srow .etce-act[title="Edit"]')[0]!.click();
+      await el.updateComplete;
+      const sel = [...panel.querySelectorAll('.etce-row')].find((r) => r.textContent!.includes('Copy this style to'))!.querySelector('select')!;
+      sel.value = '1';
+      sel.dispatchEvent(new Event('change'));
+      expect((events.at(-1)!.sets as unknown[])[1]).toEqual({ type: 'preset', style: { radius: 3, look: 'chip' } });
+    });
+  });
+
   it('hvac set full-time; preset/fan behind toggles that remember state', async () => {
     const { root, calls, el } = await mount({});
     expect(root.querySelectorAll('.set.t-hvac .btn')).toHaveLength(4);
@@ -751,8 +874,10 @@ describe('editor', () => {
     (root.querySelectorAll('details.etce-sec')[3] as HTMLDetailsElement).open = true;
     root.querySelectorAll('details.etce-sec')[3]!.dispatchEvent(new Event('toggle'));
     await el.updateComplete;
-    const add = [...root.querySelectorAll<HTMLButtonElement>('.etce-add')].find((b) => b.textContent!.includes('Devices'))!;
+    const add = [...root.querySelectorAll<HTMLButtonElement>('.etce-add')].find((b) => b.textContent!.trim() === '+ Buttons')!;
     add.click();
-    expect((events.at(-1)!.sets as unknown[]).map((s) => (s as { type: string }).type)).toEqual(['hvac', 'preset', 'fan_mode', 'chips']);
+    const sets = events.at(-1)!.sets as { type: string; name?: string }[];
+    expect(sets.map((s) => s.type)).toEqual(['hvac', 'preset', 'fan_mode', 'custom']);
+    expect(sets[3]!.name).toBe('Buttons 1');
   });
 });

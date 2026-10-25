@@ -642,6 +642,8 @@ export const cardStyles = css`
     --mdc-icon-size: calc(var(--etc-b-icon, 22px) * var(--etc-b-k, 1));
   }
   .mi > ha-icon { color: var(--etc-muted); }
+  .mi .mi-val { margin-left: auto; padding-left: 12px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--etc-fg); }
+  .mi.dev.on > ha-icon { color: var(--primary-color); }
   .mi:hover, .mi:focus-visible { background: var(--etc-surface); outline: none; }
   .mi.active { background: var(--etc-b-abg, color-mix(in srgb, var(--c) 18%, transparent)); color: var(--etc-b-afg, var(--c)); }
   .mi.active > ha-icon { color: var(--etc-b-afg, var(--c)); }

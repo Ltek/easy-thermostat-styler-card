@@ -1,5 +1,18 @@
 # Changelog
 
+## v2026.10.25.17
+
+- **Buttons are their own items now**, and any set can hold any mix:
+  - **Mode buttons**: any HVAC mode, preset or fan mode. A mode button hides itself if the thermostat stops offering that mode.
+  - **Device / sensor buttons**: show the value; RF fans keep everything they had.
+  - **Action buttons** (new): run a script, a scene, or any service (with an optional target and data).
+- **Built-in sets** (Mode, Preset, Fan) still fill themselves from the thermostat, and you can **add your own buttons** after the built-in ones. Built-in buttons can be hidden, reordered, renamed and re-iconed but not deleted, and the only set of a built-in type can be hidden but not deleted.
+- **+ Buttons** adds a custom set ("Buttons 1", "Buttons 2", …) that holds only what you put in it. It replaces "+ Devices".
+- **Duplicate** a set or a button. **Copy to set** puts a copy of a button (built-in ones too) into another set.
+- **Copy this style to** (a set's Button style): give one set, or all other sets, the same style.
+- **Expandable menus** can hold mixed buttons. The menu button shows the active mode, or the first device's value. The **set name is no longer shown** on menu buttons by default; switch it back on per set.
+- Older device-only sets keep working. The first time you edit one, it becomes a Buttons set with the same chip look, so nothing changes on the card.
+
 ## v2026.10.25.16
 
 - **Look: Button / Chip** for every set (Button style, and per set). Mode, preset and fan buttons, and expandable-menu buttons, can be chips. Device sets can be full buttons in any variant, with each item's icon and "name · value" as the label. Turn off **Show name** on an item for value only.

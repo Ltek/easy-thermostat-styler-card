@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { normalizeConfig, setPath, getPath } from '../src/model/config';
-import { toSetViews, orderOptions, optionCall, configuredSets } from '../src/model/sets';
+import { toSetViews, orderOptions, optionCall, configuredSets, actionCall } from '../src/model/sets';
 import { resolveButtonStyle, buttonVars, textVars, BUTTON_DEFAULTS } from '../src/model/style';
 import { barRange, barTicks, toFraction, fromFraction, nearestHandle } from '../src/model/bar';
 import { toChipView, chipToggleCall, defaultPopupCard, formatRemaining, spinSeconds, speedCount, naturalLevelOf } from '../src/model/chips';
@@ -76,7 +76,7 @@ describe('button sets', () => {
   it('compact forces every set behind a toggle', () => {
     expect(toSetViews(hass, { ...base, compact: true }).every((s) => s.display === 'toggle')).toBe(true);
   });
-  it('menu: direction defaults away from the edge; compact leaves menus alone; chips never menu', () => {
+  it('menu: direction defaults away from the edge; compact leaves menus alone; any set can be a menu', () => {
     const v = toSetViews(hass, {
       ...base,
       compact: true,
@@ -91,7 +91,7 @@ describe('button sets', () => {
       ['hvac', 'menu', 'up'],
       ['preset', 'menu', 'down'],
       ['fan_mode', 'menu', 'up'],
-      ['chips', 'toggle', 'up'],
+      ['chips', 'menu', 'up'],
     ]);
   });
   it('side zones default to column orientation', () => {
@@ -398,5 +398,54 @@ describe('Sync to Air Movement — any entity', () => {
       const cfg = { ...base, background: { style: 'aurora' as const, ...bgc } };
       expect(toBgView(hass, cfg, toClimateView(hass, cfg))).toMatchObject({ state: 'fan', dir: 'swirl', rate: 2.75 });
     }
+  });
+});
+
+describe('buttons as their own items', () => {
+  const { hass } = fakeHass([climate('heat', { ...RICH, temperature: 68 }), { entity_id: 'sensor.hum', state: '48', attributes: { unit_of_measurement: '%' } }]);
+  it('a custom set mixes mode, device and action buttons, in order', () => {
+    const v = toSetViews(hass, {
+      ...base,
+      sets: [
+        {
+          type: 'custom',
+          items: [
+            { kind: 'mode', source: 'hvac', value: 'heat' },
+            { kind: 'device', type: 'entity', entity: 'sensor.hum' },
+            { kind: 'action', action: 'script', entity: 'script.boost', name: 'Boost' },
+            { kind: 'mode', source: 'preset', value: 'away', name: 'Leave' },
+            { kind: 'mode', source: 'hvac', value: 'dry' }, // not offered → hidden
+            { kind: 'action', action: 'scene', entity: 'scene.cosy', hide: true },
+          ],
+        },
+      ],
+    });
+    expect(v[0]!.tiles.map((t) => t.kind)).toEqual(['mode', 'device', 'action', 'mode']);
+    expect(v[0]!.options.map((o) => [o.value, o.label, o.active])).toEqual([
+      ['heat', 'Heat', true],
+      ['away', 'Leave', false],
+    ]);
+  });
+  it('built-in sets keep their thermostat buttons and add yours after them', () => {
+    const v = toSetViews(hass, { ...base, sets: [{ type: 'hvac', options: { off: { hide: true } }, items: [{ kind: 'mode', source: 'preset', value: 'sleep' }] }] });
+    expect(v[0]!.options.map((o) => o.value)).toEqual(['heat', 'cool', 'heat_cool', 'sleep']);
+  });
+  it('older device-only sets still render', () => {
+    const v = toSetViews(hass, { ...base, sets: [{ type: 'chips', chips: [{ type: 'entity', entity: 'sensor.hum' }] }] });
+    expect(v[0]!.tiles).toEqual([{ kind: 'device', chip: { type: 'entity', entity: 'sensor.hum' } }]);
+  });
+  it('action calls', () => {
+    expect(actionCall({ kind: 'action', action: 'script', entity: 'script.boost' })).toEqual({ domain: 'script', service: 'turn_on', data: { entity_id: 'script.boost' } });
+    expect(actionCall({ kind: 'action', entity: 'scene.cosy' })).toEqual({ domain: 'scene', service: 'turn_on', data: { entity_id: 'scene.cosy' } });
+    expect(actionCall({ kind: 'action', action: 'service', service: 'light.turn_on', entity: 'light.hall', data: { brightness: 80 } })).toEqual({
+      domain: 'light',
+      service: 'turn_on',
+      data: { brightness: 80, entity_id: 'light.hall' },
+    });
+    expect(actionCall({ kind: 'action', action: 'service', service: 'not valid' })).toBeNull();
+  });
+  it('normalize drops incomplete items', () => {
+    const n = normalizeConfig({ ...base, sets: [{ type: 'custom', items: [{ kind: 'mode', source: 'hvac' }, { kind: 'device', entity: '' }, { kind: 'action' }, { kind: 'nope' }] }] });
+    expect(n.sets).toEqual([{ type: 'custom', items: [{ kind: 'action' }] }]);
   });
 });

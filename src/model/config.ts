@@ -7,13 +7,17 @@
 // untouched card never rewrites its YAML. Rendering defaults live in code
 // (`DEFAULTS` below), never in the stored config.
 
-export const CARD_VERSION = '2026.10.25.16';
+export const CARD_VERSION = '2026.10.25.17';
 export const CARD_TYPE = 'easy-thermostat-styler-card';
 export const EDITOR_TYPE = 'easy-thermostat-styler-card-editor';
 
 export type Zone = 'top' | 'bottom' | 'left' | 'right';
-export type SetType = 'hvac' | 'preset' | 'fan_mode' | 'chips';
-export const SET_TYPES: SetType[] = ['hvac', 'preset', 'fan_mode', 'chips'];
+/** hvac / preset / fan_mode: built-in, filled from the thermostat. custom: only
+ *  the buttons you add. chips: the older device-only set (read as custom). */
+export type SetType = 'hvac' | 'preset' | 'fan_mode' | 'custom' | 'chips';
+export const SET_TYPES: SetType[] = ['hvac', 'preset', 'fan_mode', 'custom', 'chips'];
+export type ModeSource = 'hvac' | 'preset' | 'fan_mode';
+export const BUILTIN_SETS: ModeSource[] = ['hvac', 'preset', 'fan_mode'];
 export const ZONES: Zone[] = ['top', 'bottom', 'left', 'right'];
 
 export type TextRole =
@@ -125,6 +129,33 @@ export interface ChipConfig {
   popup_card?: Record<string, unknown>;
 }
 
+/** A button you add to a set. */
+export interface ModeItem {
+  kind: 'mode';
+  source: ModeSource;
+  value: string;
+  name?: string;
+  icon?: string;
+  hide?: boolean;
+}
+export interface DeviceItem extends ChipConfig {
+  kind: 'device';
+  hide?: boolean;
+}
+export interface ActionItem {
+  kind: 'action';
+  action?: 'script' | 'scene' | 'service';
+  /** script.* / scene.* (or an optional target for a service). */
+  entity?: string;
+  /** domain.service, for action: service */
+  service?: string;
+  data?: Record<string, unknown>;
+  name?: string;
+  icon?: string;
+  hide?: boolean;
+}
+export type ButtonItem = ModeItem | DeviceItem | ActionItem;
+
 export interface ButtonSetConfig {
   type: SetType;
   /** Stable id, only added when another set refers to this one. */
@@ -147,6 +178,8 @@ export interface ButtonSetConfig {
   options?: Record<string, SetOption>;
   style?: ButtonStyle;
   chips?: ChipConfig[];
+  /** Buttons you added (after the built-in ones in Mode / Preset / Fan sets). */
+  items?: ButtonItem[];
 }
 
 export type SetpointControl = 'wheel' | 'stepper' | 'bar' | 'none';
@@ -384,6 +417,15 @@ function normalizeSet(raw: unknown): ButtonSetConfig | undefined {
   if ('columns' in set) set.columns = clamp(set.columns, 0, 12) || undefined;
   if (Array.isArray(set.chips)) {
     set.chips = set.chips.filter((c) => isObj(c) && typeof c.entity === 'string' && c.entity);
+  }
+  if (Array.isArray(set.items)) {
+    set.items = set.items.filter((it) => {
+      if (!isObj(it)) return false;
+      if (it.kind === 'mode') return typeof it.value === 'string' && !!it.value && typeof it.source === 'string';
+      if (it.kind === 'device') return typeof it.entity === 'string' && !!it.entity;
+      if (it.kind === 'action') return true;
+      return false;
+    });
   }
   return set as unknown as ButtonSetConfig;
 }

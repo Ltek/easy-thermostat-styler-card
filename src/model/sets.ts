@@ -1,5 +1,5 @@
 import type { HomeAssistant, HassEntity } from './hass';
-import type { ButtonSetConfig, CardConfig, SetType, Zone } from './config';
+import type { ActionItem, ButtonSetConfig, CardConfig, ChipConfig, ModeSource, SetType, Zone } from './config';
 import { DEFAULT_SETS } from './config';
 import type { ServiceCall } from './service-call';
 
@@ -16,6 +16,12 @@ export interface ButtonOption {
   color: string;
 }
 
+/** One button in a set, whatever made it. */
+export type Tile =
+  | { kind: 'mode'; source: ModeSource; option: ButtonOption }
+  | { kind: 'device'; chip: ChipConfig }
+  | { kind: 'action'; item: ActionItem; label: string; icon: string };
+
 export interface SetView {
   /** Stable key: `<type>-<index in config.sets>` (used for toggle memory). */
   key: string;
@@ -30,7 +36,10 @@ export interface SetView {
   menuDirection: 'down' | 'up' | 'left' | 'right';
   menuShowName: boolean;
   toggleIcon: string;
+  /** Mode buttons (built-in and added). */
   options: ButtonOption[];
+  /** Every button, in order. */
+  tiles: Tile[];
   config: ButtonSetConfig;
 }
 
@@ -38,6 +47,7 @@ export const SET_TITLES: Record<SetType, string> = {
   hvac: 'Mode',
   preset: 'Preset',
   fan_mode: 'Fan',
+  custom: 'Buttons',
   chips: 'Devices',
 };
 
@@ -45,11 +55,12 @@ const SET_TOGGLE_ICONS: Record<SetType, string> = {
   hvac: 'mdi:thermostat',
   preset: 'mdi:home-thermometer-outline',
   fan_mode: 'mdi:fan',
+  custom: 'mdi:gesture-tap-button',
   chips: 'mdi:devices',
 };
 
 /** Attribute that lists the options / holds the active one, per set type. */
-const SOURCE: Record<Exclude<SetType, 'chips'>, { list: string; active: string | null }> = {
+const SOURCE: Record<ModeSource, { list: string; active: string | null }> = {
   hvac: { list: 'hvac_modes', active: null },
   preset: { list: 'preset_modes', active: 'preset_mode' },
   fan_mode: { list: 'fan_modes', active: 'fan_mode' },
@@ -132,8 +143,12 @@ export function configuredSets(config: CardConfig): ButtonSetConfig[] {
 }
 
 /** The option values a set type offers on this entity, in entity order. */
+export function isBuiltin(type: SetType): type is ModeSource {
+  return type === 'hvac' || type === 'preset' || type === 'fan_mode';
+}
+
 export function availableOptions(entity: HassEntity | undefined, type: SetType): string[] {
-  if (!entity || type === 'chips') return [];
+  if (!entity || !isBuiltin(type)) return [];
   const list = entity.attributes[SOURCE[type].list];
   return Array.isArray(list) ? list.map(String) : [];
 }
@@ -151,31 +166,47 @@ export function orderOptions(values: string[], order: string[] | undefined): str
 export function toSetViews(hass: HomeAssistant, config: CardConfig): SetView[] {
   const entity = hass.states[config.entity];
   const views: SetView[] = [];
+  const modeOption = (source: ModeSource, value: string, name?: string, icon?: string): ButtonOption => {
+    const activeAttr = SOURCE[source].active;
+    const activeValue = activeAttr ? String(entity!.attributes[activeAttr] ?? '') : entity!.state;
+    return {
+      value,
+      label: name ?? optionLabel(hass, entity!, source, value),
+      icon: icon ?? MODE_ICONS[value.toLowerCase()] ?? 'mdi:circle-medium',
+      active: value === activeValue,
+      color: source === 'hvac' ? (MODE_COLORS[value] ?? ACCENT) : ACCENT,
+    };
+  };
   configuredSets(config).forEach((set, index) => {
     if (set.hidden) return;
     const type = set.type;
-    let options: ButtonOption[] = [];
-    if (type !== 'chips') {
-      if (!entity) return;
-      const values = availableOptions(entity, type);
-      if (!values.length) return; // entity doesn't support this set → hidden
-      const activeAttr = SOURCE[type].active;
-      const activeValue = activeAttr ? String(entity.attributes[activeAttr] ?? '') : entity.state;
-      options = orderOptions(values, set.order)
-        .filter((v) => !set.options?.[v]?.hide)
-        .map((value) => {
-          const o = set.options?.[value];
-          return {
-            value,
-            label: o?.name ?? optionLabel(hass, entity, type, value),
-            icon: o?.icon ?? MODE_ICONS[value.toLowerCase()] ?? 'mdi:circle-medium',
-            active: value === activeValue,
-            color: type === 'hvac' ? (MODE_COLORS[value] ?? ACCENT) : ACCENT,
-          };
-        });
-      if (!options.length) return;
-    } else if (!set.chips?.length) return;
-    views.push({
+    const tiles: Tile[] = [];
+    // Built-in sets: everything the thermostat offers (order / hide / rename).
+    if (isBuiltin(type) && entity) {
+      for (const value of orderOptions(availableOptions(entity, type), set.order)) {
+        const o = set.options?.[value];
+        if (o?.hide) continue;
+        tiles.push({ kind: 'mode', source: type, option: modeOption(type, value, o?.name, o?.icon) });
+      }
+    }
+    // The older device-only set.
+    for (const chip of set.chips ?? []) tiles.push({ kind: 'device', chip });
+    // Buttons added by the user, in any set.
+    for (const it of set.items ?? []) {
+      if (it.hide) continue;
+      if (it.kind === 'mode') {
+        if (!entity || !availableOptions(entity, it.source).includes(it.value)) continue; // the thermostat no longer offers it
+        tiles.push({ kind: 'mode', source: it.source, option: modeOption(it.source, it.value, it.name, it.icon) });
+      } else if (it.kind === 'device') {
+        const { kind: _k, hide: _h, ...chip } = it;
+        tiles.push({ kind: 'device', chip: chip as ChipConfig });
+      } else {
+        tiles.push({ kind: 'action', item: it, label: it.name ?? actionLabel(hass, it), icon: it.icon ?? actionIcon(it) });
+      }
+    }
+    if (!tiles.length) return;
+    const options = tiles.flatMap((t) => (t.kind === 'mode' ? [t.option] : []));
+        views.push({
       key: `${type}-${index}`,
       index,
       type,
@@ -185,11 +216,12 @@ export function toSetViews(hass: HomeAssistant, config: CardConfig): SetView[] {
       columns: set.columns ?? 0,
       align: set.align ?? (type === 'chips' ? 'center' : 'stretch'),
       // Compact turns full-time sets into toggles; menus are already compact.
-      display: set.display === 'menu' && type !== 'chips' ? 'menu' : config.compact ? 'toggle' : (set.display ?? 'always'),
+      display: set.display === 'menu' ? 'menu' : config.compact ? 'toggle' : (set.display ?? 'always'),
       menuDirection: set.menu_direction ?? defaultMenuDirection(set.zone ?? (config.toggles_zone || 'bottom')),
-      menuShowName: set.menu_show_name ?? true,
+      menuShowName: set.menu_show_name ?? false,
       toggleIcon: set.toggle_icon ?? SET_TOGGLE_ICONS[type],
       options,
+      tiles,
       config: set,
     });
   });
@@ -199,6 +231,30 @@ export function toSetViews(hass: HomeAssistant, config: CardConfig): SetView[] {
 /** Open away from the edge the set sits on: top → down, bottom → up, left → right, right → left. */
 export function defaultMenuDirection(zone: Zone): 'down' | 'up' | 'left' | 'right' {
   return zone === 'bottom' ? 'up' : zone === 'left' ? 'right' : zone === 'right' ? 'left' : 'down';
+}
+
+const ACTION_ICONS = { script: 'mdi:script-text-play-outline', scene: 'mdi:palette-outline', service: 'mdi:flash-outline' };
+
+export function actionIcon(it: ActionItem): string {
+  return ACTION_ICONS[it.action ?? (it.entity?.startsWith('scene.') ? 'scene' : it.entity ? 'script' : 'service')];
+}
+
+export function actionLabel(hass: HomeAssistant, it: ActionItem): string {
+  const n = it.entity ? hass.states[it.entity]?.attributes.friendly_name : undefined;
+  if (typeof n === 'string') return n;
+  if (it.service) return prettify(it.service.split('.').pop() ?? it.service);
+  return it.entity ?? 'Action';
+}
+
+/** script / scene: turn it on. service: domain.service with its data (+ target). */
+export function actionCall(it: ActionItem): ServiceCall | null {
+  const kind = it.action ?? (it.entity?.startsWith('scene.') ? 'scene' : it.entity?.startsWith('script.') ? 'script' : 'service');
+  if (kind === 'script' || kind === 'scene') {
+    return it.entity ? { domain: kind, service: 'turn_on', data: { entity_id: it.entity } } : null;
+  }
+  const m = /^([a-z0-9_]+)\.([a-z0-9_]+)$/.exec(it.service ?? '');
+  if (!m) return null;
+  return { domain: m[1]!, service: m[2]!, data: { ...(it.data ?? {}), ...(it.entity ? { entity_id: it.entity } : {}) } };
 }
 
 export function optionCall(type: SetType, entityId: string, value: string): ServiceCall | null {

@@ -11,14 +11,16 @@ import {
   getPath,
   normalizeConfig,
   setPath,
+  type ButtonItem,
   type ButtonSetConfig,
+  type ModeSource,
   type CardConfig,
   type ChipConfig,
   type SetType,
   type TextRole,
   type Zone,
 } from '../model/config';
-import { availableOptions, defaultMenuDirection, MODE_ICONS, orderOptions, prettify, SET_TITLES } from '../model/sets';
+import { actionIcon, actionLabel, availableOptions, defaultMenuDirection, isBuiltin, MODE_ICONS, orderOptions, prettify, SET_TITLES } from '../model/sets';
 import { resolveButtonStyle, BUTTON_DEFAULTS } from '../model/style';
 import { EDITOR_CSS } from './editor-css';
 import { toChipView } from '../model/chips';
@@ -70,8 +72,11 @@ const SET_ICONS: Record<SetType, string> = {
   hvac: 'mdi:thermostat',
   preset: 'mdi:home-thermometer-outline',
   fan_mode: 'mdi:fan',
+  custom: 'mdi:gesture-tap-button',
   chips: 'mdi:devices',
 };
+const SOURCE_NAMES: Record<ModeSource, string> = { hvac: 'Mode', preset: 'Preset', fan_mode: 'Fan' };
+const KIND_ICON: Record<ButtonItem['kind'], string> = { mode: 'mdi:thermostat', device: 'mdi:shape-outline', action: 'mdi:play-circle-outline' };
 
 type Opt = [string, string];
 
@@ -617,7 +622,8 @@ export class EasyThermostatStylerCardEditor extends LitElement {
     const sets = this._sets();
     const entity = this.hass?.states[this._config!.entity];
     const add = (type: SetType) => {
-      const next = [...sets, type === 'chips' ? { type, chips: [] } : { type }];
+      const n = sets.filter((x) => x.type === 'custom' || x.type === 'chips').length + 1;
+      const next = [...sets, type === 'custom' ? { type, name: `Buttons ${n}` } : { type }];
       this._set = next.length - 1;
       this._writeSets(next as ButtonSetConfig[]);
     };
@@ -638,13 +644,15 @@ export class EasyThermostatStylerCardEditor extends LitElement {
       ${this._hint('Puts every full-time set behind a toggle button, so the card stays small until you open one. Sets shown as expandable menus are already compact and are not changed.')}
       ${this._group('Sets')}
       <div class="etce-addbar">
-        ${(['hvac', 'preset', 'fan_mode', 'chips'] as SetType[]).map(
+        ${(['hvac', 'preset', 'fan_mode', 'custom'] as SetType[]).map(
           (t) => html`<button class="etce-add" @click=${() => add(t)}>+ ${SET_TITLES[t]}</button>`,
         )}
       </div>
       <div class="etce-slist">
         ${sets.map((s, i) => {
-          const supported = s.type === 'chips' || availableOptions(entity, s.type).length > 0;
+          const count = (s.items?.length ?? 0) + (s.chips?.length ?? 0);
+          const supported = isBuiltin(s.type) ? availableOptions(entity, s.type).length > 0 || count > 0 : true;
+          const protectedSet = isBuiltin(s.type) && sets.filter((x) => x.type === s.type).length === 1;
           const open = this._set === i;
           return html`<div class="etce-srow ${s.hidden ? 'off' : ''} ${open ? 'open' : ''}">
               <ha-icon class="etce-sicon" icon=${SET_ICONS[s.type]}></ha-icon>
@@ -660,10 +668,18 @@ export class EasyThermostatStylerCardEditor extends LitElement {
                 <button class="etce-act" title="Move down" ?disabled=${i === sets.length - 1} @click=${() => this._moveSet(i, 1)}>
                   <ha-icon icon="mdi:arrow-down"></ha-icon>
                 </button>
+                <button class="etce-act" title="Duplicate" @click=${() => this._duplicateSet(i)}>
+                  <ha-icon icon="mdi:content-copy"></ha-icon>
+                </button>
                 <button class="etce-act etce-eye ${s.hidden ? 'off' : ''}" title=${s.hidden ? 'Show' : 'Hide'} @click=${() => this._patchSet(i, 'hidden', !s.hidden, false)}>
                   <ha-icon icon=${s.hidden ? 'mdi:eye-off-outline' : 'mdi:eye-outline'}></ha-icon>
                 </button>
-                <button class="etce-act del" title="Delete" @click=${() => this._deleteSet(i)}>
+                <button
+                  class="etce-act del"
+                  title=${protectedSet ? 'Built-in set: hide it instead' : 'Delete'}
+                  ?disabled=${protectedSet}
+                  @click=${() => this._deleteSet(i)}
+                >
                   <ha-icon icon="mdi:trash-can-outline"></ha-icon>
                 </button>
               </div>
@@ -728,6 +744,16 @@ export class EasyThermostatStylerCardEditor extends LitElement {
     this._writeSets(sets);
   }
 
+  private _duplicateSet(i: number): void {
+    const sets = this._sets();
+    const copy = structuredClone(sets[i]!);
+    delete copy.id; // ids must stay unique; "Share a row with" links are kept
+    copy.name = `${sets[i]!.name ?? SET_TITLES[sets[i]!.type]} copy`;
+    sets.splice(i + 1, 0, copy);
+    this._set = i + 1;
+    this._writeSets(sets);
+  }
+
   private _deleteSet(i: number): void {
     const sets = this._sets();
     sets.splice(i, 1);
@@ -765,7 +791,7 @@ export class EasyThermostatStylerCardEditor extends LitElement {
       ${this._selectRow(
         'Show',
         s.display ?? 'always',
-        [['always', 'Full time'], ['toggle', 'Behind a toggle button'], ...(s.type === 'chips' ? [] : [['menu', 'Expandable menu'] as Opt])],
+        [['always', 'Full time'], ['toggle', 'Behind a toggle button'], ['menu', 'Expandable menu']],
         (v) => put('display', v, 'always'),
       )}
       ${s.display === 'menu'
@@ -776,22 +802,20 @@ export class EasyThermostatStylerCardEditor extends LitElement {
             [['down', 'Down'], ['up', 'Up'], ['right', 'Right'], ['left', 'Left']],
             (v) => put('menu_direction', v, defaultMenuDirection(zone)),
           )}
-          ${this._check('Show the set name on the button', s.menu_show_name ?? true, (v) => put('menu_show_name', v, true))}`
+          ${this._check('Show the set name on the button', s.menu_show_name ?? false, (v) => put('menu_show_name', v, false))}`
         : nothing}
       ${(s.display ?? 'always') === 'toggle' || (this._config!.compact && s.display !== 'menu')
         ? this._selector('Toggle icon', { icon: {} }, s.toggle_icon, (v) => put('toggle_icon', v || undefined))
         : nothing}
-      ${s.type === 'chips'
-        ? this._sub(`set-${i}-chips`, 'Chips', () => this._chipsEditor(s, i))
-        : this._sub(`set-${i}-options`, 'Buttons in this set', () => this._optionsEditor(s, i))}
-      ${this._sub(`set-${i}-style`, 'Button style for this set', () => this._buttonStyleEditor(`sets.${i}.style`, true, i))}
+      ${this._sub(`set-${i}-buttons`, 'Buttons in this set', () => this._buttonsEditor(s, i))}
+      ${this._sub(`set-${i}-style`, 'Button style for this set', () => html`${this._buttonStyleEditor(`sets.${i}.style`, true, i)}${this._copyStyle(i)}`)}
     `;
   }
 
   private _optionsEditor(s: ButtonSetConfig, i: number): TemplateResult {
     const entity = this.hass?.states[this._config!.entity];
     const values = orderOptions(availableOptions(entity, s.type), s.order);
-    if (!values.length) return this._hint('This entity has no options for this set.');
+    if (!values.length) return this._hint('The thermostat offers nothing for this set right now.');
     const move = (k: number, d: number) => {
       const next = [...values];
       const j = k + d;
@@ -799,7 +823,7 @@ export class EasyThermostatStylerCardEditor extends LitElement {
       [next[k], next[j]] = [next[j]!, next[k]!];
       this._patchSet(i, 'order', next);
     };
-    return html`${this._hint('Order, hide, rename and re-icon each button.')}
+    return html`${this._hint('Built-in buttons from the thermostat: order, hide, rename and re-icon them. They can’t be deleted.')}
       <div class="etce-blist">
         ${values.map((v, k) => {
           const o = s.options?.[v] ?? {};
@@ -823,103 +847,250 @@ export class EasyThermostatStylerCardEditor extends LitElement {
                     <input type="text" .value=${o.name ?? ''} placeholder=${prettify(v)} @change=${(e: Event) => this._patchSet(i, `options.${v}.name`, (e.target as HTMLInputElement).value || undefined)} />
                   </div>
                   ${this._selector('Icon', { icon: {} }, o.icon, (val) => this._patchSet(i, `options.${v}.icon`, val || undefined))}
+                  ${this._copyTo(i, { kind: 'mode', source: s.type as ModeSource, value: v, name: o.name, icon: o.icon })}
                 </div>`
               : nothing}`;
         })}
       </div>`;
   }
 
-  private _chipsEditor(s: ButtonSetConfig, i: number): TemplateResult {
-    const chips = s.chips ?? [];
-    const write = (next: ChipConfig[]) => this._patchSet(i, 'chips', next.length ? next : undefined);
-    const addChip = (type: ChipConfig['type']) => {
-      const ent = type === 'rf_fan' ? (this._firstRfFan() ?? '') : '';
-      this._chip = `chip:${i}:${chips.length}`;
-      // A chip needs an entity before it is stored (normalize drops empty ones),
-      // so seed with the first match; the user picks the right one below.
-      const fallback = ent || Object.keys(this.hass?.states ?? {}).find((id) => id.startsWith(type === 'rf_fan' ? 'fan.' : 'sensor.')) || '';
-      if (!fallback) return;
-      write([...chips, { type, entity: fallback }]);
+  /** The set's added buttons (older device-only sets are read as device buttons). */
+  private _itemsOf(s: ButtonSetConfig): ButtonItem[] {
+    return [...(s.chips ?? []).map((c) => ({ kind: 'device' as const, ...c })), ...(s.items ?? [])];
+  }
+
+  /** Write a set's buttons. An older device-only set becomes a Buttons set that
+   *  keeps its chip look, so nothing changes on the card. */
+  private _setItems(sets: ButtonSetConfig[], i: number, list: ButtonItem[]): void {
+    const set = { ...sets[i]! };
+    delete set.chips;
+    if (list.length) set.items = list;
+    else delete set.items;
+    if (set.type === 'chips') {
+      set.type = 'custom';
+      if (!set.style?.look) set.style = { ...(set.style ?? {}), look: 'chip' };
+      set.align ??= 'center';
+    }
+    sets[i] = set;
+  }
+
+  private _writeItems(i: number, list: ButtonItem[]): void {
+    const sets = this._sets();
+    this._setItems(sets, i, list);
+    this._writeSets(sets);
+  }
+
+  /** "Copy to set": add a copy of this button to another set. */
+  private _copyTo(from: number, item: ButtonItem): TemplateResult {
+    const sets = this._sets();
+    const others = sets.map((x, k) => [x, k] as const).filter(([, k]) => k !== from);
+    if (!others.length) return html``;
+    return this._selectRow(
+      'Copy to set',
+      '',
+      [['', 'Choose a set…'], ...others.map(([x, k]) => [String(k), `${x.name ?? SET_TITLES[x.type]} (#${k + 1})`] as Opt)],
+      (v) => {
+        if (v === '') return;
+        const all = this._sets();
+        const k = Number(v);
+        const copy = structuredClone(item) as ButtonItem;
+        delete (copy as { hide?: boolean }).hide;
+        this._setItems(all, k, [...this._itemsOf(all[k]!), copy]);
+        this._writeSets(all);
+      },
+    );
+  }
+
+  private _buttonsEditor(s: ButtonSetConfig, i: number): TemplateResult {
+    const entity = this.hass?.states[this._config!.entity];
+    const items = this._itemsOf(s);
+    const sources = (['hvac', 'preset', 'fan_mode'] as ModeSource[]).filter((src) => availableOptions(entity, src).length);
+    const add = (kind: ButtonItem['kind'], rf = false) => {
+      let it: ButtonItem | null = null;
+      if (kind === 'mode') {
+        const src = isBuiltin(s.type) && sources.includes(s.type) ? s.type : sources[0];
+        if (src) it = { kind: 'mode', source: src, value: availableOptions(entity, src)[0]! };
+      } else if (kind === 'device') {
+        // A device needs an entity before it is stored; seed one, pick below.
+        const ent = rf ? this._firstRfFan() : undefined;
+        const fallback = ent || Object.keys(this.hass?.states ?? {}).find((id) => id.startsWith(rf ? 'fan.' : 'sensor.'));
+        if (fallback) it = { kind: 'device', type: rf ? 'rf_fan' : 'entity', entity: fallback };
+      } else {
+        const script = Object.keys(this.hass?.states ?? {}).find((id) => id.startsWith('script.'));
+        it = script ? { kind: 'action', action: 'script', entity: script } : { kind: 'action', action: 'service' };
+      }
+      if (!it) return;
+      this._chip = `item:${i}:${items.length}`;
+      this._writeItems(i, [...items, it]);
     };
     return html`
-      ${this._hint('Status chips for linked devices. RF fan chips find the fan’s light and sleep timer automatically. Tap opens the fan card in a pop-up; hold toggles.')}
+      ${isBuiltin(s.type) ? html`${this._group('From the thermostat', true)}${this._optionsEditor(s, i)}${this._group('Added buttons')}` : nothing}
+      ${this._hint(
+        isBuiltin(s.type)
+          ? 'Add any button to this set: another mode, a device or sensor, or an action.'
+          : 'Add mode buttons, devices and sensors (shown with their value), or actions (script, scene or service).',
+      )}
       <div class="etce-addbar">
-        <button class="etce-add" @click=${() => addChip('rf_fan')}>+ RF fan</button>
-        <button class="etce-add" @click=${() => addChip('entity')}>+ Entity</button>
+        ${sources.length ? html`<button class="etce-add" @click=${() => add('mode')}>+ Mode button</button>` : nothing}
+        <button class="etce-add" @click=${() => add('device')}>+ Device / sensor</button>
+        <button class="etce-add" @click=${() => add('device', true)}>+ RF fan</button>
+        <button class="etce-add" @click=${() => add('action')}>+ Action</button>
       </div>
       <div class="etce-blist">
-        ${chips.map((ch, k) => {
-          const id = `chip:${i}:${k}`;
+        ${items.map((it, k) => {
+          const id = `item:${i}:${k}`;
           const open = this._chip === id;
-          const st = this.hass?.states[ch.entity];
-          const nm = ch.name ?? (st?.attributes.friendly_name as string | undefined) ?? ch.entity;
           const upd = (path: string, v: unknown, def?: unknown) => {
-            const next = [...chips];
-            next[k] = setPath(next[k] as unknown as Record<string, unknown>, path, v === def ? undefined : v) as unknown as ChipConfig;
-            next[k] = { ...next[k]!, type: ch.type, entity: next[k]!.entity || ch.entity };
-            write(next);
+            const next = [...items];
+            const merged = setPath(next[k] as unknown as Record<string, unknown>, path, v === def ? undefined : v) as unknown as ButtonItem;
+            next[k] = { ...merged, kind: it.kind } as ButtonItem;
+            if (it.kind === 'device') (next[k] as typeof it).entity ||= it.entity;
+            this._writeItems(i, next);
           };
           const move = (d: number) => {
-            const next = [...chips];
+            const next = [...items];
             const j = k + d;
             if (j < 0 || j >= next.length) return;
             [next[k], next[j]] = [next[j]!, next[k]!];
-            write(next);
+            this._writeItems(i, next);
           };
-          return html`<div class="etce-brow">
-              <ha-icon class="etce-sicon" icon=${ch.icon ?? (ch.type === 'rf_fan' ? 'mdi:ceiling-fan' : 'mdi:shape-outline')}></ha-icon>
-              <span class="etce-sname" @click=${() => (this._chip = open ? null : id)}>${nm}</span>
-              <span class="etce-stag">${ch.type === 'rf_fan' ? 'RF fan' : 'Entity'}</span>
+          const { name, icon, tag } = this._itemSummary(it);
+          return html`<div class="etce-brow ${it.hide ? 'off' : ''}">
+              <ha-icon class="etce-sicon" icon=${icon}></ha-icon>
+              <span class="etce-sname" @click=${() => (this._chip = open ? null : id)}>${name}</span>
+              <span class="etce-stag">${tag}</span>
               <div class="etce-sctl">
-                <button class="etce-act" @click=${() => (this._chip = open ? null : id)}><ha-icon icon="mdi:pencil"></ha-icon></button>
-                <button class="etce-act" ?disabled=${k === 0} @click=${() => move(-1)}><ha-icon icon="mdi:arrow-up"></ha-icon></button>
-                <button class="etce-act" ?disabled=${k === chips.length - 1} @click=${() => move(1)}><ha-icon icon="mdi:arrow-down"></ha-icon></button>
-                <button class="etce-act del" @click=${() => write(chips.filter((_, x) => x !== k))}><ha-icon icon="mdi:trash-can-outline"></ha-icon></button>
+                <button class="etce-act" title="Edit" @click=${() => (this._chip = open ? null : id)}><ha-icon icon="mdi:pencil"></ha-icon></button>
+                <button class="etce-act" title="Move up" ?disabled=${k === 0} @click=${() => move(-1)}><ha-icon icon="mdi:arrow-up"></ha-icon></button>
+                <button class="etce-act" title="Move down" ?disabled=${k === items.length - 1} @click=${() => move(1)}><ha-icon icon="mdi:arrow-down"></ha-icon></button>
+                <button class="etce-act" title="Duplicate" @click=${() => {
+                  const next = [...items];
+                  next.splice(k + 1, 0, structuredClone(it));
+                  this._writeItems(i, next);
+                }}><ha-icon icon="mdi:content-copy"></ha-icon></button>
+                <button class="etce-act etce-eye ${it.hide ? 'off' : ''}" title=${it.hide ? 'Show' : 'Hide'} @click=${() => upd('hide', !it.hide, false)}>
+                  <ha-icon icon=${it.hide ? 'mdi:eye-off-outline' : 'mdi:eye-outline'}></ha-icon>
+                </button>
+                <button class="etce-act del" title="Delete" @click=${() => this._writeItems(i, items.filter((_, x) => x !== k))}>
+                  <ha-icon icon="mdi:trash-can-outline"></ha-icon>
+                </button>
               </div>
             </div>
-            ${open
-              ? html`<div class="etce-sedit">
-                  ${this._selector('Entity', { entity: ch.type === 'rf_fan' ? { domain: 'fan' } : {} }, ch.entity, (v) => v && upd('entity', v))}
-                  <div class="etce-row">
-                    <label class="lbl">Name</label>
-                    <input type="text" .value=${ch.name ?? ''} placeholder="Entity name" @change=${(e: Event) => upd('name', (e.target as HTMLInputElement).value || undefined)} />
-                  </div>
-                  ${this._selector('Icon', { icon: {} }, ch.icon, (v) => upd('icon', v || undefined))}
-                  <div class="etce-checks">
-                    ${this._check('Show name', ch.show_name ?? true, (v) => upd('show_name', v, true))}
-                    ${this._check('Show state', ch.show_state ?? true, (v) => upd('show_state', v, true))}
-                  </div>
-                  ${ch.type === 'rf_fan' ? this._rfFanInfo(ch) : nothing}
-                  ${ch.type === 'rf_fan'
-                    ? this._selectRow('Speed shows as', ch.speed_format ?? 'number', [['number', 'Number (4)'], ['fraction', 'Fraction (4/10)'], ['percent', 'Percent (40%)']], (v) =>
-                        upd('speed_format', v, 'number'),
-                      )
-                    : nothing}
-                  ${this._selectRow(
-                    'Tap',
-                    ch.tap ?? (ch.type === 'rf_fan' ? 'popup' : 'more-info'),
-                    [['popup', 'Open card in pop-up'], ['more-info', 'More info'], ['toggle', 'Toggle'], ['none', 'Nothing']],
-                    (v) => upd('tap', v, ch.type === 'rf_fan' ? 'popup' : 'more-info'),
-                  )}
-                  ${this._selectRow(
-                    'Hold',
-                    ch.hold ?? (ch.type === 'rf_fan' ? 'toggle' : 'none'),
-                    [['toggle', 'Toggle'], ...(ch.type === 'rf_fan' ? [['toggle_light', 'Toggle light'] as Opt] : []), ['more-info', 'More info'], ['none', 'Nothing']],
-                    (v) => upd('hold', v, ch.type === 'rf_fan' ? 'toggle' : 'none'),
-                  )}
-                  ${(ch.tap ?? (ch.type === 'rf_fan' ? 'popup' : 'more-info')) === 'popup'
-                    ? html`${this._hint(
-                        ch.type === 'rf_fan'
-                          ? 'Pop-up card. Empty = the RF Fan card (custom:rf-fan-ltek) for this fan.'
-                          : 'Pop-up card config (any card).',
-                      )}
-                      ${this._selector('', { object: {} }, ch.popup_card, (v) => upd('popup_card', v && Object.keys(v as object).length ? v : undefined))}`
-                    : nothing}
-                </div>`
-              : nothing}`;
+            ${open ? html`<div class="etce-sedit">${this._itemFields(it, upd)}${this._copyTo(i, it)}</div>` : nothing}`;
         })}
       </div>
     `;
+  }
+
+  private _itemSummary(it: ButtonItem): { name: string; icon: string; tag: string } {
+    if (it.kind === 'mode') return { name: it.name ?? prettify(it.value), icon: it.icon ?? MODE_ICONS[it.value.toLowerCase()] ?? KIND_ICON.mode, tag: SOURCE_NAMES[it.source] };
+    if (it.kind === 'device') {
+      const st = this.hass?.states[it.entity];
+      return {
+        name: it.name ?? (st?.attributes.friendly_name as string | undefined) ?? it.entity,
+        icon: it.icon ?? (it.type === 'rf_fan' ? 'mdi:ceiling-fan' : KIND_ICON.device),
+        tag: it.type === 'rf_fan' ? 'RF fan' : 'Device',
+      };
+    }
+    return { name: it.name ?? (this.hass ? actionLabel(this.hass, it) : 'Action'), icon: it.icon ?? actionIcon(it), tag: 'Action' };
+  }
+
+  private _itemFields(it: ButtonItem, upd: (path: string, v: unknown, def?: unknown) => void): TemplateResult {
+    const nameIcon = (placeholder: string) => html`<div class="etce-row">
+        <label class="lbl">Label</label>
+        <input type="text" .value=${it.name ?? ''} placeholder=${placeholder} @change=${(e: Event) => upd('name', (e.target as HTMLInputElement).value || undefined)} />
+      </div>
+      ${this._selector('Icon', { icon: {} }, it.icon, (v) => upd('icon', v || undefined))}`;
+    if (it.kind === 'mode') {
+      const entity = this.hass?.states[this._config!.entity];
+      const sources = (['hvac', 'preset', 'fan_mode'] as ModeSource[]).filter((s) => availableOptions(entity, s).length || s === it.source);
+      const values = availableOptions(entity, it.source);
+      return html`${this._selectRow('Sets', it.source, sources.map((s) => [s, SOURCE_NAMES[s]] as Opt), (v) => {
+          const first = availableOptions(entity, v as ModeSource)[0];
+          upd('source', v);
+          if (first && !availableOptions(entity, v as ModeSource).includes(it.value)) upd('value', first);
+        })}
+        ${this._selectRow('Value', it.value, (values.includes(it.value) ? values : [it.value, ...values]).map((v) => [v, prettify(v)] as Opt), (v) => upd('value', v))}
+        ${nameIcon(prettify(it.value))}`;
+    }
+    if (it.kind === 'action') {
+      const kind = it.action ?? (it.entity?.startsWith('scene.') ? 'scene' : it.entity ? 'script' : 'service');
+      return html`${this._selectRow('Runs', kind, [['script', 'A script'], ['scene', 'A scene'], ['service', 'A service']], (v) => upd('action', v))}
+        ${kind === 'script' || kind === 'scene'
+          ? this._selector(kind === 'script' ? 'Script' : 'Scene', { entity: { domain: kind } }, it.entity, (v) => upd('entity', v || undefined))
+          : html`<div class="etce-row">
+                <label class="lbl">Service</label>
+                <input type="text" .value=${it.service ?? ''} placeholder="light.turn_on" @change=${(e: Event) => upd('service', (e.target as HTMLInputElement).value.trim() || undefined)} />
+              </div>
+              ${this._selector('Target (optional)', { entity: {} }, it.entity, (v) => upd('entity', v || undefined))}
+              ${this._hint('Extra service data (optional).')}
+              ${this._selector('', { object: {} }, it.data, (v) => upd('data', v && Object.keys(v as object).length ? v : undefined))}`}
+        ${nameIcon(this.hass ? actionLabel(this.hass, it) : 'Action')}`;
+    }
+    // device
+    const ch = it;
+    return html`
+      ${this._selector('Entity', { entity: ch.type === 'rf_fan' ? { domain: 'fan' } : {} }, ch.entity, (v) => v && upd('entity', v))}
+      ${nameIcon('Entity name')}
+      <div class="etce-checks">
+        ${this._check('Show name', ch.show_name ?? true, (v) => upd('show_name', v, true))}
+        ${this._check('Show value', ch.show_state ?? true, (v) => upd('show_state', v, true))}
+      </div>
+      ${ch.type === 'rf_fan' ? this._rfFanInfo(ch) : nothing}
+      ${ch.type === 'rf_fan'
+        ? this._selectRow('Speed shows as', ch.speed_format ?? 'number', [['number', 'Number (4)'], ['fraction', 'Fraction (4/10)'], ['percent', 'Percent (40%)']], (v) =>
+            upd('speed_format', v, 'number'),
+          )
+        : nothing}
+      ${this._selectRow(
+        'Tap',
+        ch.tap ?? (ch.type === 'rf_fan' ? 'popup' : 'more-info'),
+        [['popup', 'Open card in pop-up'], ['more-info', 'More info'], ['toggle', 'Toggle'], ['none', 'Nothing']],
+        (v) => upd('tap', v, ch.type === 'rf_fan' ? 'popup' : 'more-info'),
+      )}
+      ${this._selectRow(
+        'Hold',
+        ch.hold ?? (ch.type === 'rf_fan' ? 'toggle' : 'none'),
+        [['toggle', 'Toggle'], ...(ch.type === 'rf_fan' ? [['toggle_light', 'Toggle light'] as Opt] : []), ['more-info', 'More info'], ['none', 'Nothing']],
+        (v) => upd('hold', v, ch.type === 'rf_fan' ? 'toggle' : 'none'),
+      )}
+      ${(ch.tap ?? (ch.type === 'rf_fan' ? 'popup' : 'more-info')) === 'popup'
+        ? html`${this._hint(ch.type === 'rf_fan' ? 'Pop-up card. Empty = the RF Fan card (custom:rf-fan-ltek) for this fan.' : 'Pop-up card config (any card).')}
+          ${this._selector('', { object: {} }, ch.popup_card, (v) => upd('popup_card', v && Object.keys(v as object).length ? v : undefined))}`
+        : nothing}
+    `;
+  }
+
+  /** Copy this set's button style to other sets. */
+  private _copyStyle(i: number): TemplateResult {
+    const sets = this._sets();
+    const others = sets.map((x, k) => [x, k] as const).filter(([, k]) => k !== i);
+    if (!others.length) return html``;
+    return html`${this._group('Copy style')}
+      ${this._selectRow(
+        'Copy this style to',
+        '',
+        [['', 'Choose…'], ['all', 'All other sets'], ...others.map(([x, k]) => [String(k), `${x.name ?? SET_TITLES[x.type]} (#${k + 1})`] as Opt)],
+        (v) => {
+          if (v === '') return;
+          const all = this._sets();
+          const targets = v === 'all' ? others.map(([, k]) => k) : [Number(v)];
+          const styled = targets.filter((k) => all[k]!.style && Object.keys(all[k]!.style!).length);
+          if (styled.length && !window.confirm(`Replace the button style of ${styled.length === 1 ? 'that set' : `${styled.length} sets`}?`)) {
+            this.requestUpdate();
+            return;
+          }
+          const style = all[i]!.style;
+          for (const k of targets) {
+            const next = { ...all[k]! };
+            if (style && Object.keys(style).length) next.style = structuredClone(style);
+            else delete next.style;
+            all[k] = next;
+          }
+          this._writeSets(all);
+        },
+      )}
+      ${this._hint('Gives the chosen sets exactly this set’s button style (a set with no style of its own follows the card’s Button style).')}`;
   }
 
   /** What was detected for this fan (read-only hint). */

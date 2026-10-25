@@ -6,7 +6,7 @@ https://github.com/Ltek/easy-thermostat-styler-card
 
 [![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=Ltek&repository=easy-thermostat-styler-card&category=plugin)
 
-Current build: **v2026.10.25.16** · full history in [CHANGELOG.md](CHANGELOG.md)
+Current build: **v2026.10.25.17** · full history in [CHANGELOG.md](CHANGELOG.md)
 
 ---
 
@@ -25,6 +25,7 @@ Current build: **v2026.10.25.16** · full history in [CHANGELOG.md](CHANGELOG.md
   - Each set goes on the top, bottom, left or right, as a row or a column, with a column count and alignment.
   - Within a set, reorder, hide, rename or re-icon any button.
 - **Compact mode:** any set can sit behind a toggle button, or one switch puts them all there. Each browser remembers which ones are open.
+- **Build your own sets:** a set can hold any mix of buttons: mode buttons (any HVAC mode, preset or fan mode), devices and sensors showing their value, and action buttons (script, scene or any service). Mode, Preset and Fan fill themselves from your thermostat; add your own buttons to them or make new sets. Duplicate buttons and sets, copy a button to another set, and copy a set's style to others.
 - **Any set as buttons or chips:** every button set, including device sets, can use the Button or Chip look with the same style options. Sets can **share a row** with any other set, and the main area stays **centred** with an adjustable distance to the buttons around it.
 - **Expandable menus:** a set can collapse to one button showing the current value (for example "Mode · Heat"). Tap it and the full list opens up, down, left or right, floating over the card. Tap outside or press Escape to close it.
 - **Tap to reveal:** keep the card calm. The controls stay folded away (showing just the pill, or the control's own value) until you tap the temperature or a setpoint pill. They can open in place of the big number and fold away again after a number of seconds you choose.
