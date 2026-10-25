@@ -6,7 +6,7 @@ https://github.com/Ltek/easy-thermostat-styler-card
 
 [![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=Ltek&repository=easy-thermostat-styler-card&category=plugin)
 
-Current build: **v2026.10.24.13** · full history in [CHANGELOG.md](CHANGELOG.md)
+Current build: **v2026.10.25.14** · full history in [CHANGELOG.md](CHANGELOG.md)
 
 ---
 
@@ -42,7 +42,7 @@ Current build: **v2026.10.24.13** · full history in [CHANGELOG.md](CHANGELOG.md
   - Nine text elements, each with size, weight, colour, case, spacing, italic and opacity.
   - The card's background, border, corners, padding, and a glow while heating or cooling.
   - Every colour can follow your theme, be a custom colour, or any CSS.
-- **Test mode:** while you edit the dashboard, make the card act as if it were heating, cooling, idle, on fan or off, or cycle through all of them, to see the effects and moving background. The live card ignores it.
+- **Test mode:** in the editor, make the card act as if it were heating, cooling, idle, on fan or off, or cycle through all of them, to see the effects and moving background. It isn't saved and switches off when you close the editor.
 - **Visual editor:** everything is set in the editor, and YAML is optional. Only the settings you change are saved.
 
 <!-- gallery:start (generated from screenshots/index.json by the publish step; do not edit by hand) -->

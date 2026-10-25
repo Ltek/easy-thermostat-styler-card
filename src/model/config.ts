@@ -7,7 +7,7 @@
 // untouched card never rewrites its YAML. Rendering defaults live in code
 // (`DEFAULTS` below), never in the stored config.
 
-export const CARD_VERSION = '2026.10.24.13';
+export const CARD_VERSION = '2026.10.25.14';
 export const CARD_TYPE = 'easy-thermostat-styler-card';
 export const EDITOR_TYPE = 'easy-thermostat-styler-card-editor';
 
@@ -63,6 +63,10 @@ export interface ButtonStyle {
   icon_size?: number;
   font_size?: number;
   font_weight?: number;
+  /** Space between icon and label, px. */
+  icon_gap?: number;
+  /** Size of the whole button, % (100 = normal). */
+  scale?: number;
   border_width?: number;
   background?: string;
   color?: string;
@@ -82,6 +86,8 @@ export const BUTTON_STYLE_KEYS: (keyof ButtonStyle)[] = [
   'icon_size',
   'font_size',
   'font_weight',
+  'icon_gap',
+  'scale',
   'border_width',
   'background',
   'color',
@@ -277,9 +283,6 @@ export interface CardConfig {
   /** Frosted glass controls: buttons, pills, chips, menus and the wheel bubble. */
   frosted?: boolean;
   frost_blur?: number; // px
-  /** Editing only: pretend the system is in this state so effects and
-   *  backgrounds run. The live dashboard ignores it. */
-  test_mode?: 'heating' | 'cooling' | 'idle' | 'fan' | 'off' | 'cycle';
   [key: string]: unknown;
 }
 
@@ -371,6 +374,7 @@ function normalizeSet(raw: unknown): ButtonSetConfig | undefined {
 export function normalizeConfig(raw: unknown): CardConfig {
   if (!isObj(raw)) throw new Error('Invalid configuration');
   const cfg: Obj = { ...raw };
+  delete cfg.test_mode; // v2026.10.24.13 stored it; test mode now lives in the open editor only
   if (typeof cfg.entity !== 'string' || !cfg.entity) {
     throw new Error('Easy Thermostat Styler Card: set an entity (a climate.* entity).');
   }

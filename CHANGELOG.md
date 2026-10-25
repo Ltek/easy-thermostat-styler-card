@@ -1,5 +1,12 @@
 # Changelog
 
+## v2026.10.25.14
+
+- **Button scale** (Button style → Size): scale every button in every set, or override it for one set under "Button style for this set". The size, padding, corners, icon, text and spacing all scale together.
+- **Icon to text spacing** (Button style → Content): the gap between a button's icon and its label. It works for tiles, icon-left buttons, menu buttons and chips.
+- **Fixed**: button contents weren't centred. The icon and text in expandable-menu buttons sat to the left, and chips were slightly off-centre. Every button type now centres its icon and text.
+- **Test mode switches off when the editor closes.** It's no longer saved with the card; it lives only in the open editor. A test mode saved by v2026.10.24.13 is removed the next time the card is saved.
+
 ## v2026.10.24.13
 
 - **Test mode** (top of the editor): Off, Heating, Cooling, Idle, Fan / air movement, System off, or Cycle through all (6 s each).

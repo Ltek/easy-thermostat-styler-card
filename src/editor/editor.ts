@@ -25,6 +25,7 @@ import { toChipView } from '../model/chips';
 import { FX_DEFAULTS, FX_LABELS, FX_TARGETS, fxMode } from '../model/effects';
 import { BG_DEFAULTS, BG_PALETTE, BG_STATES, BG_STYLES } from '../model/background';
 import { TEMPLATES, applyTemplate, hasTemplateKeys } from '../model/templates';
+import { getTestMode, setTestMode, type TestState } from '../model/test-mode';
 
 // Visual editor in the Ltek panel idiom (CARD_DESIGN_SYSTEM §2): top-level
 // panels with accent border when open, flat sub-panels, content-width labels,
@@ -90,7 +91,16 @@ export class EasyThermostatStylerCardEditor extends LitElement {
   private _cmode: Record<string, string> = {};
 
   setConfig(config: CardConfig): void {
+    const before = this._config?.entity;
     this._config = normalizeConfig(config);
+    // Switching thermostat moves test mode with it.
+    if (before && before !== this._config.entity) {
+      const mode = getTestMode(before);
+      if (mode) {
+        setTestMode(before, null);
+        setTestMode(this._config.entity, mode);
+      }
+    }
   }
 
   // ---- writes ---------------------------------------------------------------
@@ -144,16 +154,10 @@ export class EasyThermostatStylerCardEditor extends LitElement {
   /** Ids of the top-level panels (filled as they render). */
   private _panels = new Set<string>();
 
-  override connectedCallback(): void {
-    super.connectedCallback();
-    const w = window as unknown as { __etcEditorsOpen?: number };
-    w.__etcEditorsOpen = (w.__etcEditorsOpen ?? 0) + 1;
-  }
-
+  /** Closing the editor always ends test mode. */
   override disconnectedCallback(): void {
     super.disconnectedCallback();
-    const w = window as unknown as { __etcEditorsOpen?: number };
-    w.__etcEditorsOpen = Math.max(0, (w.__etcEditorsOpen ?? 1) - 1);
+    if (getTestMode(this._config?.entity)) setTestMode(this._config?.entity, null);
   }
 
   private _panel(id: string, icon: string, title: string, body: TemplateResult): TemplateResult {
@@ -333,7 +337,7 @@ export class EasyThermostatStylerCardEditor extends LitElement {
   }
 
   private _testBar(): TemplateResult {
-    const cur = this._config!.test_mode ?? '';
+    const cur = getTestMode(this._config!.entity) ?? '';
     return html`<div class="etce-test ${cur ? 'on' : ''}">
       ${this._selectRow(
         'Test mode',
@@ -347,11 +351,14 @@ export class EasyThermostatStylerCardEditor extends LitElement {
           ['off', 'System off'],
           ['cycle', 'Cycle through all (6 s each)'],
         ],
-        (v) => this._put('test_mode', v || undefined),
+        (v) => {
+          setTestMode(this._config!.entity, (v || null) as TestState | 'cycle' | null);
+          this.requestUpdate();
+        },
       )}
       <p class="etce-hint">
         ${cur
-          ? 'The card acts as if it were in that state so you can see the effects and moving background. It only does this while you edit the dashboard; the live card ignores it, so saving with it on is harmless.'
+          ? 'The card acts as if it were in that state so you can see the effects and moving background. It is not saved with the card and switches off when you close the editor.'
           : 'Preview the heating, cooling, idle, fan and off looks (effects and moving background) without waiting for the real thing.'}
       </p>
     </div>`;
@@ -928,15 +935,18 @@ export class EasyThermostatStylerCardEditor extends LitElement {
       const name = opts.find(([v]) => v === inh)?.[1] ?? inh;
       return this._selectRow(label, String(cur[k] ?? ''), [['', `${def} (${name})`], ...opts], (v) => put(k, v || undefined));
     };
-    const sl = (k: keyof typeof cur, label: string, min: number, max: number) => {
-      const inh = Number((inherited as unknown as Record<string, unknown>)[k] ?? 0);
+    const sl = (k: keyof typeof cur, label: string, min: number, max: number, fmt?: (n: number) => string, step = 1, fallback = 0) => {
+      const inh = Number((inherited as unknown as Record<string, unknown>)[k] ?? fallback);
       const v = cur[k] as number | undefined;
-      return this._sliderRow(label, v ?? inh, min, max, 1, v !== undefined, (n) => put(k, n));
+      return this._sliderRow(label, v ?? inh, min, max, step, v !== undefined, (n) => put(k, n), fmt);
     };
     const col = (k: keyof typeof cur, label: string, seed: string) =>
       this._colorRow(`${base}.${k}`, label, cur[k] as string | undefined, isSet ? 'Card default' : 'Automatic', seed, (v) => put(k, v));
     return html`
-      ${this._group('Shape', true)}
+      ${this._group('Size', true)}
+      ${sl('scale', 'Scale', 50, 200, (n) => `${n}%`, 5, 100)}
+      ${this._hint(isSet ? 'Scales every button in this set. Card default comes from Button style.' : 'Scales every button in every set. Each set can override it under “Button style for this set”.')}
+      ${this._group('Shape')}
       ${sel('variant', 'Style', [['tonal', 'Tonal (tinted)'], ['filled', 'Filled'], ['outlined', 'Outlined'], ['ghost', 'Ghost']])}
       ${sl('radius', 'Corner radius', 0, 40)} ${sl('height', 'Min height', 0, 120)} ${sl('min_width', 'Min width', 0, 200)}
       ${sl('gap', 'Spacing', 0, 32)} ${sl('border_width', 'Border width', 0, 6)}
@@ -944,6 +954,7 @@ export class EasyThermostatStylerCardEditor extends LitElement {
       ${sel('content', 'Show', [['icon_label', 'Icon and label'], ['icon', 'Icon only'], ['label', 'Label only']])}
       ${sel('icon_position', 'Icon', [['top', 'Above label'], ['left', 'Left of label']])}
       ${sl('icon_size', 'Icon size', 10, 48)} ${sl('font_size', 'Text size', 8, 28)}
+      ${sl('icon_gap', 'Icon to text spacing', 0, 30, undefined, 1, 4)}
       ${sel('font_weight' as keyof typeof cur, 'Text weight', [['300', 'Light'], ['400', 'Regular'], ['500', 'Medium'], ['600', 'Semibold'], ['700', 'Bold']])}
       ${this._group('Colors — inactive')}
       ${col('background', 'Background', '#2a2a2a')} ${col('color', 'Text & icon', '#cccccc')} ${col('border_color', 'Border', '#555555')}

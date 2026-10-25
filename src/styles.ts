@@ -502,7 +502,9 @@ export const cardStyles = css`
   .bar.vertical .tick-l { top: auto; left: 10px; transform: translateY(50%); }
 
   /* ---- button sets ---- */
-  .set { min-width: 0; gap: var(--etc-b-gap, 8px); }
+  /* --etc-b-k: the set's Scale (Button style → Scale), 1 = 100 %. */
+  .set, .menus, .menu { --etc-b-k: var(--etc-b-scale, 1); }
+  .set { min-width: 0; gap: calc(var(--etc-b-gap, 8px) * var(--etc-b-k, 1)); }
   .set.grid { display: grid; }
   .set.flex { display: flex; flex-wrap: wrap; }
   .set.o-column { flex-direction: column; flex-wrap: nowrap; }
@@ -515,27 +517,28 @@ export const cardStyles = css`
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 4px;
-    min-width: var(--etc-b-minw, 52px);
-    min-height: var(--etc-b-height, 0);
-    padding: 8px 10px;
-    border-radius: var(--etc-b-radius, 14px);
+    text-align: center;
+    gap: calc(var(--etc-b-igap, 4px) * var(--etc-b-k, 1));
+    min-width: calc(var(--etc-b-minw, 52px) * var(--etc-b-k, 1));
+    min-height: calc(var(--etc-b-height, 0px) * var(--etc-b-k, 1));
+    padding: calc(8px * var(--etc-b-k, 1)) calc(10px * var(--etc-b-k, 1));
+    border-radius: calc(var(--etc-b-radius, 14px) * var(--etc-b-k, 1));
     border: var(--etc-b-bw, 0px) solid var(--etc-b-bc, transparent);
     background: var(--etc-b-bg, var(--etc-surface));
     color: var(--etc-b-fg, var(--etc-muted));
     font: inherit;
-    font-size: var(--etc-b-fs, 13px);
+    font-size: calc(var(--etc-b-fs, 13px) * var(--etc-b-k, 1));
     font-weight: var(--etc-b-fw, 500);
     cursor: pointer;
     transition: background 160ms ease, color 160ms ease, border-color 160ms ease, transform 80ms ease;
-    --mdc-icon-size: var(--etc-b-icon, 22px);
+    --mdc-icon-size: calc(var(--etc-b-icon, 22px) * var(--etc-b-k, 1));
     box-sizing: border-box;
     min-inline-size: 0;
     -webkit-tap-highlight-color: transparent;
   }
   .btn:active { transform: scale(0.97); }
   .btn:hover { color: var(--etc-b-fg, var(--etc-fg)); }
-  .ip-left .btn { flex-direction: row; gap: 5px; padding: 6px 8px; }
+  .ip-left .btn { flex-direction: row; gap: calc(var(--etc-b-igap, 5px) * var(--etc-b-k, 1)); padding: calc(6px * var(--etc-b-k, 1)) calc(8px * var(--etc-b-k, 1)); }
   .btn .lbl { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
   .v-tonal .btn.active {
     background: var(--etc-b-abg, color-mix(in srgb, var(--c) 22%, transparent));
@@ -554,25 +557,26 @@ export const cardStyles = css`
   .v-ghost .btn.active { color: var(--etc-b-afg, var(--c)); background: var(--etc-b-abg, transparent); }
 
   /* ---- expandable menus ---- */
-  .menus { display: flex; flex-wrap: wrap; gap: var(--etc-b-gap, 8px); justify-content: center; }
+  .menus { display: flex; flex-wrap: wrap; gap: calc(var(--etc-b-gap, 8px) * var(--etc-b-k, 1)); justify-content: center; }
   .menus.z-left, .menus.z-right { flex-direction: column; }
   .menu { position: relative; }
   .mt {
     --c: var(--primary-color, #03a9f4);
     display: flex;
     align-items: center;
-    gap: 12px;
-    min-width: var(--etc-b-minw, 120px);
-    min-height: var(--etc-b-height, 0);
-    padding: 10px 18px 10px 14px;
-    border-radius: var(--etc-b-radius, 14px);
+    justify-content: center;
+    gap: calc(var(--etc-b-igap, 12px) * var(--etc-b-k, 1));
+    min-width: calc(var(--etc-b-minw, 120px) * var(--etc-b-k, 1));
+    min-height: calc(var(--etc-b-height, 0px) * var(--etc-b-k, 1));
+    padding: calc(10px * var(--etc-b-k, 1)) calc(16px * var(--etc-b-k, 1));
+    border-radius: calc(var(--etc-b-radius, 14px) * var(--etc-b-k, 1));
     border: var(--etc-b-bw, 0px) solid var(--etc-b-bc, transparent);
     background: var(--etc-b-bg, var(--etc-surface));
     color: var(--etc-b-fg, var(--etc-fg));
     font: inherit;
     text-align: left;
     cursor: pointer;
-    --mdc-icon-size: var(--etc-b-icon, 22px);
+    --mdc-icon-size: calc(var(--etc-b-icon, 22px) * var(--etc-b-k, 1));
     -webkit-tap-highlight-color: transparent;
   }
   .v-outlined .mt { background: var(--etc-b-bg, transparent); border: max(var(--etc-b-bw, 1px), 1px) solid var(--etc-b-bc, color-mix(in srgb, var(--divider-color, #555) 70%, transparent)); }
@@ -580,8 +584,8 @@ export const cardStyles = css`
   .mt.has-active > ha-icon { color: var(--etc-b-afg, var(--c)); }
   .menu.open .mt, .mt[aria-expanded='true'] { border-color: var(--etc-b-abc, color-mix(in srgb, var(--c) 50%, transparent)); }
   .mt-text { display: flex; flex-direction: column; min-width: 0; line-height: 1.2; }
-  .mt-name { font-size: 12px; color: var(--etc-muted); }
-  .mt-value { font-size: calc(var(--etc-b-fs, 13px) + 3px); font-weight: var(--etc-b-fw, 500); white-space: nowrap; }
+  .mt-name { font-size: calc(12px * var(--etc-b-k, 1)); color: var(--etc-muted); }
+  .mt-value { font-size: calc((var(--etc-b-fs, 13px) + 3px) * var(--etc-b-k, 1)); font-weight: var(--etc-b-fw, 500); white-space: nowrap; }
   .menu-list {
     flex-direction: column;
     gap: 2px;
@@ -609,18 +613,18 @@ export const cardStyles = css`
     --c: var(--primary-color, #03a9f4);
     display: flex;
     align-items: center;
-    gap: 14px;
-    padding: 10px 16px 10px 12px;
+    gap: calc(var(--etc-b-igap, 14px) * var(--etc-b-k, 1));
+    padding: calc(10px * var(--etc-b-k, 1)) calc(16px * var(--etc-b-k, 1)) calc(10px * var(--etc-b-k, 1)) calc(12px * var(--etc-b-k, 1));
     border: none;
-    border-radius: calc(var(--etc-b-radius, 14px) - 6px);
+    border-radius: calc((var(--etc-b-radius, 14px) - 6px) * var(--etc-b-k, 1));
     background: transparent;
     color: var(--etc-b-fg, var(--etc-fg));
     font: inherit;
-    font-size: calc(var(--etc-b-fs, 13px) + 3px);
+    font-size: calc((var(--etc-b-fs, 13px) + 3px) * var(--etc-b-k, 1));
     text-align: left;
     white-space: nowrap;
     cursor: pointer;
-    --mdc-icon-size: var(--etc-b-icon, 22px);
+    --mdc-icon-size: calc(var(--etc-b-icon, 22px) * var(--etc-b-k, 1));
   }
   .mi > ha-icon { color: var(--etc-muted); }
   .mi:hover, .mi:focus-visible { background: var(--etc-surface); outline: none; }
@@ -655,18 +659,19 @@ export const cardStyles = css`
     position: relative;
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    padding: 6px 12px 6px 8px;
+    justify-content: center;
+    gap: calc(var(--etc-b-igap, 6px) * var(--etc-b-k, 1));
+    padding: calc(6px * var(--etc-b-k, 1)) calc(11px * var(--etc-b-k, 1));
     border-radius: 999px;
     border: 1px solid var(--etc-b-bc, var(--divider-color, #444));
     background: var(--etc-b-bg, transparent);
     color: var(--etc-b-fg, var(--etc-muted));
     font: inherit;
-    font-size: var(--etc-b-fs, 13px);
+    font-size: calc(var(--etc-b-fs, 13px) * var(--etc-b-k, 1));
     cursor: pointer;
     user-select: none;
     -webkit-tap-highlight-color: transparent;
-    --mdc-icon-size: var(--etc-b-icon, 22px);
+    --mdc-icon-size: calc(var(--etc-b-icon, 22px) * var(--etc-b-k, 1));
   }
   .chip.on { color: var(--etc-b-afg, var(--c)); border-color: var(--etc-b-abc, color-mix(in srgb, var(--c) 55%, transparent)); background: var(--etc-b-abg, color-mix(in srgb, var(--c) 12%, transparent)); }
   .chip.unavailable { opacity: 0.45; }

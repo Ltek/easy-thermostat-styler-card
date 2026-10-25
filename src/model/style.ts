@@ -49,6 +49,8 @@ export function buttonVars(style: ButtonStyle): StyleVars {
     '--etc-b-icon': px(style.icon_size),
     '--etc-b-fs': px(style.font_size),
     '--etc-b-fw': style.font_weight ? String(style.font_weight) : undefined,
+    '--etc-b-igap': style.icon_gap !== undefined ? `${style.icon_gap}px` : undefined,
+    '--etc-b-scale': style.scale !== undefined && style.scale !== 100 ? String(style.scale / 100) : undefined,
     '--etc-b-bw': style.border_width !== undefined ? `${style.border_width}px` : undefined,
     '--etc-b-bg': style.background,
     '--etc-b-fg': style.color,

@@ -40,7 +40,7 @@ import { cardStyles } from './styles';
 import { fxClasses, fxVars } from './model/effects';
 import { airEntity, bgVars, frosted, toBgView } from './model/background';
 import { renderBackground } from './components/background';
-import { simulateView, testState, TEST_CYCLE_MS, TEST_LABEL } from './model/test-mode';
+import { currentTest, getTestMode, simulateView, TEST_CYCLE_MS, TEST_EVENT, TEST_LABEL } from './model/test-mode';
 import { backgroundStyles } from './background-styles';
 
 const PX_PER_STEP = 18;
@@ -74,9 +74,6 @@ export class EasyThermostatStylerCard extends LitElement {
   @state() private _revealed = false;
   /** Moving background paused (card off-screen or tab hidden). */
   @state() private _bgPaused = false;
-  /** HA sets these while the dashboard is edited / in the card editor preview. */
-  @state() private _editMode = false;
-  @state() private _preview = false;
   @state() private _cycle = 0;
   private _cycleTimer: ReturnType<typeof setInterval> | null = null;
   private _onScreen = true;
@@ -112,23 +109,17 @@ export class EasyThermostatStylerCard extends LitElement {
     return { entity: entity ?? 'climate.thermostat' };
   }
 
-  set editMode(v: boolean) {
-    this._editMode = !!v;
+  /** Test mode, as set in the open editor for this thermostat (never saved). */
+  private _testMode() {
+    return getTestMode(this._config?.entity);
   }
 
-  set preview(v: boolean) {
-    this._preview = !!v;
-  }
-
-  /** Test mode only runs while editing, so a saved test_mode is harmless. */
-  private _testActive(): boolean {
-    if (!this._config?.test_mode) return false;
-    const w = window as unknown as { __etcEditorsOpen?: number; __etcForceEditMode?: boolean };
-    return this._editMode || this._preview || (w.__etcEditorsOpen ?? 0) > 0 || !!w.__etcForceEditMode;
-  }
+  private _onTest = (ev: Event): void => {
+    if ((ev as CustomEvent<{ entity: string }>).detail?.entity === this._config?.entity) this.requestUpdate();
+  };
 
   private _syncCycleTimer(): void {
-    const want = this._testActive() && this._config?.test_mode === 'cycle';
+    const want = this._testMode() === 'cycle';
     if (want && !this._cycleTimer) this._cycleTimer = setInterval(() => (this._cycle += 1), TEST_CYCLE_MS);
     if (!want && this._cycleTimer) {
       clearInterval(this._cycleTimer);
@@ -154,6 +145,7 @@ export class EasyThermostatStylerCard extends LitElement {
       this._io.observe(this);
     }
     document.addEventListener('visibilitychange', this._updatePause);
+    window.addEventListener(TEST_EVENT, this._onTest);
   }
 
   private _updatePause = (): void => {
@@ -168,6 +160,7 @@ export class EasyThermostatStylerCard extends LitElement {
     if (this._cycleTimer) clearInterval(this._cycleTimer);
     this._cycleTimer = null;
     document.removeEventListener('visibilitychange', this._updatePause);
+    window.removeEventListener(TEST_EVENT, this._onTest);
     this._sp.dispose();
     if (this._revealTimer) clearTimeout(this._revealTimer);
   }
@@ -248,7 +241,7 @@ export class EasyThermostatStylerCard extends LitElement {
     const c = this._config;
     const real = toClimateView(this.hass, c);
     this._syncCycleTimer();
-    const test = this._testActive() ? testState(c, this._cycle) : null;
+    const test = currentTest(this._testMode(), this._cycle);
     // Status, colours, effects and background follow the simulated state;
     // the temperature and setpoints shown stay real.
     const view = test ? { ...simulateView(real, test), currentTemp: real.currentTemp, setpoints: real.setpoints } : real;
@@ -282,7 +275,7 @@ export class EasyThermostatStylerCard extends LitElement {
     return html`
       <ha-card class=${classMap(cls)} style=${styleMap(vars)}>
         ${renderBackground(c, bg)}
-        ${test ? html`<div class="test-badge" title="Test mode runs only while you edit the dashboard">TEST · ${TEST_LABEL[test]}</div>` : nothing}
+        ${test ? html`<div class="test-badge" title="Test mode switches off when the editor closes">TEST · ${TEST_LABEL[test]}</div>` : nothing}
         <div class="grid">
           ${(['top', 'left'] as Zone[]).map((z) => this._zone(z, zones[z]))}
           ${this._renderCore(view)}

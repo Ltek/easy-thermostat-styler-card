@@ -1,4 +1,3 @@
-import type { CardConfig } from './config';
 import type { ClimateView } from './climate';
 
 // Test mode: while the dashboard is being edited, pretend the system is
@@ -17,13 +16,6 @@ export const TEST_LABEL: Record<TestState, string> = {
   fan: 'Fan',
   off: 'Off',
 };
-
-/** The simulated state now, or null when test mode is off. */
-export function testState(config: CardConfig, cycleIndex: number): TestState | null {
-  const t = config.test_mode;
-  if (!t) return null;
-  return t === 'cycle' ? TEST_CYCLE[cycleIndex % TEST_CYCLE.length]! : t;
-}
 
 /** A copy of the view as it would look in that state. `currentTemp` here is
  *  only used for "follow the work" (a clear gap so the motion is lively). */
@@ -47,4 +39,33 @@ export function simulateView(view: ClimateView, state: TestState): ClimateView {
     case 'off':
       return { ...view, equipment: 'off', mode: 'off', setpoints: null };
   }
+}
+
+// The editor owns test mode for as long as it is open; it is never written to
+// the card's config, so closing the editor always switches it off. Cards read
+// the shared store (keyed by climate entity) and re-render on the event.
+export const TEST_EVENT = 'etc-test-mode';
+
+type Store = Record<string, TestState | 'cycle'>;
+
+function store(): Store {
+  const w = window as unknown as { __etcTest?: Store };
+  return (w.__etcTest ??= {});
+}
+
+export function getTestMode(entity: string | undefined): TestState | 'cycle' | null {
+  return (entity && store()[entity]) || null;
+}
+
+export function setTestMode(entity: string | undefined, mode: TestState | 'cycle' | null): void {
+  if (!entity) return;
+  const s = store();
+  if (mode) s[entity] = mode;
+  else delete s[entity];
+  window.dispatchEvent(new CustomEvent(TEST_EVENT, { detail: { entity } }));
+}
+
+export function currentTest(mode: TestState | 'cycle' | null, cycleIndex: number): TestState | null {
+  if (!mode) return null;
+  return mode === 'cycle' ? TEST_CYCLE[cycleIndex % TEST_CYCLE.length]! : mode;
 }

@@ -3,6 +3,7 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import '../src/easy-thermostat-styler-card';
 import type { EasyThermostatStylerCard } from '../src/card';
 import type { EasyThermostatStylerCardEditor } from '../src/editor/editor';
+import { normalizeConfig } from '../src/model/config';
 import { WRITE_DEBOUNCE_MS } from '../src/model/setpoint-controller';
 import { climate, fakeHass, RICH, rfFan } from './helpers';
 
@@ -454,32 +455,51 @@ describe('card render', () => {
 
   describe('test mode', () => {
     const idleCool = () => fakeHass([climate('cool', { ...RICH, temperature: 71, current_temperature: 71, hvac_action: 'idle' })]);
-    afterEach(() => {
-      delete (window as unknown as { __etcForceEditMode?: boolean }).__etcForceEditMode;
-    });
+    const editorFor = async (cfg: Record<string, unknown>) => {
+      const ed = document.createElement('easy-thermostat-styler-card-editor') as EasyThermostatStylerCardEditor;
+      ed.hass = idleCool().hass;
+      ed.setConfig({ ...base, ...cfg } as never);
+      document.body.appendChild(ed);
+      await ed.updateComplete;
+      const sel = ed.shadowRoot!.querySelector<HTMLSelectElement>('.etce-test select')!;
+      return { ed, pick: (v: string) => { sel.value = v; sel.dispatchEvent(new Event('change')); } };
+    };
 
-    it('ignored on the live dashboard', async () => {
-      const { root } = await mount({ test_mode: 'heating', background: { style: 'plasma' }, effects: { pill: 'glow' } }, idleCool());
+    it('set in the editor, never saved; effects, status and background follow; numbers stay real', async () => {
+      const cfg = { background: { style: 'plasma' }, effects: { pill: 'glow' } };
+      const { root, el } = await mount(cfg, idleCool());
       expect(root.querySelector('.test-badge')).toBeNull();
-      expect(root.querySelector('.bg')!.className).toContain('st-idle_cool');
-    });
-
-    it('while editing: effects, status and background follow the simulated state; numbers stay real', async () => {
-      const { root, el } = await mount({ test_mode: 'heating', background: { style: 'plasma' }, effects: { pill: 'glow' } }, idleCool());
-      (el as unknown as { editMode: boolean }).editMode = true;
+      const events: Record<string, unknown>[] = [];
+      const { ed, pick } = await editorFor(cfg);
+      ed.addEventListener('config-changed', (e) => events.push((e as CustomEvent).detail.config));
+      pick('heating');
       await el.updateComplete;
+      expect(events).toEqual([]); // nothing written to the card config
       expect(root.querySelector('.test-badge')!.textContent).toContain('Heating');
       expect(root.querySelector('.bg')!.className).toContain('st-heating');
-      expect(root.querySelector('.bg')!.className).toContain('dir-up');
       expect(root.querySelector('ha-card')!.classList.contains('fx-pill-glow')).toBe(true);
       expect(root.querySelector('.status')!.textContent).toContain('Heating');
       expect(root.querySelector('.current')!.textContent).toContain('71');
     });
 
+    it('closing the editor switches it off', async () => {
+      const { root, el } = await mount({ background: { style: 'plasma' } }, idleCool());
+      const { ed, pick } = await editorFor({ background: { style: 'plasma' } });
+      pick('fan');
+      await el.updateComplete;
+      expect(root.querySelector('.bg')!.className).toContain('st-fan');
+      ed.remove();
+      await el.updateComplete;
+      expect(root.querySelector('.test-badge')).toBeNull();
+      expect(root.querySelector('.bg')!.className).toContain('st-idle_cool');
+    });
+
     it('cycle steps through every state', async () => {
       vi.useFakeTimers();
-      (window as unknown as { __etcForceEditMode?: boolean }).__etcForceEditMode = true;
-      const { root, el } = await mount({ test_mode: 'cycle', background: { style: 'aurora' } }, idleCool());
+      const { root, el } = await mount({ background: { style: 'aurora' } }, idleCool());
+      const { pick } = await editorFor({});
+      pick('cycle');
+      await el.updateComplete;
       const seen: string[] = [];
       for (let i = 0; i < 5; i++) {
         seen.push(root.querySelector('.test-badge')!.textContent!.replace('TEST · ', '').trim());
@@ -487,6 +507,10 @@ describe('card render', () => {
         await el.updateComplete;
       }
       expect(seen).toEqual(['Heating', 'Cooling', 'Idle', 'Fan', 'Off']);
+    });
+
+    it('a test_mode saved by v2026.10.24.13 is dropped', () => {
+      expect(normalizeConfig({ ...base, test_mode: 'heating' })).toEqual(base);
     });
   });
 
@@ -508,6 +532,15 @@ describe('card render', () => {
       expect(all().filter((x) => x.open).map((x) => x.querySelector('summary')!.textContent!.trim())).toEqual([name]);
     }
     expect(el.shadowRoot!.querySelector('.etce-test select')).not.toBeNull();
+  });
+
+  it('buttons: scale (all sets or one set) and icon-to-text spacing are custom properties', async () => {
+    const { root } = await mount({ buttons: { scale: 80, icon_gap: 10 }, sets: [{ type: 'hvac', style: { scale: 150 } }, { type: 'preset' }] });
+    const hv = root.querySelector<HTMLElement>('.set.t-hvac')!;
+    const pr = root.querySelector<HTMLElement>('.set.t-preset')!;
+    expect(hv.style.getPropertyValue('--etc-b-scale')).toBe('1.5');
+    expect(pr.style.getPropertyValue('--etc-b-scale')).toBe('0.8');
+    expect(pr.style.getPropertyValue('--etc-b-igap')).toBe('10px');
   });
 
   it('hvac set full-time; preset/fan behind toggles that remember state', async () => {
