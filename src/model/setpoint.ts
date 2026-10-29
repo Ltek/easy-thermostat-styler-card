@@ -22,7 +22,7 @@ export type Setpoint = 'heat' | 'cool';
  *  the entity's `target_temp_step`, so every value the scrubber renders is
  *  distinct — a sub-degree °F step (e.g. 0.5) would show each whole degree twice. */
 const STEP_F = 1;
-const STEP_C = 0.5;
+const STEP_C = 0.1;
 
 /** Default minimum heat↔cool separation (deadband) kept in Heat / Cool (Auto),
  *  in the display unit, when `min_gap` is not configured. 3°F ≈ 1.5°C matches the
