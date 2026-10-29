@@ -71,6 +71,7 @@ const BACKGROUNDS = [
   bgShot('beam', 'Glow Beam: cooling, with vignette and grain', 'climate.hall', { background: { vignette: 40, grain: 20, color: '#050507' } }),
   bgShot('plasma', 'Fan Only: swirling blades at the fan speed', 'climate.loft', { slug: '-fan' }),
   bgShot('aurora', 'Idle: a very slow drift', 'climate.study', { slug: '-idle' }),
+  bgShot('flow', 'Thermal Flow at 30°, with color variation', 'climate.office', { slug: '-angled', background: { angle: 30, variation: 80 } }),
 ];
 
 const SHOTS = [

@@ -65,6 +65,41 @@ export const backgroundStyles = css`
     mix-blend-mode: overlay;
   }
 
+  /* ---- angle: the motion is tilted inside a square that covers the card ---- */
+  .bg .bg-rot {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: var(--bg-diag, 150%);
+    height: var(--bg-diag, 150%);
+    transform: translate(-50%, -50%) rotate(var(--bg-angle, 0deg));
+  }
+
+  /* ---- color variation: each shape strays from the state colors by its own
+     amount (--hv, −1…1) times the setting (--bg-var, 0–100). Up to ±60° of
+     hue, a mix toward the second color, and a little lighter / darker. Needs relative colors; without
+     them the shapes simply keep the state colors. ---- */
+  .s-flow .b1 { --hv: -0.7; } .s-flow .b2 { --hv: 0.85; }
+  .s-mesh .m1 { --hv: -0.8; } .s-mesh .m2 { --hv: 0.5; } .s-mesh .m3 { --hv: 0.95; } .s-mesh .m4 { --hv: -0.35; }
+  .s-beam .r1 { --hv: 0.1; } .s-beam .r2 { --hv: -0.9; } .s-beam .r3 { --hv: 0.8; }
+  .s-core .c1 { --hv: 0.4; } .s-core .c2 { --hv: -0.85; }
+  /* Flow's two bands span the whole card and would average out: with
+     variation on, one leans left and the other right. Plasma's blobs blend
+     with "screen", which washes their colors together: keep them distinct. */
+  .bg.vary.s-flow .b1 { -webkit-mask-image: linear-gradient(to right, #000 25%, transparent 85%); mask-image: linear-gradient(to right, #000 25%, transparent 85%); }
+  .bg.vary.s-flow .b2 { opacity: 1; -webkit-mask-image: linear-gradient(to right, transparent 15%, #000 75%); mask-image: linear-gradient(to right, transparent 15%, #000 75%); }
+  .bg.vary.s-plasma .col > b { mix-blend-mode: normal; }
+  @supports (color: oklch(from red l c h)) {
+    .bg.vary :is(.col, .rib, .band, .m, .r1, .r2, .r3, .c1, .c2, .blades) {
+      --ca: oklch(
+        from color-mix(in oklch, var(--etc-bg-a), var(--etc-bg-b) calc(max(0, var(--hv, 0)) * var(--bg-var, 0) * 0.9%))
+          calc(l + var(--hv, 0) * var(--bg-var, 0) * 0.0018) c calc(h + var(--hv, 0) * var(--bg-var, 0) * 0.6)
+      );
+      /* the same direction, so a whole shape turns redder or more amber rather than averaging out */
+      --cb: oklch(from var(--etc-bg-b) calc(l + var(--hv, 0) * var(--bg-var, 0) * 0.0012) c calc(h + var(--hv, 0) * var(--bg-var, 0) * 0.5));
+    }
+  }
+
   /* ---- shared motion ---- */
   @keyframes bg-rise { from { transform: translateY(var(--travel, 80%)); } to { transform: translateY(calc(var(--travel, 80%) * -1)); } }
   @keyframes bg-fall { from { transform: translateY(calc(var(--travel, 80%) * -1)); } to { transform: translateY(var(--travel, 80%)); } }
@@ -90,24 +125,24 @@ export const backgroundStyles = css`
   .s-plasma { --travel: 115%; }
   .s-plasma .lay { filter: blur(calc(30px * var(--bg-blur-k, 1))); }
   .s-plasma .col > b {
-    background: radial-gradient(circle at 40% 40%, var(--etc-bg-a), color-mix(in srgb, var(--etc-bg-b) 80%, transparent) 55%, transparent 70%);
+    background: radial-gradient(circle at 40% 40%, var(--ca, var(--etc-bg-a)), color-mix(in srgb, var(--cb, var(--etc-bg-b)) 80%, transparent) 55%, transparent 70%);
     mix-blend-mode: screen;
   }
   .s-plasma::before, .s-particles::before, .s-shimmer::before {
     content: '';
     position: absolute;
     inset: 0;
-    background: radial-gradient(ellipse at 50% 115%, color-mix(in srgb, var(--etc-bg-b) 45%, transparent), transparent 70%);
+    background: radial-gradient(ellipse at 50% 115%, color-mix(in srgb, var(--cb, var(--etc-bg-b)) 45%, transparent), transparent 70%);
   }
   .bg.dir-down.s-plasma::before, .bg.dir-down.s-particles::before, .bg.dir-down.s-shimmer::before {
-    background: radial-gradient(ellipse at 50% -15%, color-mix(in srgb, var(--etc-bg-b) 45%, transparent), transparent 70%);
+    background: radial-gradient(ellipse at 50% -15%, color-mix(in srgb, var(--cb, var(--etc-bg-b)) 45%, transparent), transparent 70%);
   }
 
   /* ---- Lava Lamp (SVG goo: blobs merge and split) ---- */
   .s-lava { --travel: 95%; }
   .s-lava .lay { filter: url(#etc-goo); }
   .s-lava .col > b {
-    background: radial-gradient(circle at 35% 30%, color-mix(in srgb, var(--etc-bg-a) 65%, #fff), var(--etc-bg-a) 40%, var(--etc-bg-b));
+    background: radial-gradient(circle at 35% 30%, color-mix(in srgb, var(--ca, var(--etc-bg-a)) 65%, #fff), var(--ca, var(--etc-bg-a)) 40%, var(--cb, var(--etc-bg-b)));
     animation: bg-squish calc(var(--d, 20s) * 0.3 / var(--bg-rate, 1)) ease-in-out infinite alternate;
   }
   @keyframes bg-squish { from { transform: translate(-50%, -50%) scale(1, 1); } to { transform: translate(-50%, -50%) scale(0.86, 1.16); } }
@@ -119,7 +154,7 @@ export const backgroundStyles = css`
     bottom: -16%;
     height: 28%;
     border-radius: 50%;
-    background: linear-gradient(var(--etc-bg-a), var(--etc-bg-b));
+    background: linear-gradient(var(--ca, var(--etc-bg-a)), var(--cb, var(--etc-bg-b)));
   }
   .bg.dir-down.s-lava .lay::after { bottom: auto; top: -16%; }
   .bg.dir-swirl.s-lava .lay::after, .bg.dir-still.s-lava .lay::after { height: 18%; }
@@ -131,7 +166,7 @@ export const backgroundStyles = css`
     top: var(--y);
     height: var(--h, 34%);
     border-radius: 50%;
-    background: linear-gradient(90deg, transparent 5%, var(--etc-bg-a) 30%, var(--etc-bg-b) 50%, var(--etc-bg-a) 70%, transparent 95%);
+    background: linear-gradient(90deg, transparent 5%, var(--ca, var(--etc-bg-a)) 30%, var(--cb, var(--etc-bg-b)) 50%, var(--ca, var(--etc-bg-a)) 70%, transparent 95%);
     filter: blur(calc(28px * var(--bg-blur-k, 1)));
     opacity: 0.85;
     mix-blend-mode: screen;
@@ -155,7 +190,7 @@ export const backgroundStyles = css`
     right: -15%;
     top: -100%;
     height: 300%;
-    background: linear-gradient(to top, transparent 0%, var(--etc-bg-a) 22%, var(--etc-bg-b) 40%, transparent 62%, transparent 100%);
+    background: linear-gradient(to top, transparent 0%, var(--ca, var(--etc-bg-a)) 22%, var(--cb, var(--etc-bg-b)) 40%, transparent 62%, transparent 100%);
     background-size: 100% 33.333%;
     filter: blur(calc(26px * var(--bg-blur-k, 1)));
     animation: bg-flow-up calc(14s / var(--bg-rate, 1)) linear infinite;
@@ -176,11 +211,11 @@ export const backgroundStyles = css`
   .s-shimmer .col > b {
     height: calc(var(--sz) * 0.35);
     aspect-ratio: auto;
-    background: radial-gradient(ellipse, color-mix(in srgb, var(--etc-bg-a) 85%, transparent), transparent 70%);
+    background: radial-gradient(ellipse, color-mix(in srgb, var(--ca, var(--etc-bg-a)) 85%, transparent), transparent 70%);
     filter: blur(calc(14px * var(--bg-blur-k, 1)));
     animation: bg-waver calc(var(--d, 12s) * 0.37 / var(--bg-rate, 1)) ease-in-out infinite alternate;
   }
-  .bg.dir-down.s-shimmer .col > b { background: radial-gradient(ellipse, color-mix(in srgb, var(--etc-bg-a) 55%, #fff 15%), transparent 70%); }
+  .bg.dir-down.s-shimmer .col > b { background: radial-gradient(ellipse, color-mix(in srgb, var(--ca, var(--etc-bg-a)) 55%, #fff 15%), transparent 70%); }
   @keyframes bg-waver { from { transform: translate(-50%, -50%) scaleX(0.85) skewX(-8deg); } to { transform: translate(-50%, -50%) scaleX(1.15) skewX(8deg); } }
   .s-shimmer .spark { inset: 0; display: none; }
   .bg.dir-down.s-shimmer .spark { display: block; }
@@ -189,7 +224,7 @@ export const backgroundStyles = css`
     height: 3px;
     border-radius: 50%;
     background: #fff;
-    box-shadow: 0 0 6px var(--etc-bg-a);
+    box-shadow: 0 0 6px var(--ca, var(--etc-bg-a));
     opacity: 0;
     animation: bg-twinkle calc(var(--d, 4s) / var(--bg-rate, 1)) ease-in-out infinite;
     animation-delay: calc(var(--dl, 0s) / var(--bg-rate, 1));
@@ -199,28 +234,28 @@ export const backgroundStyles = css`
   /* ---- Embers / Snow ---- */
   .s-particles { --travel: 58%; }
   .s-particles .col > b {
-    background: radial-gradient(circle, color-mix(in srgb, var(--etc-bg-a) 40%, #fff) 0%, var(--etc-bg-a) 45%, transparent 70%);
+    background: radial-gradient(circle, color-mix(in srgb, var(--ca, var(--etc-bg-a)) 40%, #fff) 0%, var(--ca, var(--etc-bg-a)) 45%, transparent 70%);
     animation: bg-sway calc(var(--d, 14s) * 0.3 / var(--bg-rate, 1)) ease-in-out infinite alternate;
   }
-  .bg.dir-down.s-particles .col > b { background: radial-gradient(circle, #fff 0%, color-mix(in srgb, var(--etc-bg-a) 50%, #fff) 50%, transparent 72%); }
+  .bg.dir-down.s-particles .col > b { background: radial-gradient(circle, #fff 0%, color-mix(in srgb, var(--ca, var(--etc-bg-a)) 50%, #fff) 50%, transparent 72%); }
   @keyframes bg-sway { from { transform: translate(-50%, -50%) translateX(-14px); } to { transform: translate(-50%, -50%) translateX(14px); } }
 
   /* ---- Breathing Core ---- */
   .s-core .c1, .s-core .c2 { inset: -25%; }
   .s-core .c1 {
-    background: radial-gradient(circle at 50% 45%, var(--etc-bg-a) 0%, color-mix(in srgb, var(--etc-bg-b) 70%, transparent) 28%, transparent 55%);
+    background: radial-gradient(circle at 50% 45%, var(--ca, var(--etc-bg-a)) 0%, color-mix(in srgb, var(--cb, var(--etc-bg-b)) 70%, transparent) 28%, transparent 55%);
     filter: blur(calc(20px * var(--bg-blur-k, 1)));
     animation: bg-breathe calc(7s / var(--bg-rate, 1)) ease-in-out infinite alternate;
   }
   .s-core .c2 {
-    background: radial-gradient(circle at 50% 45%, transparent 30%, color-mix(in srgb, var(--etc-bg-a) 35%, transparent) 38%, transparent 48%);
+    background: radial-gradient(circle at 50% 45%, transparent 30%, color-mix(in srgb, var(--ca, var(--etc-bg-a)) 35%, transparent) 38%, transparent 48%);
     filter: blur(calc(14px * var(--bg-blur-k, 1)));
     animation: bg-breathe calc(7s / var(--bg-rate, 1)) ease-in-out infinite alternate-reverse;
   }
   .bg.dir-up.s-core .c1 { animation-name: bg-breathe-up; }
   .bg.dir-down.s-core .c1 { animation-name: bg-breathe-down; }
   .bg.dir-swirl.s-core .c2 {
-    background: repeating-conic-gradient(from 0deg at 50% 45%, color-mix(in srgb, var(--etc-bg-a) 45%, transparent) 0deg 30deg, transparent 30deg 90deg);
+    background: repeating-conic-gradient(from 0deg at 50% 45%, color-mix(in srgb, var(--ca, var(--etc-bg-a)) 45%, transparent) 0deg 30deg, transparent 30deg 90deg);
     -webkit-mask-image: radial-gradient(circle at 50% 45%, transparent 10%, #000 25%, transparent 55%);
     mask-image: radial-gradient(circle at 50% 45%, transparent 10%, #000 25%, transparent 55%);
     animation: bg-spin calc(5s / var(--bg-rate, 1)) linear infinite;
@@ -239,8 +274,8 @@ export const backgroundStyles = css`
   .s-mesh .m2 { left: 85%; top: 25%; --md: 34s; animation-direction: reverse; }
   .s-mesh .m3 { left: 80%; top: 85%; --md: 30s; }
   .s-mesh .m4 { left: 20%; top: 80%; --md: 38s; animation-direction: reverse; }
-  .s-mesh .m1 > b, .s-mesh .m3 > b { background: radial-gradient(circle, var(--etc-bg-a), transparent 65%); }
-  .s-mesh .m2 > b, .s-mesh .m4 > b { background: radial-gradient(circle, var(--etc-bg-b), transparent 65%); }
+  .s-mesh .m1 > b, .s-mesh .m3 > b { background: radial-gradient(circle, var(--ca, var(--etc-bg-a)), transparent 65%); }
+  .s-mesh .m2 > b, .s-mesh .m4 > b { background: radial-gradient(circle, var(--cb, var(--etc-bg-b)), transparent 65%); }
   .bg.dir-swirl.s-mesh .m { animation-duration: calc(var(--md, 26s) * 0.35 / var(--bg-rate, 1)); }
   @keyframes bg-mesh-up { from { transform: translateY(6%); } to { transform: translateY(-6%); } }
   @keyframes bg-mesh-down { from { transform: translateY(-6%); } to { transform: translateY(6%); } }
@@ -251,9 +286,9 @@ export const backgroundStyles = css`
   .bg.dir-swirl.s-beam .beam { animation: bg-beam-spin calc(10s / var(--bg-rate, 1)) linear infinite; }
   .bg.dir-still.s-beam .beam { animation: none; transform: rotate(-40deg); }
   .s-beam .beam i { border-radius: 40%; filter: blur(calc(38px * var(--bg-blur-k, 1))); }
-  .s-beam .r1 { left: 44%; top: 5%; width: 20%; height: 90%; background: linear-gradient(to right, var(--etc-bg-a), color-mix(in srgb, var(--etc-bg-b) 60%, transparent) 50%, transparent); }
-  .s-beam .r2 { left: 22%; top: 0; width: 18%; height: 65%; background: var(--etc-bg-b); opacity: 0.45; }
-  .s-beam .r3 { left: 62%; top: 25%; width: 28%; height: 50%; background: linear-gradient(135deg, color-mix(in srgb, var(--etc-bg-b) 70%, transparent), transparent); opacity: 0.7; }
+  .s-beam .r1 { left: 44%; top: 5%; width: 20%; height: 90%; background: linear-gradient(to right, var(--ca, var(--etc-bg-a)), color-mix(in srgb, var(--cb, var(--etc-bg-b)) 60%, transparent) 50%, transparent); }
+  .s-beam .r2 { left: 22%; top: 0; width: 18%; height: 65%; background: var(--cb, var(--etc-bg-b)); opacity: 0.45; }
+  .s-beam .r3 { left: 62%; top: 25%; width: 28%; height: 50%; background: linear-gradient(135deg, color-mix(in srgb, var(--cb, var(--etc-bg-b)) 70%, transparent), transparent); opacity: 0.7; }
   @keyframes bg-beam-up { from { transform: rotate(-40deg) translate(-6%, 8%); } to { transform: rotate(-40deg) translate(6%, -8%); } }
   @keyframes bg-beam-down { from { transform: rotate(-40deg) translate(-6%, -8%); } to { transform: rotate(-40deg) translate(6%, 8%); } }
   @keyframes bg-beam-spin { from { transform: rotate(-40deg); } to { transform: rotate(320deg); } }
@@ -261,7 +296,7 @@ export const backgroundStyles = css`
   /* ---- Fan: soft blades sweeping round, speed from the fan ---- */
   .bg .blades {
     inset: -30%;
-    background: repeating-conic-gradient(from 0deg, color-mix(in srgb, var(--etc-bg-a) 50%, transparent) 0deg 30deg, transparent 30deg 90deg);
+    background: repeating-conic-gradient(from 0deg, color-mix(in srgb, var(--ca, var(--etc-bg-a)) 50%, transparent) 0deg 30deg, transparent 30deg 90deg);
     filter: blur(calc(22px * var(--bg-blur-k, 1)));
     opacity: 0.5;
     -webkit-mask-image: radial-gradient(circle, transparent 8%, #000 22%, #000 55%, transparent 72%);

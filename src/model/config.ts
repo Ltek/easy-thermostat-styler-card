@@ -7,7 +7,7 @@
 // untouched card never rewrites its YAML. Rendering defaults live in code
 // (`DEFAULTS` below), never in the stored config.
 
-export const CARD_VERSION = '2026.10.25.23';
+export const CARD_VERSION = '2026.10.29.24';
 export const CARD_TYPE = 'easy-thermostat-styler-card';
 export const EDITOR_TYPE = 'easy-thermostat-styler-card-editor';
 
@@ -274,6 +274,10 @@ export interface BackgroundConfig {
   style?: BgStyle;
   strength?: number; // %
   speed?: number; // %
+  /** Tilt of the motion, degrees (0 = straight up / down). */
+  angle?: number;
+  /** How far each shape's color strays from the state colors, % (0 = none). */
+  variation?: number;
   /** Heating / cooling move faster and stronger the further the room is from the setpoint. */
   follow_gap?: boolean;
   /** Off: a calm, near-still layer, or none. */
@@ -451,7 +455,9 @@ export function normalizeConfig(raw: unknown): CardConfig {
   if (isObj(cfg.background)) {
     const bg = { ...cfg.background } as Obj;
     if ('strength' in bg) bg.strength = clamp(bg.strength, 0, 100);
-    if ('speed' in bg) bg.speed = clamp(bg.speed, 25, 300);
+    if ('speed' in bg) bg.speed = clamp(bg.speed, 25, 800);
+    if ('angle' in bg) bg.angle = clamp(bg.angle, -180, 180) || undefined;
+    if ('variation' in bg) bg.variation = clamp(bg.variation, 0, 100) || undefined;
     if ('scrim' in bg) bg.scrim = clamp(bg.scrim, -60, 60) || undefined;
     if ('vignette' in bg) bg.vignette = clamp(bg.vignette, 0, 100) || undefined;
     if ('grain' in bg) bg.grain = clamp(bg.grain, 0, 100) || undefined;

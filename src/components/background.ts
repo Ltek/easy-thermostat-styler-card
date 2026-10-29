@@ -15,13 +15,16 @@ const sparkles = Array.from({ length: 14 }, (_, i) => ({
   dl: -((i * 1.3) % 5),
 }));
 
+/** Spread −1…1 per shape (golden-ratio steps), for Color Variation. */
+const hv = (i: number) => (((i * 0.618034 + 0.31) % 1) * 2 - 1).toFixed(2);
+
 function columns(bv: BgView, quality: 'smooth' | 'light', unit: '%' | 'px'): TemplateResult {
   return html`<div class="lay">
     ${bgItems(bv.style, quality).map(
-      (it) =>
+      (it, i) =>
         html`<i
           class="col"
-          style=${styleMap({ '--x': `${it.x}%`, '--sz': `${it.s}${unit}`, '--d': `${it.d}s`, '--dl': `${it.dl}s` })}
+          style=${styleMap({ '--x': `${it.x}%`, '--sz': `${it.s}${unit}`, '--d': `${it.d}s`, '--dl': `${it.dl}s`, '--hv': hv(i) })}
           ><b></b
         ></i>`,
     )}
@@ -51,10 +54,10 @@ function body(bv: BgView, quality: 'smooth' | 'light'): TemplateResult {
       return columns(bv, quality, 'px');
     case 'aurora':
       return html`${bgItems('aurora', quality).map(
-        (it) =>
+        (it, i) =>
           html`<i
             class="rib"
-            style=${styleMap({ '--y': `${it.y}%`, '--h': `${it.s}%`, '--d': `${it.d}s`, '--dl': `${it.dl}s` })}
+            style=${styleMap({ '--y': `${it.y}%`, '--h': `${it.s}%`, '--d': `${it.d}s`, '--dl': `${it.dl}s`, '--hv': hv(i) })}
           ></i>`,
       )}`;
     case 'flow':
@@ -81,8 +84,8 @@ export function renderBackground(config: CardConfig, bv: BgView | null): Templat
         </div>`
       : nothing;
   const layer = bv
-    ? html`<div class="bg s-${bv.style} st-${bv.state} dir-${bv.dir} q-${quality}" aria-hidden="true">
-        ${body(bv, quality)}${bv.blades ? html`<i class="blades"></i>` : nothing}
+    ? html`<div class="bg s-${bv.style} st-${bv.state} dir-${bv.dir} q-${quality} ${b.variation ? 'vary' : ''}" aria-hidden="true">
+        ${b.angle ? html`<div class="bg-rot">${body(bv, quality)}</div>` : body(bv, quality)}${bv.blades ? html`<i class="blades"></i>` : nothing}
       </div>`
     : nothing;
   const finish =

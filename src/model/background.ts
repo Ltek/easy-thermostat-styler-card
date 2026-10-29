@@ -228,6 +228,8 @@ export function bgVars(config: CardConfig, bv: BgView | null): Record<string, st
     out['--bg-rate'] = String(bv.rate);
   }
   if ((b.quality ?? BG_DEFAULTS.quality) === 'light') out['--bg-blur-k'] = '0.6';
+  if (bv && b.angle) out['--bg-angle'] = `${b.angle}deg`;
+  if (bv && b.variation) out['--bg-var'] = String(b.variation);
   if (b.scrim) {
     out['--bg-scrim'] = String(Math.abs(b.scrim) / 100);
     out['--bg-scrim-c'] = b.scrim > 0 ? '#000' : '#fff';

@@ -1,5 +1,12 @@
 # Changelog
 
+## v2026.10.29.24
+
+- **Moving background speed** now goes up to **800%** (was 300%), for the styles that were still slow at full speed.
+- **Angle** (Background → Moving Background, −180° to 180°): tilts the motion. 0° goes straight up while heating and down while cooling; 30° leans it to the right. The tilted layer always covers the whole card, whatever its shape.
+- **Color variation** (0–100%): each shape's color strays from the state colors by its own amount. While heating, some shapes turn redder and some more amber, like a real flame. Thermal Flow and Liquid Plasma keep their shapes distinct so the variation shows. It needs a current browser (relative colors); older ones keep the plain state colors.
+- New README screenshot: Thermal Flow at 30° with color variation.
+
 ## v2026.10.25.23
 
 - **Fixed**: with Frosted Glass on, a button whose Border was set to None still showed a thin edge. That was Frosted Glass's own glass rim, not the border. Border: None now removes the rim too (inactive and active separately).

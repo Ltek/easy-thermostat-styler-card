@@ -6,7 +6,7 @@ https://github.com/Ltek/easy-thermostat-styler-card
 
 [![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=Ltek&repository=easy-thermostat-styler-card&category=plugin)
 
-Current build: **v2026.10.25.23** · full history in [CHANGELOG.md](CHANGELOG.md)
+Current build: **v2026.10.29.24** · full history in [CHANGELOG.md](CHANGELOG.md)
 
 ---
 
@@ -72,7 +72,7 @@ Current build: **v2026.10.25.23** · full history in [CHANGELOG.md](CHANGELOG.md
 <tr><td align="center" width="33%"><img src="screenshots/background-flow.png" width="260" alt="Thermal Flow" /><br /><sub><b>Thermal Flow</b>: heating, streaming up</sub></td><td align="center" width="33%"><img src="screenshots/background-shimmer.png" width="260" alt="Heat Shimmer" /><br /><sub><b>Heat Shimmer</b>: heating</sub></td><td align="center" width="33%"><img src="screenshots/background-shimmer-frost.png" width="260" alt="Frost" /><br /><sub><b>Frost</b>: cooling, mist and sparkles</sub></td></tr>
 <tr><td align="center" width="33%"><img src="screenshots/background-particles.png" width="260" alt="Embers" /><br /><sub><b>Embers</b>: heating</sub></td><td align="center" width="33%"><img src="screenshots/background-particles-snow.png" width="260" alt="Snow" /><br /><sub><b>Snow</b>: cooling</sub></td><td align="center" width="33%"><img src="screenshots/background-core.png" width="260" alt="Breathing Core" /><br /><sub><b>Breathing Core</b>: heating</sub></td></tr>
 <tr><td align="center" width="33%"><img src="screenshots/background-mesh.png" width="260" alt="Mesh Gradient" /><br /><sub><b>Mesh Gradient</b>: cooling</sub></td><td align="center" width="33%"><img src="screenshots/background-beam.png" width="260" alt="Glow Beam" /><br /><sub><b>Glow Beam</b>: cooling, with vignette and grain</sub></td><td align="center" width="33%"><img src="screenshots/background-plasma-fan.png" width="260" alt="Fan Only" /><br /><sub><b>Fan Only</b>: swirling blades at the fan speed</sub></td></tr>
-<tr><td align="center" width="33%"><img src="screenshots/background-aurora-idle.png" width="260" alt="Idle" /><br /><sub><b>Idle</b>: a very slow drift</sub></td></tr>
+<tr><td align="center" width="33%"><img src="screenshots/background-aurora-idle.png" width="260" alt="Idle" /><br /><sub><b>Idle</b>: a very slow drift</sub></td><td align="center" width="33%"><img src="screenshots/background-flow-angled.png" width="260" alt="Thermal Flow at 30°, with color variation" /><br /><sub><b>Thermal Flow at 30°, with color variation</b></sub></td></tr>
 </table>
 <!-- gallery:end -->
 

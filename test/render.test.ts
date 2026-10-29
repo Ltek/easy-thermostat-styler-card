@@ -836,6 +836,21 @@ describe('card render', () => {
     expect(pr.style.getPropertyValue('--etc-b-aring')).toBe('0px');
   });
 
+  it('background: angle wraps the motion in a rotated square; variation marks the layer; wider speed', async () => {
+    const { root } = await mount({ background: { style: 'flow', angle: 30, variation: 60, speed: 700 } });
+    const card = root.querySelector<HTMLElement>('ha-card')!;
+    expect(root.querySelector('.bg.vary > .bg-rot > .band')).not.toBeNull();
+    expect(card.style.getPropertyValue('--bg-angle')).toBe('30deg');
+    expect(card.style.getPropertyValue('--bg-var')).toBe('60');
+    expect(Number(card.style.getPropertyValue('--bg-rate'))).toBeGreaterThan(4);
+    expect(normalizeConfig({ ...base, background: { speed: 2000, angle: 400, variation: 0 } }).background).toEqual({ speed: 800, angle: 180 });
+    document.body.innerHTML = '';
+    const plain = await mount({ background: { style: 'flow' } });
+    expect(plain.root.querySelector('.bg-rot')).toBeNull();
+    expect(plain.root.querySelector('.bg.vary')).toBeNull();
+    expect(plain.root.querySelector<HTMLElement>('ha-card')!.style.getPropertyValue('--bg-angle')).toBe('');
+  });
+
   it('hvac set full-time; preset/fan behind toggles that remember state', async () => {
     const { root, calls, el } = await mount({});
     expect(root.querySelectorAll('.set.t-hvac .btn')).toHaveLength(4);

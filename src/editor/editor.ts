@@ -1379,7 +1379,11 @@ export class EasyThermostatStylerCardEditor extends LitElement {
             ${this._hint(BG_STYLES.find(([v]) => v === style)?.[2] ?? '')}
             ${this._group('Motion')}
             ${this._slider('background.strength', 'Strength', 0, 100, 5, BG_DEFAULTS.strength, pct)}
-            ${this._slider('background.speed', 'Speed', 25, 300, 5, BG_DEFAULTS.speed, pct)}
+            ${this._slider('background.speed', 'Speed', 25, 800, 5, BG_DEFAULTS.speed, pct)}
+            ${this._slider('background.angle', 'Angle', -180, 180, 5, 0, (n) => `${n}°`)}
+            ${this._hint('Tilts the motion: 0° goes straight up (heating) or down (cooling); 30° leans it to the right.')}
+            ${this._slider('background.variation', 'Color variation', 0, 100, 5, 0, pct)}
+            ${this._hint('How much each shape’s color strays from the state colors, e.g. some more orange, some more red, while heating.')}
             ${this._bool('background.follow_gap', 'Follow the work', BG_DEFAULTS.follow_gap)}
             ${this._hint('Moves faster and glows stronger the further the room is from the setpoint, and settles as it gets close.')}
             ${this._select('background.off', 'When off', [['calm', 'A calm, near-still background'], ['none', 'No moving background']], BG_DEFAULTS.off)}

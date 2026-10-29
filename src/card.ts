@@ -161,6 +161,8 @@ export class EasyThermostatStylerCard extends LitElement {
     if (this._cycleTimer) clearInterval(this._cycleTimer);
     this._cycleTimer = null;
     this._sideRO?.disconnect();
+    this._bgRO?.disconnect();
+    this._bgRO = undefined;
     document.removeEventListener('visibilitychange', this._updatePause);
     window.removeEventListener(TEST_EVENT, this._onTest);
     this._sp.dispose();
@@ -334,7 +336,31 @@ export class EasyThermostatStylerCard extends LitElement {
   /** Measure the side areas so "keep the main area centered" can balance them. */
   private _sideRO?: ResizeObserver;
 
+  private _bgRO?: ResizeObserver;
+
+  /** An angled background needs a square as large as the card's diagonal. */
+  private _syncBgDiag(): void {
+    const card = this.renderRoot.querySelector<HTMLElement>('ha-card');
+    const angled = !!this.renderRoot.querySelector('.bg-rot');
+    if (!card || !angled || typeof ResizeObserver === 'undefined') {
+      this._bgRO?.disconnect();
+      this._bgRO = undefined;
+      return;
+    }
+    const set = () => {
+      const r = card.getBoundingClientRect();
+      const d = `${Math.ceil(Math.hypot(r.width, r.height)) + 2}px`;
+      if (card.style.getPropertyValue('--bg-diag') !== d) card.style.setProperty('--bg-diag', d);
+    };
+    if (!this._bgRO) {
+      this._bgRO = new ResizeObserver(set);
+      this._bgRO.observe(card);
+    }
+    set();
+  }
+
   protected override updated(): void {
+    this._syncBgDiag();
     const grid = this.renderRoot.querySelector<HTMLElement>('.grid');
     if (!grid || typeof ResizeObserver === 'undefined') return;
     const sides = [...grid.querySelectorAll<HTMLElement>(':scope > .zone.left, :scope > .zone.right')];

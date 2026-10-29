@@ -31,5 +31,6 @@
   "background-mesh": "Mesh Gradient: cooling",
   "background-beam": "Glow Beam: cooling, with vignette and grain",
   "background-plasma-fan": "Fan Only: swirling blades at the fan speed",
-  "background-aurora-idle": "Idle: a very slow drift"
+  "background-aurora-idle": "Idle: a very slow drift",
+  "background-flow-angled": "Thermal Flow at 30°, with color variation"
 }
