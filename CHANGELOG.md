@@ -1,5 +1,14 @@
 # Changelog
 
+## v2026.10.30.25
+
+- **Button rows wrap much later.**
+  - Expandable-menu buttons are tighter by default: icon-to-text gap 6px (was 12px) and 8px side padding (was 16px). They're no longer forced to at least 120px wide.
+  - Top and bottom button rows reach closer to the card's sides (6px from the edge).
+  - **Fixed**: a row of menu buttons ignored the Button Style **Spacing** setting and always used 8px. It now uses your setting.
+  - Example: three menus (Home, Heat/Cool, Circulate) used to wrap on cards narrower than about 500px. They now stay on one line from about 360px.
+- Every one of these can still be changed under Button Style (Icon to Text Spacing, Min Width, Spacing).
+
 ## v2026.10.29.24
 
 - **Moving background speed** now goes up to **800%** (was 300%), for the styles that were still slow at full speed.

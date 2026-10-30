@@ -133,6 +133,10 @@ export const cardStyles = css`
     min-width: 0;
   }
   /* Distance from the main area: per side, else the card default. */
+  /* Top / bottom rows reach closer to the card's sides than the main area does
+     (6px from the edge instead of the card padding), so a row of buttons wraps
+     later. Never wider than the card padding allows. */
+  .zone.top, .zone.bottom { margin-inline: calc(-1 * max(0px, var(--etc-card-pad, 16px) - 6px)); }
   .zone.top { grid-area: top; margin-bottom: var(--zg-top, var(--zg, 12px)); }
   .zone.bottom { grid-area: bottom; margin-top: var(--zg-bottom, var(--zg, 12px)); }
   .zone.left { grid-area: left; flex-direction: row; align-items: center; margin-right: var(--zg-left, var(--zg, 12px)); }
@@ -584,10 +588,10 @@ export const cardStyles = css`
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: calc(var(--etc-b-igap, 12px) * var(--etc-b-k, 1));
-    min-width: calc(var(--etc-b-minw, 120px) * var(--etc-b-k, 1));
+    gap: calc(var(--etc-b-igap, 6px) * var(--etc-b-k, 1));
+    min-width: calc(var(--etc-b-minw, 0px) * var(--etc-b-k, 1));
     min-height: calc(var(--etc-b-height, 0px) * var(--etc-b-k, 1));
-    padding: calc(10px * var(--etc-b-k, 1)) calc(16px * var(--etc-b-k, 1));
+    padding: calc(10px * var(--etc-b-k, 1)) calc(8px * var(--etc-b-k, 1));
     border-radius: calc(var(--etc-b-radius, 14px) * var(--etc-b-k, 1));
     border: var(--etc-b-bw, 0px) solid var(--etc-b-bc, transparent);
     background: var(--etc-b-bg, var(--etc-surface));

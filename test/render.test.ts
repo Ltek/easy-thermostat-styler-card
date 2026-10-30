@@ -851,6 +851,11 @@ describe('card render', () => {
     expect(plain.root.querySelector<HTMLElement>('ha-card')!.style.getPropertyValue('--bg-angle')).toBe('');
   });
 
+  it('menu row uses the button Spacing setting', async () => {
+    const { root } = await mount({ buttons: { gap: 3 }, sets: [{ type: 'hvac', display: 'menu' }, { type: 'preset', display: 'menu' }] });
+    expect(root.querySelector<HTMLElement>('.menus')!.style.getPropertyValue('--etc-b-gap')).toBe('3px');
+  });
+
   it('hvac set full-time; preset/fan behind toggles that remember state', async () => {
     const { root, calls, el } = await mount({});
     expect(root.querySelectorAll('.set.t-hvac .btn')).toHaveLength(4);

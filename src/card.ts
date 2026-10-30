@@ -956,7 +956,14 @@ export class EasyThermostatStylerCard extends LitElement {
   // ---- expandable menus -------------------------------------------------------
 
   private _renderMenuRow(sets: SetView[], zone: Zone): TemplateResult {
-    return html`<div class="menus z-${zone}">${sets.map((s) => this._renderMenu(s))}</div>`;
+    // The row's own spacing comes from the button style (card default, or the
+    // first set's override), like a full-time set's.
+    const st = resolveButtonStyle(this._config?.buttons, sets[0]?.config.style);
+    const vars = buttonVars(st);
+    const rowVars: Record<string, string> = {};
+    if (vars['--etc-b-gap']) rowVars['--etc-b-gap'] = vars['--etc-b-gap'];
+    if (vars['--etc-b-scale']) rowVars['--etc-b-scale'] = vars['--etc-b-scale'];
+    return html`<div class="menus z-${zone}" style=${styleMap(rowVars)}>${sets.map((s) => this._renderMenu(s))}</div>`;
   }
 
   /** Tap on a mode or action button (device buttons have their own gestures). */
