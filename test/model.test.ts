@@ -466,3 +466,24 @@ describe('hide device button when off', () => {
     expect(v[0]!.tiles.map((x) => (x.kind === 'device' ? x.chip.entity : ''))).toEqual(['sensor.b', 'fan.c']);
   });
 });
+
+describe('pop-up cards', () => {
+  const pop = { id: 'p1', name: 'Sensors', icon: 'mdi:thermometer', size: 'large' as const, card: { type: 'entities', entities: [] } };
+  it('popup buttons resolve their pop-up; missing ones are hidden; value shown when set', () => {
+    const { hass } = fakeHass([climate('heat', { ...RICH, temperature: 68 }), { entity_id: 'sensor.open', state: '3', attributes: { unit_of_measurement: 'open' } }]);
+    const v = toSetViews(hass, { ...base, popups: [pop], sets: [{ type: 'custom', items: [
+      { kind: 'popup', popup: 'p1', entity: 'sensor.open' },
+      { kind: 'popup', popup: 'gone' },
+      { kind: 'popup', popup: 'p1', name: 'More', icon: 'mdi:dots-horizontal' },
+    ] }] });
+    expect(v[0]!.tiles.map((x) => (x.kind === 'popup' ? [x.label, x.icon, x.value] : x.kind))).toEqual([
+      ['Sensors', 'mdi:thermometer', '3 open'],
+      ['More', 'mdi:dots-horizontal', null],
+    ]);
+  });
+  it('normalize keeps pop-ups with an id and clamps numbers', () => {
+    const n = normalizeConfig({ ...base, popup_auto_close: 99999, popups: [{ id: 'a', width: 99999, auto_close: -5 }, { name: 'no id' }] });
+    expect(n.popup_auto_close).toBe(3600);
+    expect(n.popups).toEqual([{ id: 'a', width: 4000, auto_close: 0 }]);
+  });
+});

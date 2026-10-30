@@ -189,6 +189,7 @@ function stateText(hass: HomeAssistant, e: HassEntity): string {
 
 export function defaultPopupCard(chip: ChipConfig): Record<string, unknown> | null {
   if (chip.popup_card) return chip.popup_card;
+  if (chip.popup) return null; // a named pop-up; the card resolves it
   if (chip.type === 'rf_fan') return { type: RF_FAN_CARD, fan_entity: chip.entity };
   return null;
 }

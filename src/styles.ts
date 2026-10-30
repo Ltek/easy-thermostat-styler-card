@@ -731,17 +731,54 @@ export const cardStyles = css`
     border: none;
     padding: 0;
     background: transparent;
-    width: min(520px, 94vw);
+    width: var(--pop-w, min(520px, 94vw));
+    max-width: 100vw;
     max-height: 90vh;
     overflow: visible;
   }
-  dialog.popup::backdrop { background: rgba(0, 0, 0, 0.55); }
+  dialog.popup::backdrop {
+    background: rgba(0, 0, 0, var(--pop-dim, 0.55));
+    -webkit-backdrop-filter: blur(var(--pop-blur, 0px));
+    backdrop-filter: blur(var(--pop-blur, 0px));
+  }
+  dialog.popup.size-small { width: var(--pop-w, min(380px, 94vw)); }
+  dialog.popup.size-small::backdrop { background: rgba(0, 0, 0, var(--pop-dim, 0.15)); }
+  dialog.popup.anchored { position: fixed; margin: 0; inset: auto; }
+  dialog.popup.size-large { width: var(--pop-w, min(1200px, 90vw)); }
+  dialog.popup.size-full { width: var(--pop-w, 100vw); max-height: 100vh; height: var(--pop-h, 100vh); margin: 0; inset: 0; }
+  dialog.popup.size-full .popup-inner { border-radius: 0; height: 100%; max-height: 100vh; }
   .popup-inner {
     position: relative;
+    display: flex;
+    flex-direction: column;
     background: var(--card-background-color, #1c1c1c);
     border-radius: var(--ha-card-border-radius, 16px);
-    max-height: 90vh;
-    overflow: auto;
+    max-height: var(--pop-h, 90vh);
+    height: var(--pop-h, auto);
+    overflow: hidden;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+  }
+  .popup-body { overflow: auto; flex: 1 1 auto; min-height: 0; }
+  .popup-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 8px 10px 16px;
+    border-bottom: 1px solid var(--divider-color, #333);
+    color: var(--primary-text-color);
+    font-size: 16px;
+    font-weight: 500;
+    --mdc-icon-size: 20px;
+    flex: none;
+  }
+  .popup-title > span { flex: 1 1 auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .popup-x { border: none; background: transparent; color: var(--secondary-text-color); width: 36px; height: 36px; border-radius: 50%; cursor: pointer; --mdc-icon-size: 22px; }
+  .popup-x:hover { background: color-mix(in srgb, var(--primary-text-color) 10%, transparent); color: var(--primary-text-color); }
+  .popup-missing { padding: 24px 20px; color: var(--secondary-text-color); text-align: center; }
+  ha-card.frosted ~ dialog.popup .popup-inner, dialog.popup .popup-inner.frost {
+    background: color-mix(in srgb, var(--card-background-color, #1c1c1c) 72%, transparent);
+    -webkit-backdrop-filter: blur(18px) saturate(140%);
+    backdrop-filter: blur(18px) saturate(140%);
   }
   .popup-close {
     position: absolute;

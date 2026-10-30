@@ -14,6 +14,8 @@ import {
   type ButtonItem,
   type ButtonSetConfig,
   type ModeSource,
+  type PopupConfig,
+  type PopupItem,
   type CardConfig,
   type ChipConfig,
   type SetType,
@@ -76,7 +78,7 @@ const SET_ICONS: Record<SetType, string> = {
   chips: 'mdi:devices',
 };
 const SOURCE_NAMES: Record<ModeSource, string> = { hvac: 'Mode', preset: 'Preset', fan_mode: 'Fan' };
-const KIND_ICON: Record<ButtonItem['kind'], string> = { mode: 'mdi:thermostat', device: 'mdi:shape-outline', action: 'mdi:play-circle-outline' };
+const KIND_ICON: Record<ButtonItem['kind'], string> = { mode: 'mdi:thermostat', device: 'mdi:shape-outline', action: 'mdi:play-circle-outline', popup: 'mdi:card-text-outline' };
 
 type Opt = [string, string];
 
@@ -396,6 +398,7 @@ export class EasyThermostatStylerCardEditor extends LitElement {
       ${this._panel('templates', 'mdi:palette-outline', 'Quick Preset Templates', this._templatesBody())}
       ${this._panel('setpoint', 'mdi:knob', 'Setpoint control', this._setpointBody())}
       ${this._panel('sets', 'mdi:gesture-tap-button', 'Button sets', this._setsBody())}
+      ${this._panel('popups', 'mdi:card-text-outline', 'Pop-up cards', this._popupsBody())}
       ${this._panel('buttons', 'mdi:palette-swatch-outline', 'Button style', this._buttonsBody())}
       ${this._panel('text', 'mdi:format-text', 'Text', this._textBody())}
       ${this._panel('card', 'mdi:card-outline', 'Card Shape', this._cardBody())}
@@ -981,7 +984,18 @@ export class EasyThermostatStylerCardEditor extends LitElement {
     const sources = (['hvac', 'preset', 'fan_mode'] as ModeSource[]).filter((src) => availableOptions(entity, src).length);
     const add = (kind: ButtonItem['kind'], rf = false) => {
       let it: ButtonItem | null = null;
-      if (kind === 'mode') {
+      if (kind === 'popup') {
+        const first = this._config!.popups?.[0];
+        if (!first) {
+          // No pop-ups yet: create one and the button for it in one step.
+          const sets = this._sets();
+          this._setItems(sets, i, [...items, { kind: 'popup', popup: 'popup1' }]);
+          this._chip = `item:${i}:${items.length}`;
+          this._emit({ ...this._config!, sets, popups: [{ id: 'popup1', name: 'Pop-up 1' }] });
+          return;
+        }
+        it = { kind: 'popup', popup: first.id };
+      } else if (kind === 'mode') {
         const src = isBuiltin(s.type) && sources.includes(s.type) ? s.type : sources[0];
         if (src) it = { kind: 'mode', source: src, value: availableOptions(entity, src)[0]! };
       } else if (kind === 'device') {
@@ -1009,6 +1023,7 @@ export class EasyThermostatStylerCardEditor extends LitElement {
         <button class="etce-add" @click=${() => add('device')}>+ Device / sensor</button>
         <button class="etce-add" @click=${() => add('device', true)}>+ RF fan</button>
         <button class="etce-add" @click=${() => add('action')}>+ Action</button>
+        <button class="etce-add" @click=${() => add('popup')}>+ Pop-up card</button>
       </div>
       <div class="etce-rows">
         ${items.map((it, k) => {
@@ -1053,6 +1068,146 @@ export class EasyThermostatStylerCardEditor extends LitElement {
     `;
   }
 
+  private _popupItemFields(
+    it: PopupItem,
+    upd: (path: string, v: unknown, def?: unknown) => void,
+    nameIcon: (placeholder: string) => TemplateResult,
+  ): TemplateResult {
+    const pops = this._config!.popups ?? [];
+    const pop = pops.find((x) => x.id === it.popup);
+    return html`${this._selectRow(
+        'Opens',
+        it.popup,
+        [...(pop ? [] : [[it.popup, `${it.popup} (missing)`] as Opt]), ...pops.map((x) => [x.id, x.name ?? x.id] as Opt)],
+        (v) => upd('popup', v),
+        true,
+      )}
+      ${pops.length ? nothing : this._hint('Create a pop-up under Pop-up Cards first.')}
+      ${nameIcon(pop?.name ?? 'Open')}
+      <div class="etce-checks">
+        ${this._check('Show icon', it.show_icon ?? true, (v) => upd('show_icon', v, true))}
+        ${this._check('Show label', it.show_name ?? true, (v) => upd('show_name', v, true))}
+      </div>
+      ${this._group('Value on the button')}
+      ${this._selector('Entity (optional)', { entity: {} }, it.entity, (v) => upd('entity', v || undefined))}
+      ${it.entity ? this._check('Show value', it.show_state ?? true, (v) => upd('show_state', v, true)) : nothing}
+      ${this._hint('Shows that entity’s value on the button, e.g. how many windows are open.')}`;
+  }
+
+  /** Add an empty pop-up and return its id. */
+  private _newPopup(): string {
+    const pops = [...(this._config!.popups ?? [])];
+    const used = new Set(pops.map((x) => x.id));
+    let n = 1;
+    while (used.has(`popup${n}`)) n++;
+    const id = `popup${n}`;
+    pops.push({ id, name: `Pop-up ${n}` });
+    this._emit({ ...this._config!, popups: pops });
+    return id;
+  }
+
+  private _popupsBody(): TemplateResult {
+    const c = this._config!;
+    const pops = c.popups ?? [];
+    const users = (id: string) =>
+      this._sets().reduce((n, s) => n + (s.items ?? []).filter((x) => (x.kind === 'popup' && x.popup === id) || (x.kind === 'device' && x.popup === id)).length + (s.chips ?? []).filter((x) => x.popup === id).length, 0);
+    const write = (next: PopupConfig[]) => this._emit({ ...c, popups: next.length ? next : undefined } as CardConfig);
+    return html`
+      ${this._hint('Cards that open in a pop-up from any button. Define a card once here, then add an “Open card” button for it to any set, or pick it as a device button’s pop-up.')}
+      ${this._sliderRow(
+        'Auto-close after',
+        c.popup_auto_close ?? 30,
+        0,
+        300,
+        5,
+        c.popup_auto_close !== undefined,
+        (v) => this._put('popup_auto_close', v, 30),
+        (n) => (n ? `${n}s` : 'Never'),
+      )}
+      ${this._hint('Default for every pop-up and expandable menu: it closes after this long without use. Each pop-up can override it.')}
+      <div class="etce-addbar"><button class="etce-add" @click=${() => {
+          this._chip = `pop:${pops.length}`;
+          this._newPopup();
+        }}>+ Pop-up</button></div>
+      <div class="etce-rows">
+        ${pops.map((p, k) => {
+          const id = `pop:${k}`;
+          const n = users(p.id);
+          return this._rowSub(
+            this._chip === id,
+            (o) => (this._chip = o ? id : null),
+            { icon: p.icon ?? 'mdi:card-text-outline', name: p.name ?? p.id, tag: `${p.size ?? 'medium'} · ${n} button${n === 1 ? '' : 's'}`, cls: 'pop-row' },
+            html`<button class="etce-act" title="Preview" @click=${() => window.dispatchEvent(new CustomEvent('etc-popup-preview', { detail: { entity: c.entity, popup: p } }))}>
+                <ha-icon icon="mdi:eye-outline"></ha-icon>
+              </button>
+              <button class="etce-act" title="Duplicate" @click=${() => {
+                const used = new Set(pops.map((x) => x.id));
+                let i = 1;
+                while (used.has(`popup${i}`)) i++;
+                const next = [...pops];
+                next.splice(k + 1, 0, { ...structuredClone(p), id: `popup${i}`, name: `${p.name ?? p.id} copy` });
+                write(next);
+              }}><ha-icon icon="mdi:content-copy"></ha-icon></button>
+              <button class="etce-act del" title="Delete" @click=${() => {
+                if (n && !window.confirm(`${n} button${n === 1 ? ' uses' : 's use'} this pop-up. Delete it anyway? Those buttons will be hidden.`)) return;
+                write(pops.filter((_, x) => x !== k));
+              }}><ha-icon icon="mdi:trash-can-outline"></ha-icon></button>`,
+            () => this._popupFields(p, k),
+          );
+        })}
+      </div>
+    `;
+  }
+
+  private _popupFields(p: PopupConfig, k: number): TemplateResult {
+    const put = (key: string, v: unknown, def?: unknown) => {
+      const pops = [...(this._config!.popups ?? [])];
+      const next = setPath(pops[k] as unknown as Record<string, unknown>, key, v === def ? undefined : v) as unknown as PopupConfig;
+      pops[k] = { ...next, id: p.id };
+      this._emit({ ...this._config!, popups: pops });
+    };
+    const size = p.size ?? 'medium';
+    const global = this._config!.popup_auto_close ?? 30;
+    return html`
+      <div class="etce-row">
+        <label class="lbl">Name</label>
+        <input type="text" .value=${p.name ?? ''} placeholder=${p.id} @change=${(e: Event) => put('name', (e.target as HTMLInputElement).value || undefined)} />
+      </div>
+      ${this._selector('Icon', { icon: {} }, p.icon, (v) => put('icon', v || undefined))}
+      ${this._group('Size')}
+      ${this._selectRow(
+        'Size',
+        size,
+        [['small', 'Small (next to its button)'], ['medium', 'Medium'], ['large', 'Large'], ['full', 'Full screen']],
+        (v) => put('size', v, 'medium'),
+      )}
+      ${size === 'small'
+        ? this._selectRow('Opens', p.direction ?? '', [['', 'Automatic'], ['down', 'Down'], ['up', 'Up'], ['right', 'Right'], ['left', 'Left']], (v) => put('direction', v || undefined))
+        : nothing}
+      ${this._sliderRow('Width', p.width ?? 0, 0, 1600, 10, p.width !== undefined, (v) => put('width', v || undefined), (n) => (n ? `${n}px` : 'Auto'))}
+      ${this._sliderRow('Height', p.height ?? 0, 0, 1200, 10, p.height !== undefined, (v) => put('height', v || undefined), (n) => (n ? `${n}px` : 'Auto'))}
+      ${this._group('Behavior')}
+      ${this._check('Title bar with close button', p.title ?? true, (v) => put('title', v, true))}
+      ${this._sliderRow(
+        'Auto-close after',
+        p.auto_close ?? global,
+        0,
+        300,
+        5,
+        p.auto_close !== undefined,
+        (v) => put('auto_close', v),
+        (n) => (n ? `${n}s` : 'Never'),
+      )}
+      ${this._hint(`Unset follows the default above (${global ? `${global}s` : 'never'}). Tap outside or press Escape to close at any time.`)}
+      ${this._group('Backdrop')}
+      ${this._sliderRow('Dim', p.dim ?? (size === 'small' ? 15 : 55), 0, 100, 5, p.dim !== undefined, (v) => put('dim', v), (n) => `${n}%`)}
+      ${this._sliderRow('Blur', p.blur ?? 0, 0, 40, 1, p.blur !== undefined, (v) => put('blur', v))}
+      ${this._group('Card')}
+      ${this._hint('Paste any card’s YAML here, e.g. a whole Easy Entity Styler card.')}
+      ${this._selector('', { object: {} }, p.card, (v) => put('card', v && Object.keys(v as object).length ? v : undefined))}
+    `;
+  }
+
   private _itemSummary(it: ButtonItem): { name: string; icon: string; tag: string } {
     if (it.kind === 'mode') return { name: it.name ?? prettify(it.value), icon: it.icon ?? MODE_ICONS[it.value.toLowerCase()] ?? KIND_ICON.mode, tag: SOURCE_NAMES[it.source] };
     if (it.kind === 'device') {
@@ -1062,6 +1217,10 @@ export class EasyThermostatStylerCardEditor extends LitElement {
         icon: it.icon ?? (it.type === 'rf_fan' ? 'mdi:ceiling-fan' : KIND_ICON.device),
         tag: it.type === 'rf_fan' ? 'RF fan' : 'Device',
       };
+    }
+    if (it.kind === 'popup') {
+      const pop = this._config!.popups?.find((x) => x.id === it.popup);
+      return { name: it.name ?? pop?.name ?? 'Pop-up', icon: it.icon ?? pop?.icon ?? KIND_ICON.popup, tag: pop ? 'Pop-up' : 'Pop-up (missing)' };
     }
     return { name: it.name ?? (this.hass ? actionLabel(this.hass, it) : 'Action'), icon: it.icon ?? actionIcon(it), tag: 'Action' };
   }
@@ -1084,6 +1243,7 @@ export class EasyThermostatStylerCardEditor extends LitElement {
         ${this._selectRow('Value', it.value, (values.includes(it.value) ? values : [it.value, ...values]).map((v) => [v, prettify(v)] as Opt), (v) => upd('value', v))}
         ${nameIcon(prettify(it.value))}`;
     }
+    if (it.kind === 'popup') return this._popupItemFields(it, upd, nameIcon);
     if (it.kind === 'action') {
       const kind = it.action ?? (it.entity?.startsWith('scene.') ? 'scene' : it.entity ? 'script' : 'service');
       return html`${this._selectRow('Runs', kind, [['script', 'A script'], ['scene', 'A scene'], ['service', 'A service']], (v) => upd('action', v))}
@@ -1099,7 +1259,7 @@ export class EasyThermostatStylerCardEditor extends LitElement {
         ${nameIcon(this.hass ? actionLabel(this.hass, it) : 'Action')}`;
     }
     // device
-    const ch = it;
+    const ch = it as Extract<ButtonItem, { kind: 'device' }>;
     return html`
       ${this._selector('Entity', { entity: ch.type === 'rf_fan' ? { domain: 'fan' } : {} }, ch.entity, (v) => v && upd('entity', v))}
       ${nameIcon('Entity name')}
@@ -1128,8 +1288,17 @@ export class EasyThermostatStylerCardEditor extends LitElement {
         (v) => upd('hold', v, ch.type === 'rf_fan' ? 'toggle' : 'none'),
       )}
       ${(ch.tap ?? (ch.type === 'rf_fan' ? 'popup' : 'more-info')) === 'popup'
-        ? html`${this._hint(ch.type === 'rf_fan' ? 'Pop-up card. Empty = the RF Fan card (custom:rf-fan-ltek) for this fan.' : 'Pop-up card config (any card).')}
-          ${this._selector('', { object: {} }, ch.popup_card, (v) => upd('popup_card', v && Object.keys(v as object).length ? v : undefined))}`
+        ? html`${this._selectRow(
+            'Pop-up',
+            ch.popup ?? '',
+            [['', 'Its own card (below)'], ...(this._config!.popups ?? []).map((x) => [x.id, x.name ?? x.id] as Opt)],
+            (v) => upd('popup', v || undefined),
+            true,
+          )}
+          ${ch.popup
+            ? nothing
+            : html`${this._hint(ch.type === 'rf_fan' ? 'Pop-up card. Empty = the RF Fan card (custom:rf-fan-ltek) for this fan.' : 'Pop-up card config (any card).')}
+              ${this._selector('', { object: {} }, ch.popup_card, (v) => upd('popup_card', v && Object.keys(v as object).length ? v : undefined))}`}`
         : nothing}
     `;
   }

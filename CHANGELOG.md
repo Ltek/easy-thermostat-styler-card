@@ -1,5 +1,17 @@
 # Changelog
 
+## v2026.10.30.26
+
+- **Pop-up Cards** (new panel): define cards once, with any card's YAML pasted in (e.g. a whole Easy Entity Styler card), and open them from buttons.
+  - **Sizes**: Small (a pop-over next to its button that flips to stay on screen; pick the direction or let it choose), Medium, Large and Full Screen. Width and height can be set for each.
+  - **Title bar** with the name, icon and a close button (on by default). Tap outside or press Escape to close too.
+  - **Auto-close**: a card-wide default of **30 s** (Pop-up Cards → Auto-close After; 0 = never), adjustable per pop-up. Using the pop-up restarts the countdown. The same default now also closes **expandable menus** left open.
+  - **Backdrop**: dim and blur, per pop-up.
+  - **Preview** opens a pop-up on the card in the editor's preview pane. Duplicate and delete are there too; delete asks first if buttons use the pop-up, and those buttons then hide.
+  - A card type that isn't installed shows a clear message instead of an empty box.
+- **+ Pop-up Card** button kind (Buttons in This Set): opens one of your pop-ups. It works like any other button: label, icon, Show Icon / Show Label, the set's style and display, inside expandable menus, and optionally a **value** from any entity (e.g. "3 open"). If you have no pop-ups yet, adding one creates the pop-up too.
+- **Device buttons**: "Open card in pop-up" can now pick one of your Pop-up Cards instead of carrying its own card.
+
 ## v2026.10.30.25
 
 - **Button rows wrap much later.**

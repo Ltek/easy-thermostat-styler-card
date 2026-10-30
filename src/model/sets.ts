@@ -1,5 +1,5 @@
 import type { HomeAssistant, HassEntity } from './hass';
-import type { ActionItem, ButtonSetConfig, CardConfig, ChipConfig, ModeSource, SetType, Zone } from './config';
+import type { ActionItem, ButtonSetConfig, CardConfig, ChipConfig, ModeSource, PopupConfig, PopupItem, SetType, Zone } from './config';
 import { DEFAULT_SETS } from './config';
 import type { ServiceCall } from './service-call';
 
@@ -20,7 +20,8 @@ export interface ButtonOption {
 export type Tile =
   | { kind: 'mode'; source: ModeSource; option: ButtonOption }
   | { kind: 'device'; chip: ChipConfig }
-  | { kind: 'action'; item: ActionItem; label: string; icon: string };
+  | { kind: 'action'; item: ActionItem; label: string; icon: string }
+  | { kind: 'popup'; item: PopupItem; popup: PopupConfig; label: string; icon: string; value: string | null };
 
 export interface SetView {
   /** Stable key: `<type>-<index in config.sets>` (used for toggle memory). */
@@ -201,6 +202,19 @@ export function toSetViews(hass: HomeAssistant, config: CardConfig): SetView[] {
         const { kind: _k, hide: _h, ...chip } = it;
         if (it.hide_when_off && valueIsOff(hass, it.entity)) continue;
         tiles.push({ kind: 'device', chip: chip as ChipConfig });
+      } else if (it.kind === 'popup') {
+        const pop = config.popups?.find((x) => x.id === it.popup);
+        if (!pop) continue; // its pop-up was removed
+        const st = it.entity && it.show_state !== false ? hass.states[it.entity] : undefined;
+        const unit = st?.attributes.unit_of_measurement;
+        tiles.push({
+          kind: 'popup',
+          item: it,
+          popup: pop,
+          label: it.name ?? pop.name ?? 'Open',
+          icon: it.icon ?? pop.icon ?? 'mdi:card-text-outline',
+          value: st ? `${st.state}${unit ? ` ${unit}` : ''}` : null,
+        });
       } else {
         tiles.push({ kind: 'action', item: it, label: it.name ?? actionLabel(hass, it), icon: it.icon ?? actionIcon(it) });
       }

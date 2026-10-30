@@ -12,6 +12,7 @@ import {
   normalizeConfig,
   type CardConfig,
   type ChipConfig,
+  type PopupConfig,
   type Zone,
 } from './model/config';
 import { EQUIPMENT_LABEL, formatTemp, toClimateView, type ClimateView } from './model/climate';
@@ -70,6 +71,12 @@ export class EasyThermostatStylerCard extends LitElement {
   @state() private _open = new Set<string>();
   @state() private _tick = 0;
   @state() private _popupOpen = false;
+  /** The pop-up being shown (size, title, auto-close…). */
+  @state() private _popup: PopupConfig | null = null;
+  @state() private _popupMissing: string | null = null;
+  private _popupAnchor: HTMLElement | null = null;
+  private _popupTimer: ReturnType<typeof setTimeout> | null = null;
+  private _menuTimer: ReturnType<typeof setTimeout> | null = null;
   /** Open menu set key (fallback path when the Popover API is missing). */
   @state() private _menu: string | null = null;
   @state() private _revealed = false;
@@ -115,6 +122,14 @@ export class EasyThermostatStylerCard extends LitElement {
     return getTestMode(this._config?.entity);
   }
 
+  /** The editor's "Preview" for a pop-up: the card in the preview pane opens it. */
+  private _onPreview = (ev: Event): void => {
+    const d = (ev as CustomEvent<{ entity: string; popup: PopupConfig }>).detail;
+    if (!d || d.entity !== this._config?.entity || !this.isConnected) return;
+    if (this.closest('easy-thermostat-styler-card-editor')) return;
+    this._openPopup(d.popup, null);
+  };
+
   private _onTest = (ev: Event): void => {
     if ((ev as CustomEvent<{ entity: string }>).detail?.entity === this._config?.entity) this.requestUpdate();
   };
@@ -147,6 +162,7 @@ export class EasyThermostatStylerCard extends LitElement {
     }
     document.addEventListener('visibilitychange', this._updatePause);
     window.addEventListener(TEST_EVENT, this._onTest);
+    window.addEventListener('etc-popup-preview', this._onPreview);
   }
 
   private _updatePause = (): void => {
@@ -160,11 +176,14 @@ export class EasyThermostatStylerCard extends LitElement {
     this._io = undefined;
     if (this._cycleTimer) clearInterval(this._cycleTimer);
     this._cycleTimer = null;
+    if (this._popupTimer) clearTimeout(this._popupTimer);
+    if (this._menuTimer) clearTimeout(this._menuTimer);
     this._sideRO?.disconnect();
     this._bgRO?.disconnect();
     this._bgRO = undefined;
     document.removeEventListener('visibilitychange', this._updatePause);
     window.removeEventListener(TEST_EVENT, this._onTest);
+    window.removeEventListener('etc-popup-preview', this._onPreview);
     this._sp.dispose();
     if (this._revealTimer) clearTimeout(this._revealTimer);
   }
@@ -939,15 +958,22 @@ export class EasyThermostatStylerCard extends LitElement {
       ${s.tiles.map((t, i) => {
         if (t.kind === 'device') return this._renderChip(toChipView(this.hass!, t.chip, i), style.content, look);
         const o = t.kind === 'mode' ? t.option : { label: t.label, icon: t.icon, active: false, color: 'var(--primary-color)' };
+        const pi = t.kind === 'popup' ? t.item : null;
+        const icon = showIcon && pi?.show_icon !== false;
+        const label = showLabel && pi?.show_name !== false;
+        const value = t.kind === 'popup' ? t.value : null;
         return html`<button
-          class="btn ${o.active ? 'active' : ''} ${t.kind === 'action' ? 'act' : ''}"
+          class="btn ${o.active ? 'active' : ''} ${t.kind === 'action' || t.kind === 'popup' ? 'act' : ''} ${t.kind === 'popup' ? 'pop' : ''}"
           style=${styleMap({ '--c': o.color })}
           aria-pressed=${t.kind === 'mode' ? String(o.active) : nothing}
+          aria-haspopup=${t.kind === 'popup' ? 'dialog' : nothing}
           title=${o.label}
-          @click=${() => this._tileTap(t)}
+          @click=${(ev: Event) => this._tileTap(t, ev.currentTarget as HTMLElement)}
         >
-          ${showIcon ? html`<ha-icon icon=${o.icon}></ha-icon>` : nothing}
-          ${showLabel ? html`<span class="lbl">${o.label}</span>` : nothing}
+          ${icon ? html`<ha-icon icon=${o.icon}></ha-icon>` : nothing}
+          ${label || value
+            ? html`<span class="lbl dev-row">${label ? html`<span>${o.label}</span>` : nothing}${value ? html`<span class="badge">${value}</span>` : nothing}</span>`
+            : nothing}
         </button>`;
       })}
     </div>`;
@@ -967,7 +993,11 @@ export class EasyThermostatStylerCard extends LitElement {
   }
 
   /** Tap on a mode or action button (device buttons have their own gestures). */
-  private _tileTap(t: Tile): void {
+  private _tileTap(t: Tile, anchor?: HTMLElement): void {
+    if (t.kind === 'popup') {
+      this._openPopup(t.popup, anchor ?? null);
+      return;
+    }
     const call =
       t.kind === 'mode' ? optionCall(t.source, this._config!.entity, t.option.value) : t.kind === 'action' ? actionCall(t.item) : null;
     if (call) this._call(call);
@@ -1007,7 +1037,11 @@ export class EasyThermostatStylerCard extends LitElement {
         data-key=${s.key}
         popover=${native ? 'auto' : nothing}
         @toggle=${(ev: Event) => this._menuToggled(s, ev)}
-        @keydown=${this._menuKey}
+        @keydown=${(ev: KeyboardEvent) => {
+          this._armMenuTimer();
+          this._menuKey(ev);
+        }}
+        @pointermove=${this._armMenuTimer}
       >
         ${s.tiles.map((t, i) => {
           if (t.kind === 'device') {
@@ -1020,6 +1054,15 @@ export class EasyThermostatStylerCard extends LitElement {
             </button>`;
           }
           const o = t.kind === 'mode' ? t.option : { label: t.label, icon: t.icon, active: false, color: 'var(--primary-color)' };
+          if (t.kind === 'popup') {
+            return html`<button class="mi" role="option" @click=${(ev: Event) => {
+                const trig = (ev.currentTarget as HTMLElement).closest('.menu')?.querySelector<HTMLElement>('.mt') ?? null;
+                this._closeMenus();
+                this._openPopup(t.popup, trig);
+              }}>
+              ${showIcon && t.item.show_icon !== false ? html`<ha-icon icon=${o.icon}></ha-icon>` : nothing}<span>${o.label}</span>${t.value ? html`<span class="mi-val">${t.value}</span>` : nothing}
+            </button>`;
+          }
           return html`<button
             class="mi ${o.active ? 'active' : ''}"
             role="option"
@@ -1053,6 +1096,7 @@ export class EasyThermostatStylerCard extends LitElement {
     pop.showPopover();
     this._placeMenu(list, trigger, s.menuDirection);
     this._menu = s.key;
+    this._armMenuTimer();
     (list.querySelector<HTMLElement>('.mi.active') ?? list.querySelector<HTMLElement>('.mi'))?.focus({ preventScroll: true });
   }
 
@@ -1083,6 +1127,8 @@ export class EasyThermostatStylerCard extends LitElement {
   }
 
   private _closeMenus(): void {
+    if (this._menuTimer) clearTimeout(this._menuTimer);
+    this._menuTimer = null;
     for (const el of this.renderRoot.querySelectorAll<HTMLElement & { hidePopover?: () => void }>('.menu-list')) {
       if (el.hidePopover && el.matches(':popover-open')) el.hidePopover();
     }
@@ -1206,6 +1252,11 @@ export class EasyThermostatStylerCard extends LitElement {
   private _chipAction(v: ChipView, action: string): void {
     switch (action) {
       case 'popup': {
+        const named = v.config.popup ? this._config?.popups?.find((x) => x.id === v.config.popup) : undefined;
+        if (named) {
+          this._openPopup(named, null);
+          break;
+        }
         const card = defaultPopupCard(v.config);
         if (card && this._canCreate(card)) void this._showPopup(card);
         else this._fire('hass-more-info', { entityId: v.entity });
@@ -1230,7 +1281,57 @@ export class EasyThermostatStylerCard extends LitElement {
     return !t.startsWith('custom:') || !!customElements.get(t.slice(7));
   }
 
-  private async _showPopup(cardConfig: Record<string, unknown>): Promise<void> {
+  /** Open one of the card's Pop-up Cards, anchored to `anchor` when Small. */
+  private _openPopup(p: PopupConfig, anchor: HTMLElement | null): void {
+    this._popupAnchor = anchor;
+    const card = p.card;
+    if (!card || typeof card.type !== 'string') {
+      this._popup = p;
+      this._popupMissing = 'This pop-up has no card yet. Add one under Pop-up Cards in the editor.';
+      void this._showPopup(null, p);
+      return;
+    }
+    if (!this._canCreate(card)) {
+      this._popup = p;
+      this._popupMissing = `The card type “${String(card.type)}” isn’t installed. Add it (e.g. from HACS) and reload.`;
+      void this._showPopup(null, p);
+      return;
+    }
+    void this._showPopup(card, p);
+  }
+
+  /** Seconds without use before the open pop-up / menu closes (0 = never). */
+  private _autoCloseSecs(p?: PopupConfig | null): number {
+    return p?.auto_close ?? this._config?.popup_auto_close ?? 30;
+  }
+
+  private _armPopupTimer = (): void => {
+    if (this._popupTimer) clearTimeout(this._popupTimer);
+    this._popupTimer = null;
+    const s = this._autoCloseSecs(this._popup);
+    if (this._popupOpen && s > 0) this._popupTimer = setTimeout(() => this._closePopup(), s * 1000);
+  };
+
+  private _armMenuTimer = (): void => {
+    if (this._menuTimer) clearTimeout(this._menuTimer);
+    this._menuTimer = null;
+    const s = this._autoCloseSecs(null);
+    if (this._menu && s > 0) this._menuTimer = setTimeout(() => this._closeMenus(), s * 1000);
+  };
+
+  private async _showPopup(cardConfig: Record<string, unknown> | null, p: PopupConfig | null = null): Promise<void> {
+    this._popup = p;
+    if (cardConfig) this._popupMissing = null;
+    if (!cardConfig) {
+      this._popupEl = undefined;
+      this._popupOpen = true;
+      await this.updateComplete;
+      const dialog = this.renderRoot.querySelector<HTMLDialogElement>('dialog.popup');
+      if (dialog && !dialog.open) dialog.showModal?.();
+      this._placePopup();
+      this._armPopupTimer();
+      return;
+    }
     let el: (HTMLElement & { hass?: unknown; setConfig?: (c: unknown) => void }) | undefined;
     try {
       const loader = (window as unknown as { loadCardHelpers?: () => Promise<CardHelpers> }).loadCardHelpers;
@@ -1253,26 +1354,79 @@ export class EasyThermostatStylerCard extends LitElement {
     if (!dialog || !host) return;
     host.replaceChildren(el);
     if (!dialog.open) dialog.showModal?.();
+    this._placePopup();
+    this._armPopupTimer();
+  }
+
+  /** Small pop-ups sit next to their button (flipping to stay on screen). */
+  private _placePopup(): void {
+    const dialog = this.renderRoot.querySelector<HTMLDialogElement>('dialog.popup');
+    if (!dialog) return;
+    const small = (this._popup?.size ?? 'medium') === 'small' && !!this._popupAnchor;
+    dialog.classList.toggle('anchored', small);
+    if (!small) {
+      dialog.style.left = '';
+      dialog.style.top = '';
+      return;
+    }
+    requestAnimationFrame(() => {
+      const t = this._popupAnchor!.getBoundingClientRect();
+      const d = dialog.getBoundingClientRect();
+      const dir = this._popup?.direction ?? (t.top > window.innerHeight / 2 ? 'up' : 'down');
+      const gap = 6, vw = window.innerWidth, vh = window.innerHeight;
+      let left = dir === 'right' ? t.right + gap : dir === 'left' ? t.left - gap - d.width : t.left + t.width / 2 - d.width / 2;
+      let top = dir === 'down' ? t.bottom + gap : dir === 'up' ? t.top - gap - d.height : t.top + t.height / 2 - d.height / 2;
+      if (dir === 'down' && top + d.height > vh) top = t.top - gap - d.height;
+      if (dir === 'up' && top < 0) top = t.bottom + gap;
+      if (dir === 'right' && left + d.width > vw) left = t.left - gap - d.width;
+      if (dir === 'left' && left < 0) left = t.right + gap;
+      dialog.style.left = `${Math.round(Math.max(4, Math.min(left, vw - d.width - 4)))}px`;
+      dialog.style.top = `${Math.round(Math.max(4, Math.min(top, vh - d.height - 4)))}px`;
+    });
   }
 
   private _closePopup = (): void => {
     const dialog = this.renderRoot.querySelector<HTMLDialogElement>('dialog.popup');
     if (dialog?.open) dialog.close();
+    if (this._popupTimer) clearTimeout(this._popupTimer);
+    this._popupTimer = null;
     this._popupOpen = false;
     this._popupEl = undefined;
+    this._popup = null;
+    this._popupMissing = null;
   };
 
   private _renderPopup(): TemplateResult | typeof nothing {
     if (!this._popupOpen) return nothing;
+    const p = this._popup;
+    const size = p?.size ?? 'medium';
+    const title = p ? p.title !== false : false;
+    const vars: Record<string, string> = {};
+    if (p?.width) vars['--pop-w'] = `${p.width}px`;
+    if (p?.height) vars['--pop-h'] = `${p.height}px`;
+    if (p?.dim !== undefined) vars['--pop-dim'] = String(p.dim / 100);
+    if (p?.blur !== undefined) vars['--pop-blur'] = `${p.blur}px`;
     return html`<dialog
-      class="popup"
+      class="popup size-${size} ${title ? 'has-title' : ''}"
+      style=${styleMap(vars)}
+      aria-label=${p?.name ?? 'Pop-up'}
       @cancel=${this._closePopup}
+      @pointerdown=${this._armPopupTimer}
+      @keydown=${this._armPopupTimer}
+      @wheel=${this._armPopupTimer}
+      @input=${this._armPopupTimer}
       @click=${(ev: MouseEvent) => {
         if (ev.target === ev.currentTarget) this._closePopup();
       }}
     >
       <div class="popup-inner">
-        <button class="popup-close" aria-label="Close" @click=${this._closePopup}><ha-icon icon="mdi:close"></ha-icon></button>
+        ${title
+          ? html`<div class="popup-title">
+              ${p?.icon ? html`<ha-icon icon=${p.icon}></ha-icon>` : nothing}<span>${p?.name ?? ''}</span>
+              <button class="popup-x" aria-label="Close" @click=${this._closePopup}><ha-icon icon="mdi:close"></ha-icon></button>
+            </div>`
+          : html`<button class="popup-close" aria-label="Close" @click=${this._closePopup}><ha-icon icon="mdi:close"></ha-icon></button>`}
+        ${this._popupMissing ? html`<div class="popup-missing">${this._popupMissing}</div>` : nothing}
         <div class="popup-body"></div>
       </div>
     </dialog>`;

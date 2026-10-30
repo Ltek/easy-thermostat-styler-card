@@ -7,7 +7,7 @@
 // untouched card never rewrites its YAML. Rendering defaults live in code
 // (`DEFAULTS` below), never in the stored config.
 
-export const CARD_VERSION = '2026.10.30.25';
+export const CARD_VERSION = '2026.10.30.26';
 export const CARD_TYPE = 'easy-thermostat-styler-card';
 export const EDITOR_TYPE = 'easy-thermostat-styler-card-editor';
 
@@ -129,6 +129,8 @@ export interface ChipConfig {
   /** Card config shown in the pop-up (tap: popup). Default for rf_fan:
    *  `{ type: 'custom:rf-fan-ltek', fan_entity: <entity> }`. */
   popup_card?: Record<string, unknown>;
+  /** Use one of the card's Pop-up Cards (by id) instead of popup_card. */
+  popup?: string;
 }
 
 /** A button you add to a set. */
@@ -156,7 +158,39 @@ export interface ActionItem {
   icon?: string;
   hide?: boolean;
 }
-export type ButtonItem = ModeItem | DeviceItem | ActionItem;
+/** A button that opens one of the card's Pop-up Cards. */
+export interface PopupItem {
+  kind: 'popup';
+  popup: string;
+  name?: string;
+  icon?: string;
+  show_icon?: boolean;
+  show_name?: boolean;
+  /** Optional value shown on the button, e.g. a count. */
+  entity?: string;
+  show_state?: boolean;
+  hide?: boolean;
+}
+export type ButtonItem = ModeItem | DeviceItem | ActionItem | PopupItem;
+
+export type PopupSize = 'small' | 'medium' | 'large' | 'full';
+/** A card shown in a pop-up, defined once and opened by any number of buttons. */
+export interface PopupConfig {
+  id: string;
+  name?: string;
+  icon?: string;
+  size?: PopupSize;
+  width?: number; // px, 0 = by size
+  height?: number; // px, 0 = by size
+  title?: boolean; // title bar with name + close (default on)
+  /** Seconds without use before it closes; 0 = never. Unset = the card's default. */
+  auto_close?: number;
+  dim?: number; // backdrop darkness %
+  blur?: number; // backdrop blur px
+  /** Small only: which way it opens from its button. */
+  direction?: 'down' | 'up' | 'left' | 'right';
+  card?: Record<string, unknown>;
+}
 
 export interface ButtonSetConfig {
   type: SetType;
@@ -337,6 +371,9 @@ export interface CardConfig {
   };
   effects?: EffectsConfig;
   background?: BackgroundConfig;
+  popups?: PopupConfig[];
+  /** Default for every pop-up and expandable menu: close after N seconds without use (0 = never). */
+  popup_auto_close?: number;
   /** Frosted glass controls: buttons, pills, chips, menus and the wheel bubble. */
   frosted?: boolean;
   frost_blur?: number; // px
@@ -430,6 +467,7 @@ function normalizeSet(raw: unknown): ButtonSetConfig | undefined {
       if (it.kind === 'mode') return typeof it.value === 'string' && !!it.value && typeof it.source === 'string';
       if (it.kind === 'device') return typeof it.entity === 'string' && !!it.entity;
       if (it.kind === 'action') return true;
+      if (it.kind === 'popup') return typeof it.popup === 'string' && !!it.popup;
       return false;
     });
   }
@@ -473,6 +511,18 @@ export function normalizeConfig(raw: unknown): CardConfig {
     cfg.background = bg;
   }
   if ('frost_blur' in cfg) cfg.frost_blur = clamp(cfg.frost_blur, 0, 40);
+  if ('popup_auto_close' in cfg) cfg.popup_auto_close = clamp(cfg.popup_auto_close, 0, 3600);
+  if (Array.isArray(cfg.popups)) {
+    cfg.popups = cfg.popups
+      .filter((x) => isObj(x) && typeof x.id === 'string' && x.id)
+      .map((x) => {
+        const o = { ...(x as Obj) };
+        for (const [k, lo, hi] of [['width', 0, 4000], ['height', 0, 4000], ['auto_close', 0, 3600], ['dim', 0, 100], ['blur', 0, 40]] as const) {
+          if (k in o) o[k] = clamp(o[k], lo, hi);
+        }
+        return o;
+      });
+  }
   if (isObj(cfg.effects)) {
     const fx = { ...cfg.effects };
     if ('size' in fx) fx.size = clamp(fx.size, 2, 60);

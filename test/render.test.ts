@@ -856,6 +856,100 @@ describe('card render', () => {
     expect(root.querySelector<HTMLElement>('.menus')!.style.getPropertyValue('--etc-b-gap')).toBe('3px');
   });
 
+  describe('pop-up cards', () => {
+    const popCfg = (extra: Record<string, unknown> = {}) => ({
+      popups: [{ id: 'p1', name: 'Sensors', icon: 'mdi:thermometer', size: 'large', card: { type: 'custom:etc-test-card' }, ...extra }],
+      sets: [{ type: 'custom', items: [{ kind: 'popup', popup: 'p1' }] }],
+    });
+    if (!customElements.get('etc-test-card')) {
+      customElements.define('etc-test-card', class extends HTMLElement {
+        hass: unknown;
+        setConfig() {}
+        connectedCallback() { this.textContent = 'TEST CARD'; }
+      });
+    }
+
+    it('button opens the card in a sized dialog with a title bar; close button closes', async () => {
+      const { root, el } = await mount(popCfg());
+      const btn = root.querySelector<HTMLButtonElement>('.btn.pop')!;
+      expect(btn.textContent).toContain('Sensors');
+      btn.click();
+      await new Promise((r) => setTimeout(r, 0));
+      await el.updateComplete;
+      const d = root.querySelector<HTMLDialogElement>('dialog.popup')!;
+      expect(d.classList.contains('size-large')).toBe(true);
+      expect(d.querySelector('.popup-title span')!.textContent).toBe('Sensors');
+      expect(d.querySelector('.popup-body')!.textContent).toContain('TEST CARD');
+      d.querySelector<HTMLButtonElement>('.popup-x')!.click();
+      await el.updateComplete;
+      expect(root.querySelector('dialog.popup')).toBeNull();
+    });
+
+    it('auto-closes after the default 30 s, or its own time; use restarts the countdown; 0 = never', async () => {
+      vi.useFakeTimers();
+      const a = await mount(popCfg());
+      a.root.querySelector<HTMLButtonElement>('.btn.pop')!.click();
+      await vi.advanceTimersByTimeAsync(10);
+      await a.el.updateComplete;
+      vi.advanceTimersByTime(20000);
+      a.root.querySelector<HTMLDialogElement>('dialog.popup')!.dispatchEvent(new PointerEvent('pointerdown'));
+      vi.advanceTimersByTime(25000);
+      await a.el.updateComplete;
+      expect(a.root.querySelector('dialog.popup')).not.toBeNull();
+      vi.advanceTimersByTime(6000);
+      await a.el.updateComplete;
+      expect(a.root.querySelector('dialog.popup')).toBeNull();
+      document.body.innerHTML = '';
+      const b = await mount({ ...popCfg({ auto_close: 0 }), popup_auto_close: 5 });
+      b.root.querySelector<HTMLButtonElement>('.btn.pop')!.click();
+      await vi.advanceTimersByTimeAsync(10);
+      vi.advanceTimersByTime(600000);
+      await b.el.updateComplete;
+      expect(b.root.querySelector('dialog.popup')).not.toBeNull();
+    });
+
+    it('a missing card type shows a message instead of a blank box', async () => {
+      const { root, el } = await mount({ popups: [{ id: 'p1', name: 'X', card: { type: 'custom:not-installed-card' } }], sets: [{ type: 'custom', items: [{ kind: 'popup', popup: 'p1' }] }] });
+      root.querySelector<HTMLButtonElement>('.btn.pop')!.click();
+      await new Promise((r) => setTimeout(r, 0));
+      await el.updateComplete;
+      expect(root.querySelector('.popup-missing')!.textContent).toContain('custom:not-installed-card');
+    });
+
+    it('a device button can open a named pop-up', async () => {
+      const h = fakeHass([climate('heat', { ...RICH, temperature: 68 }), { entity_id: 'sensor.hum', state: '48', attributes: {} }]);
+      const { root, el } = await mount({ popups: popCfg().popups, sets: [{ type: 'custom', items: [{ kind: 'device', type: 'entity', entity: 'sensor.hum', tap: 'popup', popup: 'p1' }] }] }, h);
+      root.querySelector<HTMLButtonElement>('.btn.dev')!.click();
+      await new Promise((r) => setTimeout(r, 0));
+      await el.updateComplete;
+      expect(root.querySelector('dialog.popup .popup-title span')!.textContent).toBe('Sensors');
+    });
+
+    it('editor: "+ Pop-up card" with no pop-ups creates one and the button together', async () => {
+      const ed = document.createElement('easy-thermostat-styler-card-editor') as EasyThermostatStylerCardEditor;
+      ed.hass = fakeHass([climate('heat', { ...RICH, temperature: 68 })]).hass;
+      ed.setConfig({ ...base, sets: [{ type: 'custom', name: 'Buttons 1' }] } as never);
+      document.body.appendChild(ed);
+      await ed.updateComplete;
+      const events: Record<string, unknown>[] = [];
+      ed.addEventListener('config-changed', (e) => {
+        events.push((e as CustomEvent).detail.config);
+        ed.setConfig((e as CustomEvent).detail.config);
+      });
+      const r = ed.shadowRoot!;
+      for (let pass = 0; pass < 4; pass++) {
+        for (const d of r.querySelectorAll<HTMLDetailsElement>('details:not([open])')) { d.open = true; d.dispatchEvent(new Event('toggle')); }
+        await ed.updateComplete;
+      }
+      [...r.querySelectorAll<HTMLButtonElement>('.etce-add')].find((b) => b.textContent!.trim() === '+ Pop-up card')!.click();
+      const cfg = events.at(-1)!;
+      expect(cfg.popups).toEqual([{ id: 'popup1', name: 'Pop-up 1' }]);
+      expect((cfg.sets as { items?: unknown[] }[])[0]!.items).toEqual([{ kind: 'popup', popup: 'popup1' }]);
+      const titles = [...r.querySelectorAll('details.etce-sec > summary')].map((s) => s.textContent!.trim());
+      expect(titles).toContain('Pop-up Cards');
+    });
+  });
+
   it('hvac set full-time; preset/fan behind toggles that remember state', async () => {
     const { root, calls, el } = await mount({});
     expect(root.querySelectorAll('.set.t-hvac .btn')).toHaveLength(4);
@@ -943,7 +1037,7 @@ describe('editor', () => {
   it('renders panels with the token block root', async () => {
     const { root } = await editor({});
     expect(root.querySelector('.etce')).not.toBeNull();
-    expect(root.querySelectorAll('details.etce-sec').length).toBe(9);
+    expect(root.querySelectorAll('details.etce-sec').length).toBe(10);
     expect(root.querySelectorAll('details.etce-sec > summary')[1]!.textContent).toContain('Quick Preset Templates');
     // Design guide: like Text, every panel body is a hint and fields, then flat
     // sub-panels; group subtitles live only inside sub-panels / set editors.
