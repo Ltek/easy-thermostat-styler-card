@@ -128,8 +128,8 @@ export function toClimateView(hass: HomeAssistant, config: CardConfig): ClimateV
 export function formatTemp(value: number | null, unit: string): string {
   if (value === null) return '–';
   const celsius = unit.includes('C');
-  const rounded = celsius ? Math.round(value * 2) / 2 : Math.round(value);
-  return celsius && !Number.isInteger(rounded) ? rounded.toFixed(1) : String(rounded);
+  const rounded = celsius ? value : Math.round(value);
+  return String(rounded);
 }
 
 export const EQUIPMENT_LABEL: Record<EquipmentStatus, string> = {
