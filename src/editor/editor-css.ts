@@ -151,6 +151,7 @@ export const EDITOR_CSS = `
         .etce-stops { display: flex; gap: var(--ltek-sp-2); align-items: center; flex-wrap: wrap; }
         .etce-stops input[type="color"] { width: 44px; height: 30px; padding: 0; border: none; background: none; cursor: pointer; }
         .etce-full { width: 100%; }
+        .etce-row > .etce-clear { flex: none; }
         /* Row sub-panels (a set, a button): same flat section as every other,
            with the row's name in normal case and its actions before the chevron. */
         .etce-rows { display: flex; flex-direction: column; margin-bottom: var(--ltek-sp-3); }

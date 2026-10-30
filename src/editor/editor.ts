@@ -376,7 +376,9 @@ export class EasyThermostatStylerCardEditor extends LitElement {
   }
 
 
-  private _selector(label: string, selector: Record<string, unknown>, value: unknown, onChange: (v: unknown) => void): TemplateResult {
+  private _selector(label: string, selector: Record<string, unknown>, value: unknown, onChange: (v: unknown) => void, clearable?: boolean): TemplateResult {
+    // Icons (and optional pickers) get a clear button once something is picked.
+    const canClear = (clearable ?? ('icon' in selector || /optional/i.test(label))) && value !== undefined && value !== null && value !== '';
     return html`<div class="etce-row">
       ${label ? html`<label class="lbl">${tc(label)}</label>` : nothing}
       <ha-selector
@@ -385,6 +387,9 @@ export class EasyThermostatStylerCardEditor extends LitElement {
         .value=${value}
         @value-changed=${(e: CustomEvent) => onChange((e.detail as { value: unknown }).value)}
       ></ha-selector>
+      ${canClear
+        ? html`<button class="etce-reset etce-clear" title="Clear" @click=${() => onChange(undefined)}><ha-icon icon="mdi:close-circle-outline"></ha-icon></button>`
+        : nothing}
     </div>`;
   }
 
@@ -1061,7 +1066,7 @@ export class EasyThermostatStylerCardEditor extends LitElement {
               <button class="etce-act del" title="Delete" @click=${() => this._writeItems(i, items.filter((_, x) => x !== k))}>
                 <ha-icon icon="mdi:trash-can-outline"></ha-icon>
               </button>`,
-            () => html`${this._itemFields(it, upd)}${this._copyTo(i, it)}`,
+            () => html`${this._itemFields(it, upd, resolveButtonStyle(this._config!.buttons, s.style).content)}${this._copyTo(i, it)}`,
           );
         })}
       </div>
@@ -1072,8 +1077,12 @@ export class EasyThermostatStylerCardEditor extends LitElement {
     it: PopupItem,
     upd: (path: string, v: unknown, def?: unknown) => void,
     nameIcon: (placeholder: string) => TemplateResult,
+    content = 'icon_label',
   ): TemplateResult {
     const pops = this._config!.popups ?? [];
+    // Defaults follow the set's Content (Button Style); ticking one here wins.
+    const iconDef = content !== 'label';
+    const labelDef = content !== 'icon';
     const pop = pops.find((x) => x.id === it.popup);
     return html`${this._selectRow(
         'Opens',
@@ -1084,10 +1093,12 @@ export class EasyThermostatStylerCardEditor extends LitElement {
       )}
       ${pops.length ? nothing : this._hint('Create a pop-up under Pop-up Cards first.')}
       ${nameIcon(pop?.name ?? 'Open')}
+      ${this._hint(`Empty label = the pop-up’s name (${pop?.name ?? '—'}). Empty icon = the pop-up’s icon.`)}
       <div class="etce-checks">
-        ${this._check('Show icon', it.show_icon ?? true, (v) => upd('show_icon', v, true))}
-        ${this._check('Show label', it.show_name ?? true, (v) => upd('show_name', v, true))}
+        ${this._check('Show icon', it.show_icon ?? iconDef, (v) => upd('show_icon', v, iconDef))}
+        ${this._check('Show label', it.show_name ?? labelDef, (v) => upd('show_name', v, labelDef))}
       </div>
+      ${!labelDef ? this._hint('This set shows icons only (Button Style → Content); Show Label turns the label on for this button.') : nothing}
       ${this._group('Value on the button')}
       ${this._selector('Entity (optional)', { entity: {} }, it.entity, (v) => upd('entity', v || undefined))}
       ${it.entity ? this._check('Show value', it.show_state ?? true, (v) => upd('show_state', v, true)) : nothing}
@@ -1225,7 +1236,7 @@ export class EasyThermostatStylerCardEditor extends LitElement {
     return { name: it.name ?? (this.hass ? actionLabel(this.hass, it) : 'Action'), icon: it.icon ?? actionIcon(it), tag: 'Action' };
   }
 
-  private _itemFields(it: ButtonItem, upd: (path: string, v: unknown, def?: unknown) => void): TemplateResult {
+  private _itemFields(it: ButtonItem, upd: (path: string, v: unknown, def?: unknown) => void, content: string = 'icon_label'): TemplateResult {
     const nameIcon = (placeholder: string) => html`<div class="etce-row">
         <label class="lbl">Label</label>
         <input type="text" .value=${it.name ?? ''} placeholder=${placeholder} @change=${(e: Event) => upd('name', (e.target as HTMLInputElement).value || undefined)} />
@@ -1243,7 +1254,7 @@ export class EasyThermostatStylerCardEditor extends LitElement {
         ${this._selectRow('Value', it.value, (values.includes(it.value) ? values : [it.value, ...values]).map((v) => [v, prettify(v)] as Opt), (v) => upd('value', v))}
         ${nameIcon(prettify(it.value))}`;
     }
-    if (it.kind === 'popup') return this._popupItemFields(it, upd, nameIcon);
+    if (it.kind === 'popup') return this._popupItemFields(it, upd, nameIcon, content);
     if (it.kind === 'action') {
       const kind = it.action ?? (it.entity?.startsWith('scene.') ? 'scene' : it.entity ? 'script' : 'service');
       return html`${this._selectRow('Runs', kind, [['script', 'A script'], ['scene', 'A scene'], ['service', 'A service']], (v) => upd('action', v))}

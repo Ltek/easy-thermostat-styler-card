@@ -1,5 +1,12 @@
 # Changelog
 
+## v2026.10.30.27
+
+- **Fixed: Show Label / Show Icon on a button did nothing** when the set's Button Style showed icons only (Content: Icon), because the set's setting won. A button's own Show Icon / Show Label now wins, and the checkboxes start from the set's setting.
+- **Pop-up buttons**: an empty Label uses the pop-up's name, and an empty icon uses the pop-up's icon (the editor says so).
+- **Clear buttons** on every icon picker and optional entity picker, so a chosen icon can be removed again.
+- Note: pop-up buttons need this build or later. A browser or tablet still running an older cached copy of the card drops them. Clear the app or browser cache if a pop-up button is missing on one device.
+
 ## v2026.10.30.26
 
 - **Pop-up Cards** (new panel): define cards once, with any card's YAML pasted in (e.g. a whole Easy Entity Styler card), and open them from buttons.

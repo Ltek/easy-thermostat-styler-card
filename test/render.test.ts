@@ -950,6 +950,18 @@ describe('card render', () => {
     });
   });
 
+  it('pop-up button: Show Label wins over the set showing icons only; empty label = the pop-up name', async () => {
+    const pops = [{ id: 'p1', name: 'Climate Sensors', icon: 'mdi:home-thermometer', card: { type: 'entities', entities: [] } }];
+    const a = await mount({ buttons: { content: 'icon' }, popups: pops, sets: [{ type: 'custom', items: [{ kind: 'popup', popup: 'p1' }] }] });
+    expect(a.root.querySelector('.btn.pop .lbl')).toBeNull(); // icons only by default
+    document.body.innerHTML = '';
+    const b = await mount({ buttons: { content: 'icon' }, popups: pops, sets: [{ type: 'custom', items: [{ kind: 'popup', popup: 'p1', show_name: true }] }] });
+    expect(b.root.querySelector('.btn.pop .lbl')!.textContent!.trim()).toBe('Climate Sensors');
+    document.body.innerHTML = '';
+    const c = await mount({ popups: pops, sets: [{ type: 'custom', items: [{ kind: 'popup', popup: 'p1', show_icon: false }] }] });
+    expect(c.root.querySelector('.btn.pop ha-icon')).toBeNull();
+  });
+
   it('hvac set full-time; preset/fan behind toggles that remember state', async () => {
     const { root, calls, el } = await mount({});
     expect(root.querySelectorAll('.set.t-hvac .btn')).toHaveLength(4);

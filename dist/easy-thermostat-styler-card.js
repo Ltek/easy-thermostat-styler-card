@@ -3,7 +3,7 @@
  * Copyright 2019 Google LLC
  * SPDX-License-Identifier: BSD-3-Clause
  */
-const _t = globalThis, Gt = _t.ShadowRoot && (_t.ShadyCSS === void 0 || _t.ShadyCSS.nativeShadow) && "adoptedStyleSheets" in Document.prototype && "replace" in CSSStyleSheet.prototype, Kt = Symbol(), le = /* @__PURE__ */ new WeakMap();
+const wt = globalThis, Gt = wt.ShadowRoot && (wt.ShadyCSS === void 0 || wt.ShadyCSS.nativeShadow) && "adoptedStyleSheets" in Document.prototype && "replace" in CSSStyleSheet.prototype, Kt = Symbol(), le = /* @__PURE__ */ new WeakMap();
 let Le = class {
   constructor(t, e, o) {
     if (this._$cssResult$ = !0, o !== Kt) throw Error("CSSResult is not constructable. Use `unsafeCSS` or `css` instead.");
@@ -32,10 +32,10 @@ const Be = (r) => new Le(typeof r == "string" ? r : r + "", void 0, Kt), Xt = (r
 }, po = (r, t) => {
   if (Gt) r.adoptedStyleSheets = t.map((e) => e instanceof CSSStyleSheet ? e : e.styleSheet);
   else for (const e of t) {
-    const o = document.createElement("style"), i = _t.litNonce;
+    const o = document.createElement("style"), i = wt.litNonce;
     i !== void 0 && o.setAttribute("nonce", i), o.textContent = e.cssText, r.appendChild(o);
   }
-}, de = Gt ? (r) => r : (r) => r instanceof CSSStyleSheet ? ((t) => {
+}, pe = Gt ? (r) => r : (r) => r instanceof CSSStyleSheet ? ((t) => {
   let e = "";
   for (const o of t.cssRules) e += o.cssText;
   return Be(e);
@@ -45,7 +45,7 @@ const Be = (r) => new Le(typeof r == "string" ? r : r + "", void 0, Kt), Xt = (r
  * Copyright 2017 Google LLC
  * SPDX-License-Identifier: BSD-3-Clause
  */
-const { is: ho, defineProperty: uo, getOwnPropertyDescriptor: fo, getOwnPropertyNames: go, getOwnPropertySymbols: mo, getPrototypeOf: bo } = Object, Pt = globalThis, pe = Pt.trustedTypes, vo = pe ? pe.emptyScript : "", _o = Pt.reactiveElementPolyfillSupport, ct = (r, t) => r, St = { toAttribute(r, t) {
+const { is: ho, defineProperty: uo, getOwnPropertyDescriptor: fo, getOwnPropertyNames: go, getOwnPropertySymbols: mo, getPrototypeOf: bo } = Object, Pt = globalThis, de = Pt.trustedTypes, vo = de ? de.emptyScript : "", _o = Pt.reactiveElementPolyfillSupport, ct = (r, t) => r, St = { toAttribute(r, t) {
   switch (t) {
     case Boolean:
       r = r ? vo : null;
@@ -129,8 +129,8 @@ let et = class extends HTMLElement {
     const e = [];
     if (Array.isArray(t)) {
       const o = new Set(t.flat(1 / 0).reverse());
-      for (const i of o) e.unshift(de(i));
-    } else t !== void 0 && e.push(de(t));
+      for (const i of o) e.unshift(pe(i));
+    } else t !== void 0 && e.push(pe(t));
     return e;
   }
   static _$Eu(t, e) {
@@ -262,9 +262,9 @@ et.elementStyles = [], et.shadowRootOptions = { mode: "open" }, et[ct("elementPr
  * Copyright 2017 Google LLC
  * SPDX-License-Identifier: BSD-3-Clause
  */
-const Jt = globalThis, ue = (r) => r, Tt = Jt.trustedTypes, fe = Tt ? Tt.createPolicy("lit-html", { createHTML: (r) => r }) : void 0, Ne = "$lit$", q = `lit$${Math.random().toFixed(9).slice(2)}$`, Fe = "?" + q, wo = `<${Fe}>`, J = document, lt = () => J.createComment(""), dt = (r) => r === null || typeof r != "object" && typeof r != "function", Qt = Array.isArray, $o = (r) => Qt(r) || typeof r?.[Symbol.iterator] == "function", Bt = `[ 	
+const Jt = globalThis, ue = (r) => r, Tt = Jt.trustedTypes, fe = Tt ? Tt.createPolicy("lit-html", { createHTML: (r) => r }) : void 0, Ne = "$lit$", q = `lit$${Math.random().toFixed(9).slice(2)}$`, Fe = "?" + q, wo = `<${Fe}>`, J = document, pt = () => J.createComment(""), dt = (r) => r === null || typeof r != "object" && typeof r != "function", Qt = Array.isArray, $o = (r) => Qt(r) || typeof r?.[Symbol.iterator] == "function", Bt = `[ 	
 \f\r]`, rt = /<(?:(!--|\/[^a-zA-Z])|(\/?[a-zA-Z][^>\s]*)|(\/?$))/g, ge = /-->/g, me = />/g, Y = RegExp(`>|${Bt}(?:([^\\s"'>=/]+)(${Bt}*=${Bt}*(?:[^ 	
-\f\r"'\`<>=]|("|')|))|$)`, "g"), be = /'/g, ve = /"/g, Ie = /^(?:script|style|textarea|title)$/i, yo = (r) => (t, ...e) => ({ _$litType$: r, strings: t, values: e }), l = yo(1), V = Symbol.for("lit-noChange"), u = Symbol.for("lit-nothing"), _e = /* @__PURE__ */ new WeakMap(), Z = J.createTreeWalker(J, 129);
+\f\r"'\`<>=]|("|')|))|$)`, "g"), be = /'/g, ve = /"/g, Ie = /^(?:script|style|textarea|title)$/i, yo = (r) => (t, ...e) => ({ _$litType$: r, strings: t, values: e }), p = yo(1), V = Symbol.for("lit-noChange"), u = Symbol.for("lit-nothing"), _e = /* @__PURE__ */ new WeakMap(), Z = J.createTreeWalker(J, 129);
 function De(r, t) {
   if (!Qt(r) || !r.hasOwnProperty("raw")) throw Error("invalid template strings array");
   return fe !== void 0 ? fe.createHTML(t) : t;
@@ -274,35 +274,35 @@ const xo = (r, t) => {
   let i, n = t === 2 ? "<svg>" : t === 3 ? "<math>" : "", a = rt;
   for (let s = 0; s < e; s++) {
     const c = r[s];
-    let d, p, h = -1, f = 0;
-    for (; f < c.length && (a.lastIndex = f, p = a.exec(c), p !== null); ) f = a.lastIndex, a === rt ? p[1] === "!--" ? a = ge : p[1] !== void 0 ? a = me : p[2] !== void 0 ? (Ie.test(p[2]) && (i = RegExp("</" + p[2], "g")), a = Y) : p[3] !== void 0 && (a = Y) : a === Y ? p[0] === ">" ? (a = i ?? rt, h = -1) : p[1] === void 0 ? h = -2 : (h = a.lastIndex - p[2].length, d = p[1], a = p[3] === void 0 ? Y : p[3] === '"' ? ve : be) : a === ve || a === be ? a = Y : a === ge || a === me ? a = rt : (a = Y, i = void 0);
+    let l, d, h = -1, f = 0;
+    for (; f < c.length && (a.lastIndex = f, d = a.exec(c), d !== null); ) f = a.lastIndex, a === rt ? d[1] === "!--" ? a = ge : d[1] !== void 0 ? a = me : d[2] !== void 0 ? (Ie.test(d[2]) && (i = RegExp("</" + d[2], "g")), a = Y) : d[3] !== void 0 && (a = Y) : a === Y ? d[0] === ">" ? (a = i ?? rt, h = -1) : d[1] === void 0 ? h = -2 : (h = a.lastIndex - d[2].length, l = d[1], a = d[3] === void 0 ? Y : d[3] === '"' ? ve : be) : a === ve || a === be ? a = Y : a === ge || a === me ? a = rt : (a = Y, i = void 0);
     const g = a === Y && r[s + 1].startsWith("/>") ? " " : "";
-    n += a === rt ? c + wo : h >= 0 ? (o.push(d), c.slice(0, h) + Ne + c.slice(h) + q + g) : c + q + (h === -2 ? s : g);
+    n += a === rt ? c + wo : h >= 0 ? (o.push(l), c.slice(0, h) + Ne + c.slice(h) + q + g) : c + q + (h === -2 ? s : g);
   }
   return [De(r, n + (r[e] || "<?>") + (t === 2 ? "</svg>" : t === 3 ? "</math>" : "")), o];
 };
-class pt {
+class ht {
   constructor({ strings: t, _$litType$: e }, o) {
     let i;
     this.parts = [];
     let n = 0, a = 0;
-    const s = t.length - 1, c = this.parts, [d, p] = xo(t, e);
-    if (this.el = pt.createElement(d, o), Z.currentNode = this.el.content, e === 2 || e === 3) {
+    const s = t.length - 1, c = this.parts, [l, d] = xo(t, e);
+    if (this.el = ht.createElement(l, o), Z.currentNode = this.el.content, e === 2 || e === 3) {
       const h = this.el.content.firstChild;
       h.replaceWith(...h.childNodes);
     }
     for (; (i = Z.nextNode()) !== null && c.length < s; ) {
       if (i.nodeType === 1) {
         if (i.hasAttributes()) for (const h of i.getAttributeNames()) if (h.endsWith(Ne)) {
-          const f = p[a++], g = i.getAttribute(h).split(q), m = /([.?@])?(.*)/.exec(f);
+          const f = d[a++], g = i.getAttribute(h).split(q), m = /([.?@])?(.*)/.exec(f);
           c.push({ type: 1, index: n, name: m[2], strings: g, ctor: m[1] === "." ? So : m[1] === "?" ? To : m[1] === "@" ? Ao : Ot }), i.removeAttribute(h);
         } else h.startsWith(q) && (c.push({ type: 6, index: n }), i.removeAttribute(h));
         if (Ie.test(i.tagName)) {
           const h = i.textContent.split(q), f = h.length - 1;
           if (f > 0) {
             i.textContent = Tt ? Tt.emptyScript : "";
-            for (let g = 0; g < f; g++) i.append(h[g], lt()), Z.nextNode(), c.push({ type: 2, index: ++n });
-            i.append(h[f], lt());
+            for (let g = 0; g < f; g++) i.append(h[g], pt()), Z.nextNode(), c.push({ type: 2, index: ++n });
+            i.append(h[f], pt());
           }
         }
       } else if (i.nodeType === 8) if (i.data === Fe) c.push({ type: 2, index: n });
@@ -340,8 +340,8 @@ class ko {
     let n = Z.nextNode(), a = 0, s = 0, c = o[0];
     for (; c !== void 0; ) {
       if (a === c.index) {
-        let d;
-        c.type === 2 ? d = new ht(n, n.nextSibling, this, t) : c.type === 1 ? d = new c.ctor(n, c.name, c.strings, this, t) : c.type === 6 && (d = new Co(n, this, t)), this._$AV.push(d), c = o[++s];
+        let l;
+        c.type === 2 ? l = new ut(n, n.nextSibling, this, t) : c.type === 1 ? l = new c.ctor(n, c.name, c.strings, this, t) : c.type === 6 && (l = new Co(n, this, t)), this._$AV.push(l), c = o[++s];
       }
       a !== c?.index && (n = Z.nextNode(), a++);
     }
@@ -352,7 +352,7 @@ class ko {
     for (const o of this._$AV) o !== void 0 && (o.strings !== void 0 ? (o._$AI(t, o, e), e += o.strings.length - 2) : o._$AI(t[e])), e++;
   }
 }
-class ht {
+class ut {
   get _$AU() {
     return this._$AM?._$AU ?? this._$Cv;
   }
@@ -383,7 +383,7 @@ class ht {
     this._$AH !== u && dt(this._$AH) ? this._$AA.nextSibling.data = t : this.T(J.createTextNode(t)), this._$AH = t;
   }
   $(t) {
-    const { values: e, _$litType$: o } = t, i = typeof o == "number" ? this._$AC(t) : (o.el === void 0 && (o.el = pt.createElement(De(o.h, o.h[0]), this.options)), o);
+    const { values: e, _$litType$: o } = t, i = typeof o == "number" ? this._$AC(t) : (o.el === void 0 && (o.el = ht.createElement(De(o.h, o.h[0]), this.options)), o);
     if (this._$AH?._$AD === i) this._$AH.p(e);
     else {
       const n = new ko(i, this), a = n.u(this.options);
@@ -392,13 +392,13 @@ class ht {
   }
   _$AC(t) {
     let e = _e.get(t.strings);
-    return e === void 0 && _e.set(t.strings, e = new pt(t)), e;
+    return e === void 0 && _e.set(t.strings, e = new ht(t)), e;
   }
   k(t) {
     Qt(this._$AH) || (this._$AH = [], this._$AR());
     const e = this._$AH;
     let o, i = 0;
-    for (const n of t) i === e.length ? e.push(o = new ht(this.O(lt()), this.O(lt()), this, this.options)) : o = e[i], o._$AI(n), i++;
+    for (const n of t) i === e.length ? e.push(o = new ut(this.O(pt()), this.O(pt()), this, this.options)) : o = e[i], o._$AI(n), i++;
     i < e.length && (this._$AR(o && o._$AB.nextSibling, i), e.length = i);
   }
   _$AR(t = this._$AA.nextSibling, e) {
@@ -427,8 +427,8 @@ class Ot {
     if (n === void 0) t = it(this, t, e, 0), a = !dt(t) || t !== this._$AH && t !== V, a && (this._$AH = t);
     else {
       const s = t;
-      let c, d;
-      for (t = n[0], c = 0; c < n.length - 1; c++) d = it(this, s[o + c], e, c), d === V && (d = this._$AH[c]), a ||= !dt(d) || d !== this._$AH[c], d === u ? t = u : t !== u && (t += (d ?? "") + n[c + 1]), this._$AH[c] = d;
+      let c, l;
+      for (t = n[0], c = 0; c < n.length - 1; c++) l = it(this, s[o + c], e, c), l === V && (l = this._$AH[c]), a ||= !dt(l) || l !== this._$AH[c], l === u ? t = u : t !== u && (t += (l ?? "") + n[c + 1]), this._$AH[c] = l;
     }
     a && !i && this.j(t);
   }
@@ -477,13 +477,13 @@ class Co {
   }
 }
 const zo = Jt.litHtmlPolyfillSupport;
-zo?.(pt, ht), (Jt.litHtmlVersions ??= []).push("3.3.3");
+zo?.(ht, ut), (Jt.litHtmlVersions ??= []).push("3.3.3");
 const Eo = (r, t, e) => {
   const o = e?.renderBefore ?? t;
   let i = o._$litPart$;
   if (i === void 0) {
     const n = e?.renderBefore ?? null;
-    o._$litPart$ = i = new ht(t.insertBefore(lt(), n), n, void 0, e ?? {});
+    o._$litPart$ = i = new ut(t.insertBefore(pt(), n), n, void 0, e ?? {});
   }
   return i._$AI(r), i;
 };
@@ -559,7 +559,7 @@ function ee(r) {
 function M(r) {
   return ee({ ...r, state: !0, attribute: !1 });
 }
-const He = "2026.10.30.26", At = "easy-thermostat-styler-card", Ut = "easy-thermostat-styler-card-editor", Ue = [
+const He = "2026.10.30.27", At = "easy-thermostat-styler-card", Ut = "easy-thermostat-styler-card-editor", Ue = [
   "name",
   "status",
   "current",
@@ -685,8 +685,8 @@ function C(r, t, e) {
     if (a === o.length - 1)
       e === void 0 || e === "" || e === null ? Array.isArray(s) ? s.splice(Number(c), 1) : delete s[c] : s[c] = e;
     else {
-      const d = i(s[c], a + 1);
-      d === void 0 ? delete s[c] : s[c] = d;
+      const l = i(s[c], a + 1);
+      l === void 0 ? delete s[c] : s[c] = l;
     }
     if (!(!Array.isArray(s) && Object.keys(s).length === 0))
       return s;
@@ -786,12 +786,12 @@ function Ve(r, t) {
 }
 function Ho(r, t) {
   const e = r.states[t.entity], o = [], i = (n, a, s, c) => {
-    const d = qe[n].active, p = d ? String(e.attributes[d] ?? "") : e.state;
+    const l = qe[n].active, d = l ? String(e.attributes[l] ?? "") : e.state;
     return {
       value: a,
       label: s ?? Io(r, e, n, a),
       icon: c ?? zt[a.toLowerCase()] ?? "mdi:circle-medium",
-      active: a === p,
+      active: a === d,
       color: n === "hvac" ? Fo[a] ?? $e : $e
     };
   };
@@ -799,36 +799,36 @@ function Ho(r, t) {
     if (n.hidden) return;
     const s = n.type, c = [];
     if (X(s) && e)
-      for (const p of Ve(D(e, s), n.order)) {
-        const h = n.options?.[p];
-        h?.hide || c.push({ kind: "mode", source: s, option: i(s, p, h?.name, h?.icon) });
+      for (const d of Ve(D(e, s), n.order)) {
+        const h = n.options?.[d];
+        h?.hide || c.push({ kind: "mode", source: s, option: i(s, d, h?.name, h?.icon) });
       }
-    for (const p of n.chips ?? []) p.hide_when_off && ye(r, p.entity) || c.push({ kind: "device", chip: p });
-    for (const p of n.items ?? [])
-      if (!p.hide)
-        if (p.kind === "mode") {
-          if (!e || !D(e, p.source).includes(p.value)) continue;
-          c.push({ kind: "mode", source: p.source, option: i(p.source, p.value, p.name, p.icon) });
-        } else if (p.kind === "device") {
-          const { kind: h, hide: f, ...g } = p;
-          if (p.hide_when_off && ye(r, p.entity)) continue;
+    for (const d of n.chips ?? []) d.hide_when_off && ye(r, d.entity) || c.push({ kind: "device", chip: d });
+    for (const d of n.items ?? [])
+      if (!d.hide)
+        if (d.kind === "mode") {
+          if (!e || !D(e, d.source).includes(d.value)) continue;
+          c.push({ kind: "mode", source: d.source, option: i(d.source, d.value, d.name, d.icon) });
+        } else if (d.kind === "device") {
+          const { kind: h, hide: f, ...g } = d;
+          if (d.hide_when_off && ye(r, d.entity)) continue;
           c.push({ kind: "device", chip: g });
-        } else if (p.kind === "popup") {
-          const h = t.popups?.find((m) => m.id === p.popup);
+        } else if (d.kind === "popup") {
+          const h = t.popups?.find((m) => m.id === d.popup);
           if (!h) continue;
-          const f = p.entity && p.show_state !== !1 ? r.states[p.entity] : void 0, g = f?.attributes.unit_of_measurement;
+          const f = d.entity && d.show_state !== !1 ? r.states[d.entity] : void 0, g = f?.attributes.unit_of_measurement;
           c.push({
             kind: "popup",
-            item: p,
+            item: d,
             popup: h,
-            label: p.name ?? h.name ?? "Open",
-            icon: p.icon ?? h.icon ?? "mdi:card-text-outline",
+            label: d.name ?? h.name ?? "Open",
+            icon: d.icon ?? h.icon ?? "mdi:card-text-outline",
             value: f ? `${f.state}${g ? ` ${g}` : ""}` : null
           });
         } else
-          c.push({ kind: "action", item: p, label: p.name ?? Vt(r, p), icon: p.icon ?? We(p) });
+          c.push({ kind: "action", item: d, label: d.name ?? Vt(r, d), icon: d.icon ?? We(d) });
     if (!c.length) return;
-    const d = c.flatMap((p) => p.kind === "mode" ? [p.option] : []);
+    const l = c.flatMap((d) => d.kind === "mode" ? [d.option] : []);
     o.push({
       key: `${s}-${a}`,
       index: a,
@@ -843,7 +843,7 @@ function Ho(r, t) {
       menuDirection: n.menu_direction ?? qt(n.zone ?? (t.toggles_zone || "bottom")),
       menuShowName: n.menu_show_name ?? !1,
       toggleIcon: n.toggle_icon ?? No[s],
-      options: d,
+      options: l,
       tiles: c,
       config: n
     });
@@ -958,17 +958,17 @@ function Ko(r, t) {
       state: e?.state ?? "unavailable",
       setpoints: null
     };
-  const a = e.attributes, s = Ye(e.state), c = A(a.current_temperature), d = Go(s, a);
+  const a = e.attributes, s = Ye(e.state), c = A(a.current_temperature), l = Go(s, a);
   return {
     available: !0,
     name: n,
     currentTemp: c,
     unit: o,
     humidity: A(a.current_humidity),
-    equipment: Wo(a.hvac_action) ?? Yo(s, c, d),
+    equipment: Wo(a.hvac_action) ?? Yo(s, c, l),
     mode: s,
     state: e.state,
-    setpoints: d
+    setpoints: l
   };
 }
 function U(r, t) {
@@ -1001,7 +1001,7 @@ const Xo = {
   ["idle_cool", "Idle (cool)"],
   ["fan", "Air movement"],
   ["off", "Off"]
-], ke = "var(--state-climate-heat-color, #ff8100)", Se = "var(--state-climate-cool-color, #2b9af9)", wt = {
+], ke = "var(--state-climate-heat-color, #ff8100)", Se = "var(--state-climate-cool-color, #2b9af9)", $t = {
   heating: { main: ke, second: "#d1342a" },
   cooling: { main: Se, second: "#3446d6" },
   idle_heat: { main: ke, second: "#7a3d14" },
@@ -1047,22 +1047,22 @@ function Ge(r, t, e) {
   if (Ae.has(i)) return null;
   const a = o.attributes;
   if (n === "fan") {
-    const p = A(a.percentage);
-    return p === null ? 0.6 : p <= 0 ? null : Q(p / 100);
+    const d = A(a.percentage);
+    return d === null ? 0.6 : d <= 0 ? null : Q(d / 100);
   }
   const s = A(o.state);
   if (s !== null) {
     if (s <= 0) return null;
     if (e) return Q(s / e);
-    const p = A(a.min), h = A(a.max);
-    if (h !== null && h > (p ?? 0)) return Q((s - (p ?? 0)) / (h - (p ?? 0)));
+    const d = A(a.min), h = A(a.max);
+    if (h !== null && h > (d ?? 0)) return Q((s - (d ?? 0)) / (h - (d ?? 0)));
     if (String(a.unit_of_measurement ?? "").trim() === "%") return Q(s / 100);
     const f = s <= 1 ? 1 : s <= 10 ? 10 : 10 ** Math.ceil(Math.log10(s));
     return Q(s / f);
   }
   if (Te[i] !== void 0) return Te[i];
-  const c = Array.isArray(a.options) ? a.options.map((p) => String(p).toLowerCase()).filter((p) => !Ae.has(p) && p !== "auto") : [], d = c.indexOf(i);
-  return d >= 0 ? Q((d + 1) / c.length) : Jo.has(i) ? 0.6 : 0.5;
+  const c = Array.isArray(a.options) ? a.options.map((d) => String(d).toLowerCase()).filter((d) => !Ae.has(d) && d !== "auto") : [], l = c.indexOf(i);
+  return l >= 0 ? Q((l + 1) / c.length) : Jo.has(i) ? 0.6 : 0.5;
 }
 function Qo(r, t) {
   const e = r.states[t.entity], o = String(e?.attributes.fan_mode ?? "").toLowerCase(), i = { quiet: 0.2, low: 0.33, medium: 0.6, middle: 0.6, high: 1, max: 1, turbo: 1 };
@@ -1097,20 +1097,20 @@ function ii(r, t, e) {
   const n = ti(r, t, e);
   if (n === "off" && (o.off ?? P.off) === "none") return null;
   const a = (o.speed ?? P.speed) / 100, s = (o.strength ?? P.strength) / 100;
-  let c, d;
+  let c, l;
   if (n === "heating" || n === "cooling") {
     const f = o.follow_gap ?? P.follow_gap ? ei(e, n) : 0.7;
-    c = 0.6 + 1.4 * f, d = 0.6 + 0.4 * f;
-  } else n === "fan" ? (c = 0.4 + 2.6 * (Ge(r, oe(t), o.air_max) ?? Qo(r, t)), d = 0.8) : n === "off" ? (c = 0.2, d = 0.35) : (c = 0.35, d = 0.55);
-  const p = o.colors?.[n] ?? {}, h = wt[n];
+    c = 0.6 + 1.4 * f, l = 0.6 + 0.4 * f;
+  } else n === "fan" ? (c = 0.4 + 2.6 * (Ge(r, oe(t), o.air_max) ?? Qo(r, t)), l = 0.8) : n === "off" ? (c = 0.2, l = 0.35) : (c = 0.35, l = 0.55);
+  const d = o.colors?.[n] ?? {}, h = $t[n];
   return {
     style: i,
     state: n,
     dir: n === "fan" ? "swirl" : n === "off" ? "still" : n === "heating" || n === "idle_heat" ? "up" : "down",
     rate: oi(c * a),
-    opacity: Math.round(d * s * 100) / 100,
-    main: p.main || h.main,
-    second: p.second || h.second,
+    opacity: Math.round(l * s * 100) / 100,
+    main: d.main || h.main,
+    second: d.second || h.second,
     blades: n === "fan"
   };
 }
@@ -1139,11 +1139,11 @@ function Xe(r, t) {
     aurora: [3, 2, 30, 42, 14, 22]
   }[r];
   if (!i) return [];
-  const [n, a, s, c, d, p] = i, h = e ? a : n;
+  const [n, a, s, c, l, d] = i, h = e ? a : n;
   let f = r.length * 9973 + 17;
   const g = () => (f = (f * 1664525 + 1013904223) % 4294967296, f / 4294967296);
   return Array.from({ length: h }, (m, w) => {
-    const $ = Math.round(d + g() * (p - d));
+    const $ = Math.round(l + g() * (d - l));
     return {
       x: Math.round(8 + g() * 84),
       y: r === "aurora" ? [12, 38, 62][w % 3] : Math.round(10 + g() * 80),
@@ -1165,7 +1165,7 @@ const Ze = {
   font_weight: 500,
   border_width: 0
 };
-function $t(r, t) {
+function lt(r, t) {
   const e = { ...Ze };
   for (const o of [r, t])
     if (o)
@@ -1237,7 +1237,7 @@ function ie(r) {
   for (const [e, o] of Object.entries(r)) o !== void 0 && o !== "" && (t[e] = o);
   return t;
 }
-const di = `
+const pi = `
         .etce {
           /* Font sizes (by role, not by pixel) */
           --ltek-fs-panel-title: 16px;  /* top-level panel / section title */
@@ -1387,6 +1387,7 @@ const di = `
         .etce-stops { display: flex; gap: var(--ltek-sp-2); align-items: center; flex-wrap: wrap; }
         .etce-stops input[type="color"] { width: 44px; height: 30px; padding: 0; border: none; background: none; cursor: pointer; }
         .etce-full { width: 100%; }
+        .etce-row > .etce-clear { flex: none; }
         /* Row sub-panels (a set, a button): same flat section as every other,
            with the row's name in normal case and its actions before the chevron. */
         .etce-rows { display: flex; flex-direction: column; margin-bottom: var(--ltek-sp-3); }
@@ -1410,14 +1411,14 @@ const di = `
         .etce-tpl-tags { display: flex; flex-wrap: wrap; gap: var(--ltek-sp-1); margin-top: 2px; }
         .etce-tpl-tags span { font-size: var(--ltek-fs-tiny); color: var(--ltek-c-label); border: 1px solid var(--ltek-c-border); border-radius: 999px; padding: 0 6px; }
         .etce-tpl .etce-preset { flex: none; align-self: center; }
-`, pi = "esphome_rf_fan", hi = "custom:rf-fan-ltek";
+`, di = "esphome_rf_fan", hi = "custom:rf-fan-ltek";
 function Je(r, t) {
   const e = r.entities, o = e?.[t]?.device_id;
   return !e || !o ? [] : Object.values(e).filter((i) => i.device_id === o && i.entity_id !== t).map((i) => i.entity_id);
 }
 function ui(r, t) {
   const e = Je(r, t).filter((i) => i.startsWith("light.")), o = r.entities ?? {};
-  return e.find((i) => o[i]?.platform === pi) ?? e[0] ?? null;
+  return e.find((i) => o[i]?.platform === di) ?? e[0] ?? null;
 }
 function fi(r, t) {
   const e = r.entities ?? {}, o = Je(r, t).filter((i) => i.startsWith("sensor."));
@@ -1463,14 +1464,14 @@ function st(r, t, e) {
     config: t
   };
   if (t.type !== "rf_fan" || !o) return a;
-  const s = o.attributes, c = A(s.percentage), d = bi(s), p = n && c !== null && d ? Math.max(1, Math.min(d, Math.round(c * d / 100))) : null, h = ui(r, t.entity), f = fi(r, t.entity), g = f ? r.states[f]?.state : void 0, m = g && !Et.has(g) ? new Date(g) : null, w = typeof s.preset_mode == "string" ? s.preset_mode : "", $ = n && !!w && w !== "normal", x = $ ? Ce(w) : null, b = Array.isArray(s.preset_modes) ? s.preset_modes.filter((y) => Ce(String(y)) !== null).length : 0, _ = t.speed_format ?? "number", k = p === null ? "On" : _ === "fraction" && d ? `${p}/${d}` : _ === "percent" && c !== null ? `${Math.round(c)}%` : String(p);
+  const s = o.attributes, c = A(s.percentage), l = bi(s), d = n && c !== null && l ? Math.max(1, Math.min(l, Math.round(c * l / 100))) : null, h = ui(r, t.entity), f = fi(r, t.entity), g = f ? r.states[f]?.state : void 0, m = g && !Et.has(g) ? new Date(g) : null, w = typeof s.preset_mode == "string" ? s.preset_mode : "", $ = n && !!w && w !== "normal", x = $ ? Ce(w) : null, b = Array.isArray(s.preset_modes) ? s.preset_modes.filter((y) => Ce(String(y)) !== null).length : 0, _ = t.speed_format ?? "number", k = d === null ? "On" : _ === "fraction" && l ? `${d}/${l}` : _ === "percent" && c !== null ? `${Math.round(c)}%` : String(d);
   return {
     ...a,
     icon: t.icon ?? "mdi:ceiling-fan",
     // In Breeze/natural mode the level is what matters, not the underlying speed.
     state: i ? n ? x !== null ? String(x) : k : "Off" : "Unavailable",
-    speed: p,
-    speedCount: d,
+    speed: d,
+    speedCount: l,
     naturalLevel: x,
     naturalLevels: b,
     percentage: c,
@@ -1788,11 +1789,11 @@ function Ti(r) {
 const Ai = ["order", "options", "name", "toggle_icon"];
 function Ci(r, t) {
   const e = r ?? [], o = /* @__PURE__ */ new Set(), i = t.map((a) => {
-    const s = e.findIndex((d, p) => !o.has(p) && d.type === a.type);
+    const s = e.findIndex((l, d) => !o.has(d) && l.type === a.type);
     if (s < 0) return structuredClone(a);
     o.add(s);
     const c = {};
-    for (const d of Ai) e[s][d] !== void 0 && (c[d] = structuredClone(e[s][d]));
+    for (const l of Ai) e[s][l] !== void 0 && (c[l] = structuredClone(e[s][l]));
     return { ...structuredClone(a), ...c };
   }), n = e.filter((a, s) => a.type === "chips" && !o.has(s));
   return [...structuredClone(n), ...i];
@@ -1841,7 +1842,7 @@ function oo() {
 function xt(r) {
   return r && oo()[r] || null;
 }
-function mt(r, t) {
+function bt(r, t) {
   if (!r) return;
   const e = oo();
   t ? e[r] = t : delete e[r], window.dispatchEvent(new CustomEvent(Yt, { detail: { entity: r } }));
@@ -1849,7 +1850,7 @@ function mt(r, t) {
 function Ri(r, t) {
   return r ? r === "cycle" ? Ee[t % Ee.length] : r : null;
 }
-var Pi = Object.defineProperty, ut = (r, t, e, o) => {
+var Pi = Object.defineProperty, ft = (r, t, e, o) => {
   for (var i = void 0, n = r.length - 1, a; n >= 0; n--)
     (a = r[n]) && (i = a(t, e, i) || i);
   return i && Pi(t, e, i), i;
@@ -1908,7 +1909,7 @@ const ne = class ne extends ot {
     const e = this._config?.entity;
     if (this._config = jt(t), e && e !== this._config.entity) {
       const o = xt(e);
-      o && (mt(e, null), mt(this._config.entity, o));
+      o && (bt(e, null), bt(this._config.entity, o));
     }
   }
   // ---- writes ---------------------------------------------------------------
@@ -1949,16 +1950,16 @@ const ne = class ne extends ot {
   }
   /** Closing the editor always ends test mode. */
   disconnectedCallback() {
-    super.disconnectedCallback(), xt(this._config?.entity) && mt(this._config?.entity, null);
+    super.disconnectedCallback(), xt(this._config?.entity) && bt(this._config?.entity, null);
   }
   _panel(t, e, o, i) {
-    return this._panels.add(t), l`<details class="etce-sec" ?open=${this._open.has(t)} @toggle=${(n) => this._toggleOpen(t, n, !0)}>
+    return this._panels.add(t), p`<details class="etce-sec" ?open=${this._open.has(t)} @toggle=${(n) => this._toggleOpen(t, n, !0)}>
       <summary><ha-icon icon=${e}></ha-icon>${O(o)}<ha-icon class="chev" icon="mdi:chevron-down"></ha-icon></summary>
       <div class="etce-body">${i}</div>
     </details>`;
   }
   _sub(t, e, o) {
-    return l`<details class="etce-sub" ?open=${this._open.has(t)} @toggle=${(i) => this._toggleOpen(t, i)}>
+    return p`<details class="etce-sub" ?open=${this._open.has(t)} @toggle=${(i) => this._toggleOpen(t, i)}>
       <summary>${O(e)}<ha-icon class="chev" icon="mdi:chevron-down"></ha-icon></summary>
       <div class="etce-sub-body">${o()}</div>
     </details>`;
@@ -1967,7 +1968,7 @@ const ne = class ne extends ot {
    *  name, tag, action buttons, chevron) and its settings open right under it,
    *  exactly like every other section. Action buttons don't toggle it. */
   _rowSub(t, e, o, i, n) {
-    return l`<details
+    return p`<details
       class="etce-sub etce-rowsub ${o.cls ?? ""} ${o.off ? "off" : ""}"
       ?open=${t}
       @toggle=${(a) => {
@@ -1979,7 +1980,7 @@ const ne = class ne extends ot {
       <summary>
         <ha-icon class="etce-sicon" icon=${o.icon}></ha-icon>
         <span class="etce-sname">${o.name}</span>
-        ${o.tag ? l`<span class="etce-stag">${O(o.tag)}</span>` : u}
+        ${o.tag ? p`<span class="etce-stag">${O(o.tag)}</span>` : u}
         <span
           class="etce-sctl"
           @click=${(a) => {
@@ -1993,13 +1994,13 @@ const ne = class ne extends ot {
     </details>`;
   }
   _group(t, e = !1) {
-    return l`<div class="etce-group ${e ? "first" : ""}">${O(t)}</div>`;
+    return p`<div class="etce-group ${e ? "first" : ""}">${O(t)}</div>`;
   }
   _hint(t) {
-    return l`<p class="etce-hint">${t}</p>`;
+    return p`<p class="etce-hint">${t}</p>`;
   }
   _check(t, e, o) {
-    return l`<label class="etce-check"
+    return p`<label class="etce-check"
       ><input type="checkbox" .checked=${e} @change=${(i) => o(i.target.checked)} />${O(t)}</label
     >`;
   }
@@ -2008,10 +2009,10 @@ const ne = class ne extends ot {
     return this._check(e, i, (n) => this._put(t, n, o));
   }
   _selectRow(t, e, o, i, n = !1) {
-    return l`<div class="etce-row">
+    return p`<div class="etce-row">
       <label class="lbl">${O(t)}</label>
       <select @change=${(a) => i(a.target.value)}>
-        ${o.map(([a, s], c) => l`<option value=${a} ?selected=${a === e}>${n && c > 0 ? s : O(s)}</option>`)}
+        ${o.map(([a, s], c) => p`<option value=${a} ?selected=${a === e}>${n && c > 0 ? s : O(s)}</option>`)}
       </select>
     </div>`;
   }
@@ -2019,8 +2020,8 @@ const ne = class ne extends ot {
     const n = String(this._get(t) ?? i);
     return this._selectRow(e, n, o, (a) => this._put(t, a, i));
   }
-  _sliderRow(t, e, o, i, n, a, s, c = (d) => `${d}px`) {
-    return l`<div class="etce-row etce-nowrap">
+  _sliderRow(t, e, o, i, n, a, s, c = (l) => `${l}px`) {
+    return p`<div class="etce-row etce-nowrap">
       <label class="lbl">${O(t)}</label>
       <input
         type="range"
@@ -2028,36 +2029,36 @@ const ne = class ne extends ot {
         max=${i}
         step=${n}
         .value=${String(e)}
-        @input=${(d) => {
-      const p = d.target;
-      p.nextElementSibling.textContent = c(Number(p.value));
+        @input=${(l) => {
+      const d = l.target;
+      d.nextElementSibling.textContent = c(Number(d.value));
     }}
-        @change=${(d) => s(Number(d.target.value))}
+        @change=${(l) => s(Number(l.target.value))}
       />
       <span class="etce-val">${c(e)}</span>
-      ${a ? l`<button class="etce-reset" title="Back to default" @click=${() => s(void 0)}>
+      ${a ? p`<button class="etce-reset" title="Back to default" @click=${() => s(void 0)}>
             <ha-icon icon="mdi:restore"></ha-icon>
           </button>` : u}
     </div>`;
   }
   _slider(t, e, o, i, n, a, s) {
     const c = this._get(t);
-    return this._sliderRow(e, c ?? a, o, i, n, c !== void 0, (d) => this._put(t, d, a), s);
+    return this._sliderRow(e, c ?? a, o, i, n, c !== void 0, (l) => this._put(t, l, a), s);
   }
   /** Four-mode color control (§3). `write(undefined)` = default (key removed). */
   _colorRow(t, e, o, i, n, a, s = {}) {
     const c = s.transparentValue ?? "transparent";
-    let d = this._cmode[t] || (s.transparent && o === c ? "transparent" : Oi(o));
-    d === "transparent" && !s.transparent && (d = "css");
-    let p = u;
-    if (d === "theme")
-      p = l`<select @change=${(f) => a(f.target.value)}>
-        ${kt.map(([f, g]) => l`<option value=${f} ?selected=${f === o}>${g}</option>`)}
+    let l = this._cmode[t] || (s.transparent && o === c ? "transparent" : Oi(o));
+    l === "transparent" && !s.transparent && (l = "css");
+    let d = u;
+    if (l === "theme")
+      d = p`<select @change=${(f) => a(f.target.value)}>
+        ${kt.map(([f, g]) => p`<option value=${f} ?selected=${f === o}>${g}</option>`)}
       </select>`;
-    else if (d === "custom") {
+    else if (l === "custom") {
       const f = o && /^#[0-9a-fA-F]{6}$/.test(o) ? o : n;
-      p = l`<input type="color" .value=${f} @change=${(g) => a(g.target.value)} />`;
-    } else d === "css" && (p = l`<input
+      d = p`<input type="color" .value=${f} @change=${(g) => a(g.target.value)} />`;
+    } else l === "css" && (d = p`<input
         type="text"
         .value=${o ?? ""}
         placeholder="e.g. tomato, rgba(…), var(--my-color)"
@@ -2066,7 +2067,7 @@ const ne = class ne extends ot {
     const h = (f) => {
       this._cmode = { ...this._cmode, [t]: f }, f === "default" ? a(void 0) : f === "transparent" ? a(c) : f === "theme" ? a(kt.some(([g]) => g === o) ? o : kt[0][0]) : f === "custom" ? a(o && /^#[0-9a-fA-F]{6}$/.test(o) ? o : n) : this.requestUpdate();
     };
-    return l`<div class="etce-row">
+    return p`<div class="etce-row">
       <label class="lbl">${O(e)}</label>
       <div class="etce-color">
         <select class="etce-cmode" @change=${(f) => h(f.target.value)}>
@@ -2077,30 +2078,32 @@ const ne = class ne extends ot {
       ["custom", "Custom color"],
       ["css", "Custom CSS"]
     ].map(
-      ([f, g]) => l`<option value=${f} ?selected=${f === d}>${O(g)}</option>`
+      ([f, g]) => p`<option value=${f} ?selected=${f === l}>${O(g)}</option>`
     )}
         </select>
-        ${p}
+        ${d}
       </div>
     </div>`;
   }
   _color(t, e, o, i, n = {}) {
     return this._colorRow(t, e, this._get(t), o, i, (a) => this._put(t, a), n);
   }
-  _selector(t, e, o, i) {
-    return l`<div class="etce-row">
-      ${t ? l`<label class="lbl">${O(t)}</label>` : u}
+  _selector(t, e, o, i, n) {
+    const a = (n ?? ("icon" in e || /optional/i.test(t))) && o !== void 0 && o !== null && o !== "";
+    return p`<div class="etce-row">
+      ${t ? p`<label class="lbl">${O(t)}</label>` : u}
       <ha-selector
         .hass=${this.hass}
         .selector=${e}
         .value=${o}
-        @value-changed=${(n) => i(n.detail.value)}
+        @value-changed=${(s) => i(s.detail.value)}
       ></ha-selector>
+      ${a ? p`<button class="etce-reset etce-clear" title="Clear" @click=${() => i(void 0)}><ha-icon icon="mdi:close-circle-outline"></ha-icon></button>` : u}
     </div>`;
   }
   // ---- render -----------------------------------------------------------------
   render() {
-    return this._config ? l`<div class="etce">
+    return this._config ? p`<div class="etce">
       ${this._testBar()}
       ${this._panel("thermostat", "mdi:thermostat", "Thermostat", this._thermostatBody())}
       ${this._panel("templates", "mdi:palette-outline", "Quick Preset Templates", this._templatesBody())}
@@ -2117,7 +2120,7 @@ const ne = class ne extends ot {
   }
   _testBar() {
     const t = xt(this._config.entity) ?? "";
-    return l`<div class="etce-test ${t ? "on" : ""}">
+    return p`<div class="etce-test ${t ? "on" : ""}">
       ${this._selectRow(
       "Test mode",
       t,
@@ -2131,7 +2134,7 @@ const ne = class ne extends ot {
         ["cycle", "Cycle through all (6 s each)"]
       ],
       (e) => {
-        mt(this._config.entity, e || null), this.requestUpdate();
+        bt(this._config.entity, e || null), this.requestUpdate();
       }
     )}
       <p class="etce-hint">
@@ -2141,21 +2144,21 @@ const ne = class ne extends ot {
   }
   _thermostatBody() {
     const t = this._config;
-    return l`
+    return p`
       ${this._hint("The climate entity this card controls, and what the center of the card shows.")}
       ${this._selector("Entity", { entity: { domain: "climate" } }, t.entity, (e) => this._put("entity", e || void 0))}
       <div class="etce-row">
         <label class="lbl">Name</label>
         <input type="text" .value=${t.name ?? ""} placeholder="Entity name" @change=${(e) => this._put("name", e.target.value || void 0)} />
       </div>
-      ${this._sub("th-show", "Show", () => l`
+      ${this._sub("th-show", "Show", () => p`
         <div class="etce-checks">
           ${this._bool("show_name", "Name", v.show_name)} ${this._bool("show_status", "Status", v.show_status)}
           ${this._bool("show_humidity", "Humidity", v.show_humidity)}
           ${this._bool("show_current", "Current temperature", v.show_current)}
           ${this._bool("show_pills", "Setpoint pills", v.show_pills)}
         </div>`)}
-      ${this._sub("th-layout", "Layout", () => l`
+      ${this._sub("th-layout", "Layout", () => p`
         ${this._select("core_align", "Align", [["left", "Left"], ["center", "Center"], ["right", "Right"]], v.core_align)}
         ${this._select(
       "status_position",
@@ -2174,16 +2177,16 @@ const ne = class ne extends ot {
 It replaces this card’s layout, setpoint control and styling. Your device chips, button order/names/icons and temperature range are kept.`
       ) || this._emit(zi(this._config, o));
     };
-    return l`
+    return p`
       ${this._hint("One-click starting points, each with its own setpoint control, button style and layout. Fine-tune anything afterwards; nothing stays linked to the template.")}
       <div class="etce-blist">
         ${Wt.map(
-      (e) => l`<div class="etce-brow etce-tpl">
+      (e) => p`<div class="etce-brow etce-tpl">
             <ha-icon class="etce-sicon" icon=${e.icon}></ha-icon>
             <div class="etce-tpl-text">
               <span class="etce-sname">${e.name}</span>
               <span class="etce-tpl-hint">${e.hint}</span>
-              <span class="etce-tpl-tags">${e.tags.map((o) => l`<span>${o}</span>`)}</span>
+              <span class="etce-tpl-tags">${e.tags.map((o) => p`<span>${o}</span>`)}</span>
             </div>
             <button class="etce-preset" @click=${() => t(e.id)}>Apply</button>
           </div>`
@@ -2193,7 +2196,7 @@ It replaces this card’s layout, setpoint control and styling. Your device chip
   }
   _setpointBody() {
     const t = this._get("setpoint.control") ?? v.control, e = t === "wheel" ? "Wheel" : t === "stepper" ? "Stepper" : "Bar";
-    return l`
+    return p`
       ${this._hint("How you change the target temperature. The wheel scrolls through values; the bar drags heat and cool handles.")}
       ${this._select(
       "setpoint.control",
@@ -2201,19 +2204,19 @@ It replaces this card’s layout, setpoint control and styling. Your device chip
       [["wheel", "Wheel"], ["stepper", "− / + stepper"], ["bar", "Setpoint bar"], ["none", "None (display only)"]],
       v.control
     )}
-      ${t === "wheel" || t === "stepper" ? this._sub("sp-ctl", e, () => l`
+      ${t === "wheel" || t === "stepper" ? this._sub("sp-ctl", e, () => p`
             ${this._group("Placement & size", !0)}
             ${this._select("setpoint.position", "Position", [["left", "Left"], ["right", "Right"], ["center", "Center (below)"]], v.position)}
             ${this._slider("setpoint.scale", "Size", 40, 250, 5, v.scale, (o) => `${o}%`)}
             ${this._hint("Size scales the controls only; the current temperature has its own size under Text.")}
             ${this._group("Buttons")}
             ${this._nudgeSelect(t)}
-            ${t === "wheel" ? l`${this._group("Wheel")}
+            ${t === "wheel" ? p`${this._group("Wheel")}
                 ${this._slider("setpoint.neighbors", "Next values shown", 0, 3, 1, v.neighbors, (o) => String(o))}
                 ${this._select("setpoint.wheel_style", "Center value", [["bubble", "Bubble"], ["pill", "Pill (like the setpoint pills)"]], v.wheel_style)}` : u}`) : u}
       ${t === "bar" ? this._barBody() : u}
       ${t !== "none" ? this._sub("sp-reveal", "Show controls", () => this._revealBody()) : u}
-      ${this._sub("sp-hc", "Heat / Cool", () => l`
+      ${this._sub("sp-hc", "Heat / Cool", () => p`
         ${this._slider("setpoint.min_gap", "Minimum gap", 0, 10, 0.5, this._defaultGap(), (o) => `${o}°`)}
         ${this._hint("In Heat / Cool the two setpoints stay at least this far apart; dragging one pushes the other.")}`)}
     `;
@@ -2232,12 +2235,12 @@ It replaces this card’s layout, setpoint control and styling. Your device chip
   }
   _revealBody() {
     const t = (this._get("setpoint.reveal") ?? v.reveal) === "tap", e = this._get("setpoint.hide_after") ?? v.hide_after;
-    return l`
+    return p`
       ${this._select("setpoint.reveal", "Controls", [["always", "Always shown"], ["tap", "Shown when tapped"]], v.reveal)}
       ${this._hint(
       t ? "The controls stay folded away until you tap. They fold away again after the time below without use." : "Choose “Shown when tapped” to keep the card calm: just the temperature and setpoint until you want to change it."
     )}
-      ${t ? l`
+      ${t ? p`
             ${this._select(
       "setpoint.reveal_from",
       "Open by tapping",
@@ -2276,29 +2279,29 @@ It replaces this card’s layout, setpoint control and styling. Your device chip
   }
   /** A bar-side choice: above / below for a horizontal bar, left / right for a vertical one. */
   _sidePlacement(t, e, o, i) {
-    const n = String(this._get("setpoint.bar.position") ?? v.bar.position), a = n === "left" || n === "right", s = a ? [["left", "Left of the bar"], ["right", "Right of the bar"]] : [["above", "Above the bar"], ["below", "Below the bar"]], c = a ? i : o, d = String(this._get(`setpoint.bar.${t}`) ?? c);
-    return this._selectRow(e, s.some(([p]) => p === d) ? d : c, s, (p) => this._put(`setpoint.bar.${t}`, p, c));
+    const n = String(this._get("setpoint.bar.position") ?? v.bar.position), a = n === "left" || n === "right", s = a ? [["left", "Left of the bar"], ["right", "Right of the bar"]] : [["above", "Above the bar"], ["below", "Below the bar"]], c = a ? i : o, l = String(this._get(`setpoint.bar.${t}`) ?? c);
+    return this._selectRow(e, s.some(([d]) => d === l) ? l : c, s, (d) => this._put(`setpoint.bar.${t}`, d, c));
   }
   _defaultGap() {
     return (this.hass?.config?.unit_system?.temperature ?? "").includes("C") ? 1.5 : 3;
   }
   _barBody() {
-    return l`${this._sub("sp-bar", "Bar", () => this._barLook())}
+    return p`${this._sub("sp-bar", "Bar", () => this._barLook())}
       ${this._sub("sp-flags", "Value flags", () => this._barFlags())}
       ${this._sub("sp-markers", "Ticks, markers & range", () => this._barMarkers())}`;
   }
   _barFlags() {
     const t = v.bar;
-    return l`
+    return p`
       ${this._bool("setpoint.bar.flags", "Show value flags on the handles", t.flags)}
-      ${this._get("setpoint.bar.flags") ?? t.flags ? l`${this._sidePlacement("flag_position", "Flag placement", "above", "left")}
+      ${this._get("setpoint.bar.flags") ?? t.flags ? p`${this._sidePlacement("flag_position", "Flag placement", "above", "left")}
           ${this._color("setpoint.bar.flag_color", "Flag color", "Heat / cool color", "#ff8100", { transparent: !0 })}
           ${this._color("setpoint.bar.flag_text_color", "Flag text color", "White", "#ffffff")}` : u}
     `;
   }
   _barMarkers() {
     const t = v.bar;
-    return l`
+    return p`
       ${this._group("Ticks & markers", !0)}
       ${this._bool("setpoint.bar.show_current", "Current temperature marker", t.show_current)}
       ${this._slider("setpoint.bar.ticks", "Tick every", 0, 10, 0.5, t.ticks, (e) => e ? `${e}°` : "Off")}
@@ -2307,7 +2310,7 @@ It replaces this card’s layout, setpoint control and styling. Your device chip
       ${this._group("Range")}
       ${this._hint("Leave empty to use the thermostat’s own limits.")}
       ${["range_min", "range_max"].map(
-      (e) => l`<div class="etce-row">
+      (e) => p`<div class="etce-row">
           <label class="lbl">${e === "range_min" ? "From" : "To"}</label>
           <input
             type="number"
@@ -2323,7 +2326,7 @@ It replaces this card’s layout, setpoint control and styling. Your device chip
   }
   _barLook() {
     const t = v.bar, e = this._get("setpoint.bar.look") ?? t.look, o = this._get("setpoint.bar.stops") ?? ["#2b9af9", "#7ccf8a", "#ff8100"];
-    return l`
+    return p`
       ${this._group("Placement", !0)}
       ${this._select(
       "setpoint.bar.position",
@@ -2335,11 +2338,11 @@ It replaces this card’s layout, setpoint control and styling. Your device chip
       ${this._slider("setpoint.bar.height", "Thickness", 6, 40, 1, t.height)}
       ${this._group("Colors")}
       ${this._select("setpoint.bar.look", "Look", [["zones", "Heat / comfort / cool zones"], ["gradient", "Gradient"]], t.look)}
-      ${e === "gradient" ? l`<div class="etce-row">
+      ${e === "gradient" ? p`<div class="etce-row">
             <label class="lbl">Gradient (Cold → Hot)</label>
             <div class="etce-stops">
               ${o.map(
-      (i, n) => l`<input
+      (i, n) => p`<input
                   type="color"
                   .value=${i}
                   @change=${(a) => {
@@ -2349,7 +2352,7 @@ It replaces this card’s layout, setpoint control and styling. Your device chip
                 />`
     )}
             </div>
-          </div>` : l`${this._color("setpoint.bar.heat_color", "Heat zone", "Theme heat", "#ff8100", { transparent: !0 })}
+          </div>` : p`${this._color("setpoint.bar.heat_color", "Heat zone", "Theme heat", "#ff8100", { transparent: !0 })}
           ${this._color("setpoint.bar.comfort_color", "Comfort zone", "Green", "#4caf50", { transparent: !0 })}
           ${this._color("setpoint.bar.cool_color", "Cool zone", "Theme cool", "#2b9af9", { transparent: !0 })}`}
       ${this._group("Handles")}
@@ -2369,19 +2372,19 @@ It replaces this card’s layout, setpoint control and styling. Your device chip
       const n = t.filter((s) => s.type === "custom" || s.type === "chips").length + 1, a = [...t, i === "custom" ? { type: i, name: `Buttons ${n}` } : { type: i }];
       this._set = a.length - 1, this._writeSets(a);
     };
-    return l`
+    return p`
       ${this._hint("Groups of buttons. Each set picks its side of the card, its layout, and how it shows: full time, behind a toggle button, or as an expandable menu.")}
       <div class="etce-addbar">
         ${["hvac", "preset", "fan_mode", "custom"].map(
-      (i) => l`<button class="etce-add" @click=${() => o(i)}>+ ${j[i]}</button>`
+      (i) => p`<button class="etce-add" @click=${() => o(i)}>+ ${j[i]}</button>`
     )}
       </div>
       <div class="etce-rows">
         ${t.map((i, n) => {
-      const a = (i.items?.length ?? 0) + (i.chips?.length ?? 0), s = X(i.type) ? D(e, i.type).length > 0 || a > 0 : !0, c = X(i.type) && t.filter((p) => p.type === i.type).length === 1, d = this._set === n;
+      const a = (i.items?.length ?? 0) + (i.chips?.length ?? 0), s = X(i.type) ? D(e, i.type).length > 0 || a > 0 : !0, c = X(i.type) && t.filter((d) => d.type === i.type).length === 1, l = this._set === n;
       return this._rowSub(
-        d,
-        (p) => this._set = p ? n : null,
+        l,
+        (d) => this._set = d ? n : null,
         {
           icon: Bi[i.type],
           name: i.name ?? j[i.type],
@@ -2389,7 +2392,7 @@ It replaces this card’s layout, setpoint control and styling. Your device chip
           off: i.hidden,
           cls: "set-row"
         },
-        l`<button class="etce-act" title="Move up" ?disabled=${n === 0} @click=${() => this._moveSet(n, -1)}>
+        p`<button class="etce-act" title="Move up" ?disabled=${n === 0} @click=${() => this._moveSet(n, -1)}>
                 <ha-icon icon="mdi:arrow-up"></ha-icon>
               </button>
               <button class="etce-act" title="Move down" ?disabled=${n === t.length - 1} @click=${() => this._moveSet(n, 1)}>
@@ -2408,7 +2411,7 @@ It replaces this card’s layout, setpoint control and styling. Your device chip
       );
     })}
       </div>
-      ${this._sub("sets-layout", "Layout & spacing", () => l`
+      ${this._sub("sets-layout", "Layout & spacing", () => p`
         ${this._group("Location", !0)}
         ${this._select("toggles_zone", "Default location", [["bottom", "Bottom"], ["top", "Top"], ["left", "Left"], ["right", "Right"]], v.toggles_zone)}
         ${this._hint("Where sets go when they have no Side of their own, and where the toggle buttons sit. A set’s own Side always wins.")}
@@ -2422,7 +2425,7 @@ It replaces this card’s layout, setpoint control and styling. Your device chip
       return this._sliderRow(i.charAt(0).toUpperCase() + i.slice(1), n ?? a, 0, 48, 1, n !== void 0, (s) => this._put(`zones.${i}`, s));
     })}
         ${this._hint("Top, Bottom, Left and Right override “All sides” for one side; ↺ puts it back.")}`)}
-      ${this._sub("sets-compact", "Compact", () => l`
+      ${this._sub("sets-compact", "Compact", () => p`
         ${this._bool("compact", "Put every full-time set behind a toggle button", !1)}
         ${this._hint("Keeps the card small until you open a set. Sets shown as expandable menus are already compact and are not changed.")}`)}
     `;
@@ -2435,28 +2438,28 @@ It replaces this card’s layout, setpoint control and styling. Your device chip
   }
   /** "Share a row with": own row, or any other set (by id, added on demand). */
   _shareRow(t, e) {
-    const o = this._sets(), i = (c, d) => `${c.name ?? j[c.type]} (#${d + 1})`, n = o.map((c, d) => [c, d]).filter(([, c]) => c !== e), a = t.row_with ? o.findIndex((c) => c.id === t.row_with) : -1, s = (c) => {
-      const d = o.map((h) => ({ ...h }));
-      if (c === "") delete d[e].row_with;
+    const o = this._sets(), i = (c, l) => `${c.name ?? j[c.type]} (#${l + 1})`, n = o.map((c, l) => [c, l]).filter(([, c]) => c !== e), a = t.row_with ? o.findIndex((c) => c.id === t.row_with) : -1, s = (c) => {
+      const l = o.map((h) => ({ ...h }));
+      if (c === "") delete l[e].row_with;
       else {
         const h = Number(c);
-        let f = d[h].id;
+        let f = l[h].id;
         if (!f) {
-          const g = new Set(d.map((w) => w.id).filter(Boolean));
+          const g = new Set(l.map((w) => w.id).filter(Boolean));
           let m = 1;
           for (; g.has(`set${m}`); ) m++;
-          f = `set${m}`, d[h].id = f;
+          f = `set${m}`, l[h].id = f;
         }
-        d[e].row_with = f;
+        l[e].row_with = f;
       }
-      const p = new Set(d.map((h) => h.row_with).filter(Boolean));
-      for (const h of d) h.id && !p.has(h.id) && delete h.id;
-      this._writeSets(d);
+      const d = new Set(l.map((h) => h.row_with).filter(Boolean));
+      for (const h of l) h.id && !d.has(h.id) && delete h.id;
+      this._writeSets(l);
     };
-    return l`${this._selectRow(
+    return p`${this._selectRow(
       "Share a row with",
       a >= 0 ? String(a) : "",
-      [["", "Own row"], ...n.map(([c, d]) => [String(d), i(c, d)])],
+      [["", "Own row"], ...n.map(([c, l]) => [String(l), i(c, l)])],
       s,
       !0
     )}
@@ -2476,13 +2479,13 @@ It replaces this card’s layout, setpoint control and styling. Your device chip
   }
   _setEditor(t, e) {
     const o = t.zone ?? this._defaultZone(), i = o === "left" || o === "right", n = (a, s, c) => this._patchSet(e, a, s, c);
-    return l`
+    return p`
       <div class="etce-row">
         <label class="lbl">Name</label>
         <input type="text" .value=${t.name ?? ""} placeholder=${j[t.type]} @change=${(a) => n("name", a.target.value || void 0)} />
       </div>
       ${this._sub(`set-${e}-buttons`, "Buttons in this set", () => this._buttonsEditor(t, e))}
-      ${this._sub(`set-${e}-place`, "Placement", () => l`
+      ${this._sub(`set-${e}-place`, "Placement", () => p`
       ${this._group("Side & layout", !0)}
       ${this._selectRow(
       "Side",
@@ -2505,14 +2508,14 @@ It replaces this card’s layout, setpoint control and styling. Your device chip
       ${(t.align ?? "stretch") === "stretch" && t.type !== "chips" ? this._sliderRow("Columns", t.columns ?? 0, 0, 8, 1, t.columns !== void 0, (a) => n("columns", a, 0), (a) => a ? String(a) : "Auto") : u}
       ${this._group("Row")}
       ${this._shareRow(t, e)}`)}
-      ${this._sub(`set-${e}-display`, "Display", () => l`
+      ${this._sub(`set-${e}-display`, "Display", () => p`
       ${this._selectRow(
       "Show",
       t.display ?? "always",
       [["always", "Full time"], ["toggle", "Behind a toggle button"], ["menu", "Expandable menu"]],
       (a) => n("display", a, "always")
     )}
-      ${t.display === "menu" ? l`${this._hint("One button shows the current value; tap it to open the full list.")}
+      ${t.display === "menu" ? p`${this._hint("One button shows the current value; tap it to open the full list.")}
           ${this._selectRow(
       "Opens",
       t.menu_direction ?? qt(o),
@@ -2521,34 +2524,34 @@ It replaces this card’s layout, setpoint control and styling. Your device chip
     )}
           ${this._check("Show the set name on the button", t.menu_show_name ?? !1, (a) => n("menu_show_name", a, !1))}` : u}
       ${(t.display ?? "always") === "toggle" || this._config.compact && t.display !== "menu" ? this._selector("Toggle icon", { icon: {} }, t.toggle_icon, (a) => n("toggle_icon", a || void 0)) : u}`)}
-      ${this._sub(`set-${e}-style`, "Button style for this set", () => l`${this._buttonStyleEditor(`sets.${e}.style`, !0, e)}${this._copyStyle(e)}`)}
+      ${this._sub(`set-${e}-style`, "Button style for this set", () => p`${this._buttonStyleEditor(`sets.${e}.style`, !0, e)}${this._copyStyle(e)}`)}
     `;
   }
   _optionsEditor(t, e) {
     const o = this.hass?.states[this._config.entity], i = Ve(D(o, t.type), t.order);
     if (!i.length) return this._hint("The thermostat offers nothing for this set right now.");
     const n = (a, s) => {
-      const c = [...i], d = a + s;
-      d < 0 || d >= c.length || ([c[a], c[d]] = [c[d], c[a]], this._patchSet(e, "order", c));
+      const c = [...i], l = a + s;
+      l < 0 || l >= c.length || ([c[a], c[l]] = [c[l], c[a]], this._patchSet(e, "order", c));
     };
-    return l`${this._hint("Built-in buttons from the thermostat: order, hide, rename and re-icon them. They can’t be deleted.")}
+    return p`${this._hint("Built-in buttons from the thermostat: order, hide, rename and re-icon them. They can’t be deleted.")}
       <div class="etce-rows">
         ${i.map((a, s) => {
-      const c = t.options?.[a] ?? {}, d = `${e}:${a}`;
+      const c = t.options?.[a] ?? {}, l = `${e}:${a}`;
       return this._rowSub(
-        this._chip === d,
-        (p) => this._chip = p ? d : null,
+        this._chip === l,
+        (d) => this._chip = d ? l : null,
         { icon: c.icon ?? zt[a.toLowerCase()] ?? "mdi:circle-medium", name: c.name ?? K(a), off: c.hide, cls: "item-row" },
-        l`<button class="etce-act" title="Move up" ?disabled=${s === 0} @click=${() => n(s, -1)}><ha-icon icon="mdi:arrow-up"></ha-icon></button>
+        p`<button class="etce-act" title="Move up" ?disabled=${s === 0} @click=${() => n(s, -1)}><ha-icon icon="mdi:arrow-up"></ha-icon></button>
               <button class="etce-act" title="Move down" ?disabled=${s === i.length - 1} @click=${() => n(s, 1)}><ha-icon icon="mdi:arrow-down"></ha-icon></button>
               <button class="etce-act etce-eye ${c.hide ? "off" : ""}" title=${c.hide ? "Show" : "Hide"} @click=${() => this._patchSet(e, `options.${a}.hide`, !c.hide, !1)}>
                 <ha-icon icon=${c.hide ? "mdi:eye-off-outline" : "mdi:eye-outline"}></ha-icon>
               </button>`,
-        () => l`<div class="etce-row">
+        () => p`<div class="etce-row">
                 <label class="lbl">Label</label>
-                <input type="text" .value=${c.name ?? ""} placeholder=${K(a)} @change=${(p) => this._patchSet(e, `options.${a}.name`, p.target.value || void 0)} />
+                <input type="text" .value=${c.name ?? ""} placeholder=${K(a)} @change=${(d) => this._patchSet(e, `options.${a}.name`, d.target.value || void 0)} />
               </div>
-              ${this._selector("Icon", { icon: {} }, c.icon, (p) => this._patchSet(e, `options.${a}.icon`, p || void 0))}
+              ${this._selector("Icon", { icon: {} }, c.icon, (d) => this._patchSet(e, `options.${a}.icon`, d || void 0))}
               ${this._copyTo(e, { kind: "mode", source: t.type, value: a, name: c.name, icon: c.icon })}`
       );
     })}
@@ -2581,38 +2584,38 @@ It replaces this card’s layout, setpoint control and styling. Your device chip
         delete c.hide, this._setItems(a, s, [...this._itemsOf(a[s]), c]), this._writeSets(a);
       },
       !0
-    ) : l``;
+    ) : p``;
   }
   _buttonsEditor(t, e) {
     const o = this.hass?.states[this._config.entity], i = this._itemsOf(t), n = ["hvac", "preset", "fan_mode"].filter((s) => D(o, s).length), a = (s, c = !1) => {
-      let d = null;
+      let l = null;
       if (s === "popup") {
-        const p = this._config.popups?.[0];
-        if (!p) {
+        const d = this._config.popups?.[0];
+        if (!d) {
           const h = this._sets();
           this._setItems(h, e, [...i, { kind: "popup", popup: "popup1" }]), this._chip = `item:${e}:${i.length}`, this._emit({ ...this._config, sets: h, popups: [{ id: "popup1", name: "Pop-up 1" }] });
           return;
         }
-        d = { kind: "popup", popup: p.id };
+        l = { kind: "popup", popup: d.id };
       } else if (s === "mode") {
-        const p = X(t.type) && n.includes(t.type) ? t.type : n[0];
-        p && (d = { kind: "mode", source: p, value: D(o, p)[0] });
+        const d = X(t.type) && n.includes(t.type) ? t.type : n[0];
+        d && (l = { kind: "mode", source: d, value: D(o, d)[0] });
       } else if (s === "device") {
         const h = (c ? this._firstRfFan() : void 0) || Object.keys(this.hass?.states ?? {}).find((f) => f.startsWith(c ? "fan." : "sensor."));
-        h && (d = { kind: "device", type: c ? "rf_fan" : "entity", entity: h });
+        h && (l = { kind: "device", type: c ? "rf_fan" : "entity", entity: h });
       } else {
-        const p = Object.keys(this.hass?.states ?? {}).find((h) => h.startsWith("script."));
-        d = p ? { kind: "action", action: "script", entity: p } : { kind: "action", action: "service" };
+        const d = Object.keys(this.hass?.states ?? {}).find((h) => h.startsWith("script."));
+        l = d ? { kind: "action", action: "script", entity: d } : { kind: "action", action: "service" };
       }
-      d && (this._chip = `item:${e}:${i.length}`, this._writeItems(e, [...i, d]));
+      l && (this._chip = `item:${e}:${i.length}`, this._writeItems(e, [...i, l]));
     };
-    return l`
-      ${X(t.type) ? l`${this._group("From the thermostat", !0)}${this._optionsEditor(t, e)}${this._group("Added buttons")}` : u}
+    return p`
+      ${X(t.type) ? p`${this._group("From the thermostat", !0)}${this._optionsEditor(t, e)}${this._group("Added buttons")}` : u}
       ${this._hint(
       X(t.type) ? "Add any button to this set: another mode, a device or sensor, or an action." : "Add mode buttons, devices and sensors (shown with their value), or actions (script, scene or service)."
     )}
       <div class="etce-addbar">
-        ${n.length ? l`<button class="etce-add" @click=${() => a("mode")}>+ Mode button</button>` : u}
+        ${n.length ? p`<button class="etce-add" @click=${() => a("mode")}>+ Mode button</button>` : u}
         <button class="etce-add" @click=${() => a("device")}>+ Device / sensor</button>
         <button class="etce-add" @click=${() => a("device", !0)}>+ RF fan</button>
         <button class="etce-add" @click=${() => a("action")}>+ Action</button>
@@ -2620,7 +2623,7 @@ It replaces this card’s layout, setpoint control and styling. Your device chip
       </div>
       <div class="etce-rows">
         ${i.map((s, c) => {
-      const d = `item:${e}:${c}`, p = this._chip === d, h = ($, x, b) => {
+      const l = `item:${e}:${c}`, d = this._chip === l, h = ($, x, b) => {
         const _ = [...i], k = C(_[c], $, x === b ? void 0 : x);
         _[c] = { ...k, kind: s.kind }, s.kind === "device" && (_[c].entity ||= s.entity), this._writeItems(e, _);
       }, f = ($) => {
@@ -2628,10 +2631,10 @@ It replaces this card’s layout, setpoint control and styling. Your device chip
         b < 0 || b >= x.length || ([x[c], x[b]] = [x[b], x[c]], this._writeItems(e, x));
       }, { name: g, icon: m, tag: w } = this._itemSummary(s);
       return this._rowSub(
-        p,
-        ($) => this._chip = $ ? d : null,
+        d,
+        ($) => this._chip = $ ? l : null,
         { icon: m, name: g, tag: w, off: s.hide, cls: "item-row" },
-        l`<button class="etce-act" title="Move up" ?disabled=${c === 0} @click=${() => f(-1)}><ha-icon icon="mdi:arrow-up"></ha-icon></button>
+        p`<button class="etce-act" title="Move up" ?disabled=${c === 0} @click=${() => f(-1)}><ha-icon icon="mdi:arrow-up"></ha-icon></button>
               <button class="etce-act" title="Move down" ?disabled=${c === i.length - 1} @click=${() => f(1)}><ha-icon icon="mdi:arrow-down"></ha-icon></button>
               <button class="etce-act" title="Duplicate" @click=${() => {
           const $ = [...i];
@@ -2643,30 +2646,32 @@ It replaces this card’s layout, setpoint control and styling. Your device chip
               <button class="etce-act del" title="Delete" @click=${() => this._writeItems(e, i.filter(($, x) => x !== c))}>
                 <ha-icon icon="mdi:trash-can-outline"></ha-icon>
               </button>`,
-        () => l`${this._itemFields(s, h)}${this._copyTo(e, s)}`
+        () => p`${this._itemFields(s, h, lt(this._config.buttons, t.style).content)}${this._copyTo(e, s)}`
       );
     })}
       </div>
     `;
   }
-  _popupItemFields(t, e, o) {
-    const i = this._config.popups ?? [], n = i.find((a) => a.id === t.popup);
-    return l`${this._selectRow(
+  _popupItemFields(t, e, o, i = "icon_label") {
+    const n = this._config.popups ?? [], a = i !== "label", s = i !== "icon", c = n.find((l) => l.id === t.popup);
+    return p`${this._selectRow(
       "Opens",
       t.popup,
-      [...n ? [] : [[t.popup, `${t.popup} (missing)`]], ...i.map((a) => [a.id, a.name ?? a.id])],
-      (a) => e("popup", a),
+      [...c ? [] : [[t.popup, `${t.popup} (missing)`]], ...n.map((l) => [l.id, l.name ?? l.id])],
+      (l) => e("popup", l),
       !0
     )}
-      ${i.length ? u : this._hint("Create a pop-up under Pop-up Cards first.")}
-      ${o(n?.name ?? "Open")}
+      ${n.length ? u : this._hint("Create a pop-up under Pop-up Cards first.")}
+      ${o(c?.name ?? "Open")}
+      ${this._hint(`Empty label = the pop-up’s name (${c?.name ?? "—"}). Empty icon = the pop-up’s icon.`)}
       <div class="etce-checks">
-        ${this._check("Show icon", t.show_icon ?? !0, (a) => e("show_icon", a, !0))}
-        ${this._check("Show label", t.show_name ?? !0, (a) => e("show_name", a, !0))}
+        ${this._check("Show icon", t.show_icon ?? a, (l) => e("show_icon", l, a))}
+        ${this._check("Show label", t.show_name ?? s, (l) => e("show_name", l, s))}
       </div>
+      ${s ? u : this._hint("This set shows icons only (Button Style → Content); Show Label turns the label on for this button.")}
       ${this._group("Value on the button")}
-      ${this._selector("Entity (optional)", { entity: {} }, t.entity, (a) => e("entity", a || void 0))}
-      ${t.entity ? this._check("Show value", t.show_state ?? !0, (a) => e("show_state", a, !0)) : u}
+      ${this._selector("Entity (optional)", { entity: {} }, t.entity, (l) => e("entity", l || void 0))}
+      ${t.entity ? this._check("Show value", t.show_state ?? !0, (l) => e("show_state", l, !0)) : u}
       ${this._hint("Shows that entity’s value on the button, e.g. how many windows are open.")}`;
   }
   /** Add an empty pop-up and return its id. */
@@ -2679,7 +2684,7 @@ It replaces this card’s layout, setpoint control and styling. Your device chip
   }
   _popupsBody() {
     const t = this._config, e = t.popups ?? [], o = (n) => this._sets().reduce((a, s) => a + (s.items ?? []).filter((c) => c.kind === "popup" && c.popup === n || c.kind === "device" && c.popup === n).length + (s.chips ?? []).filter((c) => c.popup === n).length, 0), i = (n) => this._emit({ ...t, popups: n.length ? n : void 0 });
-    return l`
+    return p`
       ${this._hint("Cards that open in a pop-up from any button. Define a card once here, then add an “Open card” button for it to any set, or pick it as a device button’s pop-up.")}
       ${this._sliderRow(
       "Auto-close after",
@@ -2700,20 +2705,20 @@ It replaces this card’s layout, setpoint control and styling. Your device chip
       const s = `pop:${a}`, c = o(n.id);
       return this._rowSub(
         this._chip === s,
-        (d) => this._chip = d ? s : null,
+        (l) => this._chip = l ? s : null,
         { icon: n.icon ?? "mdi:card-text-outline", name: n.name ?? n.id, tag: `${n.size ?? "medium"} · ${c} button${c === 1 ? "" : "s"}`, cls: "pop-row" },
-        l`<button class="etce-act" title="Preview" @click=${() => window.dispatchEvent(new CustomEvent("etc-popup-preview", { detail: { entity: t.entity, popup: n } }))}>
+        p`<button class="etce-act" title="Preview" @click=${() => window.dispatchEvent(new CustomEvent("etc-popup-preview", { detail: { entity: t.entity, popup: n } }))}>
                 <ha-icon icon="mdi:eye-outline"></ha-icon>
               </button>
               <button class="etce-act" title="Duplicate" @click=${() => {
-          const d = new Set(e.map((f) => f.id));
-          let p = 1;
-          for (; d.has(`popup${p}`); ) p++;
+          const l = new Set(e.map((f) => f.id));
+          let d = 1;
+          for (; l.has(`popup${d}`); ) d++;
           const h = [...e];
-          h.splice(a + 1, 0, { ...structuredClone(n), id: `popup${p}`, name: `${n.name ?? n.id} copy` }), i(h);
+          h.splice(a + 1, 0, { ...structuredClone(n), id: `popup${d}`, name: `${n.name ?? n.id} copy` }), i(h);
         }}><ha-icon icon="mdi:content-copy"></ha-icon></button>
               <button class="etce-act del" title="Delete" @click=${() => {
-          c && !window.confirm(`${c} button${c === 1 ? " uses" : "s use"} this pop-up. Delete it anyway? Those buttons will be hidden.`) || i(e.filter((d, p) => p !== a));
+          c && !window.confirm(`${c} button${c === 1 ? " uses" : "s use"} this pop-up. Delete it anyway? Those buttons will be hidden.`) || i(e.filter((l, d) => d !== a));
         }}><ha-icon icon="mdi:trash-can-outline"></ha-icon></button>`,
         () => this._popupFields(n, a)
       );
@@ -2723,10 +2728,10 @@ It replaces this card’s layout, setpoint control and styling. Your device chip
   }
   _popupFields(t, e) {
     const o = (a, s, c) => {
-      const d = [...this._config.popups ?? []], p = C(d[e], a, s === c ? void 0 : s);
-      d[e] = { ...p, id: t.id }, this._emit({ ...this._config, popups: d });
+      const l = [...this._config.popups ?? []], d = C(l[e], a, s === c ? void 0 : s);
+      l[e] = { ...d, id: t.id }, this._emit({ ...this._config, popups: l });
     }, i = t.size ?? "medium", n = this._config.popup_auto_close ?? 30;
-    return l`
+    return p`
       <div class="etce-row">
         <label class="lbl">Name</label>
         <input type="text" .value=${t.name ?? ""} placeholder=${t.id} @change=${(a) => o("name", a.target.value || void 0)} />
@@ -2779,99 +2784,99 @@ It replaces this card’s layout, setpoint control and styling. Your device chip
     }
     return { name: t.name ?? (this.hass ? Vt(this.hass, t) : "Action"), icon: t.icon ?? We(t), tag: "Action" };
   }
-  _itemFields(t, e) {
-    const o = (n) => l`<div class="etce-row">
+  _itemFields(t, e, o = "icon_label") {
+    const i = (a) => p`<div class="etce-row">
         <label class="lbl">Label</label>
-        <input type="text" .value=${t.name ?? ""} placeholder=${n} @change=${(a) => e("name", a.target.value || void 0)} />
+        <input type="text" .value=${t.name ?? ""} placeholder=${a} @change=${(s) => e("name", s.target.value || void 0)} />
       </div>
-      ${this._selector("Icon", { icon: {} }, t.icon, (a) => e("icon", a || void 0))}`;
+      ${this._selector("Icon", { icon: {} }, t.icon, (s) => e("icon", s || void 0))}`;
     if (t.kind === "mode") {
-      const n = this.hass?.states[this._config.entity], a = ["hvac", "preset", "fan_mode"].filter((c) => D(n, c).length || c === t.source), s = D(n, t.source);
-      return l`${this._selectRow("Sets", t.source, a.map((c) => [c, Re[c]]), (c) => {
-        const d = D(n, c)[0];
-        e("source", c), d && !D(n, c).includes(t.value) && e("value", d);
+      const a = this.hass?.states[this._config.entity], s = ["hvac", "preset", "fan_mode"].filter((l) => D(a, l).length || l === t.source), c = D(a, t.source);
+      return p`${this._selectRow("Sets", t.source, s.map((l) => [l, Re[l]]), (l) => {
+        const d = D(a, l)[0];
+        e("source", l), d && !D(a, l).includes(t.value) && e("value", d);
       })}
-        ${this._selectRow("Value", t.value, (s.includes(t.value) ? s : [t.value, ...s]).map((c) => [c, K(c)]), (c) => e("value", c))}
-        ${o(K(t.value))}`;
+        ${this._selectRow("Value", t.value, (c.includes(t.value) ? c : [t.value, ...c]).map((l) => [l, K(l)]), (l) => e("value", l))}
+        ${i(K(t.value))}`;
     }
-    if (t.kind === "popup") return this._popupItemFields(t, e, o);
+    if (t.kind === "popup") return this._popupItemFields(t, e, i, o);
     if (t.kind === "action") {
-      const n = t.action ?? (t.entity?.startsWith("scene.") ? "scene" : t.entity ? "script" : "service");
-      return l`${this._selectRow("Runs", n, [["script", "A script"], ["scene", "A scene"], ["service", "A service"]], (a) => e("action", a))}
-        ${n === "script" || n === "scene" ? this._selector(n === "script" ? "Script" : "Scene", { entity: { domain: n } }, t.entity, (a) => e("entity", a || void 0)) : l`<div class="etce-row">
+      const a = t.action ?? (t.entity?.startsWith("scene.") ? "scene" : t.entity ? "script" : "service");
+      return p`${this._selectRow("Runs", a, [["script", "A script"], ["scene", "A scene"], ["service", "A service"]], (s) => e("action", s))}
+        ${a === "script" || a === "scene" ? this._selector(a === "script" ? "Script" : "Scene", { entity: { domain: a } }, t.entity, (s) => e("entity", s || void 0)) : p`<div class="etce-row">
                 <label class="lbl">Service</label>
-                <input type="text" .value=${t.service ?? ""} placeholder="light.turn_on" @change=${(a) => e("service", a.target.value.trim() || void 0)} />
+                <input type="text" .value=${t.service ?? ""} placeholder="light.turn_on" @change=${(s) => e("service", s.target.value.trim() || void 0)} />
               </div>
-              ${this._selector("Target (optional)", { entity: {} }, t.entity, (a) => e("entity", a || void 0))}
+              ${this._selector("Target (optional)", { entity: {} }, t.entity, (s) => e("entity", s || void 0))}
               ${this._hint("Extra service data (optional).")}
-              ${this._selector("", { object: {} }, t.data, (a) => e("data", a && Object.keys(a).length ? a : void 0))}`}
-        ${o(this.hass ? Vt(this.hass, t) : "Action")}`;
+              ${this._selector("", { object: {} }, t.data, (s) => e("data", s && Object.keys(s).length ? s : void 0))}`}
+        ${i(this.hass ? Vt(this.hass, t) : "Action")}`;
     }
-    const i = t;
-    return l`
-      ${this._selector("Entity", { entity: i.type === "rf_fan" ? { domain: "fan" } : {} }, i.entity, (n) => n && e("entity", n))}
-      ${o("Entity name")}
+    const n = t;
+    return p`
+      ${this._selector("Entity", { entity: n.type === "rf_fan" ? { domain: "fan" } : {} }, n.entity, (a) => a && e("entity", a))}
+      ${i("Entity name")}
       <div class="etce-checks">
-        ${this._check("Show name", i.show_name ?? !0, (n) => e("show_name", n, !0))}
-        ${this._check("Show value", i.show_state ?? !0, (n) => e("show_state", n, !0))}
+        ${this._check("Show name", n.show_name ?? !0, (a) => e("show_name", a, !0))}
+        ${this._check("Show value", n.show_state ?? !0, (a) => e("show_state", a, !0))}
       </div>
-      ${this._check("Hide when off, 0 or none", !!i.hide_when_off, (n) => e("hide_when_off", n, !1))}
+      ${this._check("Hide when off, 0 or none", !!n.hide_when_off, (a) => e("hide_when_off", a, !1))}
       ${this._hint("Hides this button while the value is off, 0, none, idle, closed or unavailable, and shows it again when there is something to show.")}
-      ${i.type === "rf_fan" ? this._rfFanInfo(i) : u}
-      ${i.type === "rf_fan" ? this._selectRow(
+      ${n.type === "rf_fan" ? this._rfFanInfo(n) : u}
+      ${n.type === "rf_fan" ? this._selectRow(
       "Speed shows as",
-      i.speed_format ?? "number",
+      n.speed_format ?? "number",
       [["number", "Number (4)"], ["fraction", "Fraction (4/10)"], ["percent", "Percent (40%)"]],
-      (n) => e("speed_format", n, "number")
+      (a) => e("speed_format", a, "number")
     ) : u}
       ${this._selectRow(
       "Tap",
-      i.tap ?? (i.type === "rf_fan" ? "popup" : "more-info"),
+      n.tap ?? (n.type === "rf_fan" ? "popup" : "more-info"),
       [["popup", "Open card in pop-up"], ["more-info", "More info"], ["toggle", "Toggle"], ["none", "Nothing"]],
-      (n) => e("tap", n, i.type === "rf_fan" ? "popup" : "more-info")
+      (a) => e("tap", a, n.type === "rf_fan" ? "popup" : "more-info")
     )}
       ${this._selectRow(
       "Hold",
-      i.hold ?? (i.type === "rf_fan" ? "toggle" : "none"),
-      [["toggle", "Toggle"], ...i.type === "rf_fan" ? [["toggle_light", "Toggle light"]] : [], ["more-info", "More info"], ["none", "Nothing"]],
-      (n) => e("hold", n, i.type === "rf_fan" ? "toggle" : "none")
+      n.hold ?? (n.type === "rf_fan" ? "toggle" : "none"),
+      [["toggle", "Toggle"], ...n.type === "rf_fan" ? [["toggle_light", "Toggle light"]] : [], ["more-info", "More info"], ["none", "Nothing"]],
+      (a) => e("hold", a, n.type === "rf_fan" ? "toggle" : "none")
     )}
-      ${(i.tap ?? (i.type === "rf_fan" ? "popup" : "more-info")) === "popup" ? l`${this._selectRow(
+      ${(n.tap ?? (n.type === "rf_fan" ? "popup" : "more-info")) === "popup" ? p`${this._selectRow(
       "Pop-up",
-      i.popup ?? "",
-      [["", "Its own card (below)"], ...(this._config.popups ?? []).map((n) => [n.id, n.name ?? n.id])],
-      (n) => e("popup", n || void 0),
+      n.popup ?? "",
+      [["", "Its own card (below)"], ...(this._config.popups ?? []).map((a) => [a.id, a.name ?? a.id])],
+      (a) => e("popup", a || void 0),
       !0
     )}
-          ${i.popup ? u : l`${this._hint(i.type === "rf_fan" ? "Pop-up card. Empty = the RF Fan card (custom:rf-fan-ltek) for this fan." : "Pop-up card config (any card).")}
-              ${this._selector("", { object: {} }, i.popup_card, (n) => e("popup_card", n && Object.keys(n).length ? n : void 0))}`}` : u}
+          ${n.popup ? u : p`${this._hint(n.type === "rf_fan" ? "Pop-up card. Empty = the RF Fan card (custom:rf-fan-ltek) for this fan." : "Pop-up card config (any card).")}
+              ${this._selector("", { object: {} }, n.popup_card, (a) => e("popup_card", a && Object.keys(a).length ? a : void 0))}`}` : u}
     `;
   }
   /** Copy this set's button style to other sets. */
   _copyStyle(t) {
     const o = this._sets().map((i, n) => [i, n]).filter(([, i]) => i !== t);
-    return o.length ? l`${this._group("Copy style")}
+    return o.length ? p`${this._group("Copy style")}
       ${this._selectRow(
       "Copy this style to",
       "",
       [["", "Choose…"], ["all", "All other sets"], ...o.map(([i, n]) => [String(n), `${i.name ?? j[i.type]} (#${n + 1})`])],
       (i) => {
         if (i === "") return;
-        const n = this._sets(), a = i === "all" ? o.map(([, d]) => d) : [Number(i)], s = a.filter((d) => n[d].style && Object.keys(n[d].style).length);
+        const n = this._sets(), a = i === "all" ? o.map(([, l]) => l) : [Number(i)], s = a.filter((l) => n[l].style && Object.keys(n[l].style).length);
         if (s.length && !window.confirm(`Replace the button style of ${s.length === 1 ? "that set" : `${s.length} sets`}?`)) {
           this.requestUpdate();
           return;
         }
         const c = n[t].style;
-        for (const d of a) {
-          const p = { ...n[d] };
-          c && Object.keys(c).length ? p.style = structuredClone(c) : delete p.style, n[d] = p;
+        for (const l of a) {
+          const d = { ...n[l] };
+          c && Object.keys(c).length ? d.style = structuredClone(c) : delete d.style, n[l] = d;
         }
         this._writeSets(n);
       },
       !0
     )}
-      ${this._hint("Gives the chosen sets exactly this set’s button style (a set with no style of its own follows the card’s Button style).")}` : l``;
+      ${this._hint("Gives the chosen sets exactly this set’s button style (a set with no style of its own follows the card’s Button style).")}` : p``;
   }
   /** What was detected for this fan (read-only hint). */
   _rfFanInfo(t) {
@@ -2899,23 +2904,23 @@ It replaces this card’s layout, setpoint control and styling. Your device chip
         s = C(s, "frosted", !0), s = C(s, "frost_blur", a === P.frost_blur ? void 0 : a);
       this._emit(s);
     }, i = t.frost_blur ?? t.background?.frost_blur;
-    return l`${this._hint("The look of every button. Each button set can override any of these under “Button style for this set”.")}
+    return p`${this._hint("The look of every button. Each button set can override any of these under “Button style for this set”.")}
       ${this._buttonStyleEditor("buttons", !1)}
-      ${this._sub("bs-frost", "Frosted glass", () => l`
+      ${this._sub("bs-frost", "Frosted glass", () => p`
         ${this._check("Frosted glass controls", e, (n) => o("frosted", n))}
         ${this._hint("Buttons, menus, chips, toggles, setpoint pills and the wheel’s setpoint bubble turn see-through with a blur. Best over a moving background or an image.")}
         ${e ? this._sliderRow("Blur", i ?? P.frost_blur, 0, 40, 1, i !== void 0, (n) => o("frost_blur", n)) : u}`)}`;
   }
   _buttonStyleEditor(t, e, o) {
-    const i = (e ? this._sets()[o]?.style : this._config.buttons) ?? {}, n = e ? $t(this._config.buttons, void 0) : Ze, a = e ? "Card default" : "Built-in", s = (g, m) => {
+    const i = (e ? this._sets()[o]?.style : this._config.buttons) ?? {}, n = e ? lt(this._config.buttons, void 0) : Ze, a = e ? "Card default" : "Built-in", s = (g, m) => {
       e ? this._patchSet(o, `style.${g}`, m) : this._put(`${t}.${g}`, m);
     }, c = (g, m, w) => {
       const $ = String(n[g] ?? ""), x = w.find(([b]) => b === $)?.[1] ?? $;
       return this._selectRow(m, String(i[g] ?? ""), [["", `${a} (${x})`], ...w], (b) => s(g, b || void 0));
-    }, d = (g, m, w, $, x, b = 1, _ = 0) => {
+    }, l = (g, m, w, $, x, b = 1, _ = 0) => {
       const k = Number(n[g] ?? _), y = i[g];
       return this._sliderRow(m, y ?? k, w, $, b, y !== void 0, (z) => s(g, z), x);
-    }, p = (g, m, w) => this._colorRow(`${t}.${g}`, m, i[g], e ? "Card default" : "Automatic", w, ($) => s(g, $), {
+    }, d = (g, m, w) => this._colorRow(`${t}.${g}`, m, i[g], e ? "Card default" : "Automatic", w, ($) => s(g, $), {
       // Backgrounds can be see-through; borders can be switched off.
       transparent: /background|border/.test(String(g)),
       transparentLabel: /border/.test(String(g)) ? "None" : "Transparent"
@@ -2923,11 +2928,11 @@ It replaces this card’s layout, setpoint control and styling. Your device chip
     let h = !0;
     const f = (g, m, w) => {
       if (!e) return this._sub(`bs-${g}`, m, w);
-      const $ = l`${this._group(m, h)}${w()}`;
+      const $ = p`${this._group(m, h)}${w()}`;
       return h = !1, $;
     };
-    return l`
-      ${f("look", "Look & size", () => l`
+    return p`
+      ${f("look", "Look & size", () => p`
       ${this._selectRow(
       "Look",
       String(i.look ?? ""),
@@ -2938,35 +2943,35 @@ It replaces this card’s layout, setpoint control and styling. Your device chip
       ],
       (g) => s("look", g || void 0)
     )}
-      ${d("scale", "Scale", 50, 200, (g) => `${g}%`, 5, 100)}
+      ${l("scale", "Scale", 50, 200, (g) => `${g}%`, 5, 100)}
       ${this._hint(e ? "Scales every button in this set. Card default comes from Button style." : "Scales every button in every set. Each set can override it under “Button style for this set”.")}`)}
-      ${f("shape", "Shape", () => l`
+      ${f("shape", "Shape", () => p`
       ${c("variant", "Style", [["tonal", "Tonal (tinted)"], ["filled", "Filled"], ["outlined", "Outlined"], ["ghost", "Ghost"]])}
-      ${d("radius", "Corner radius", 0, 40)} ${d("height", "Min height", 0, 120)} ${d("min_width", "Min width", 0, 200)}
-      ${d("gap", "Spacing", 0, 32)} ${d("border_width", "Border width", 0, 6)}`)}
-      ${f("content", "Content", () => l`
+      ${l("radius", "Corner radius", 0, 40)} ${l("height", "Min height", 0, 120)} ${l("min_width", "Min width", 0, 200)}
+      ${l("gap", "Spacing", 0, 32)} ${l("border_width", "Border width", 0, 6)}`)}
+      ${f("content", "Content", () => p`
       ${c("content", "Show", [["icon_label", "Icon and label"], ["icon", "Icon only"], ["label", "Label only"]])}
       ${c("icon_position", "Icon", [["top", "Above label"], ["left", "Left of label"]])}
-      ${d("icon_size", "Icon size", 10, 48)} ${d("font_size", "Text size", 8, 28)}
-      ${d("icon_gap", "Icon to text spacing", 0, 30, void 0, 1, 4)}
+      ${l("icon_size", "Icon size", 10, 48)} ${l("font_size", "Text size", 8, 28)}
+      ${l("icon_gap", "Icon to text spacing", 0, 30, void 0, 1, 4)}
       ${c("font_weight", "Text weight", [["300", "Light"], ["400", "Regular"], ["500", "Medium"], ["600", "Semibold"], ["700", "Bold"]])}
       `)}
-      ${f("inactive", "Colors: inactive", () => l`
-      ${p("background", "Background", "#2a2a2a")} ${p("color", "Text & icon", "#cccccc")} ${p("border_color", "Border", "#555555")}`)}
-      ${f("active", "Colors: active", () => l`
+      ${f("inactive", "Colors: inactive", () => p`
+      ${d("background", "Background", "#2a2a2a")} ${d("color", "Text & icon", "#cccccc")} ${d("border_color", "Border", "#555555")}`)}
+      ${f("active", "Colors: active", () => p`
       ${this._hint("Unset = the mode’s own color (heat orange, cool blue…), or the theme primary for presets and fan.")}
-      ${p("active_background", "Background", "#ff8100")} ${p("active_color", "Text & icon", "#ffffff")}
-      ${p("active_border_color", "Border", "#ff8100")}`)}
+      ${d("active_background", "Background", "#ff8100")} ${d("active_color", "Text & icon", "#ffffff")}
+      ${d("active_border_color", "Border", "#ff8100")}`)}
     `;
   }
   // ---- text ---------------------------------------------------------------------
   _textBody() {
-    return l`${this._hint("Size, weight, color and case for each piece of text. Unset keeps the built-in look.")}
+    return p`${this._hint("Size, weight, color and case for each piece of text. Unset keeps the built-in look.")}
       ${Ue.map((t) => this._sub(`text-${t}`, Li[t], () => this._textRole(t)))}`;
   }
   _textRole(t) {
     const e = `text.${t}`, o = this._get(e) ?? {};
-    return l`
+    return p`
       ${this._sliderRow(
       "Size",
       o.size ?? 0,
@@ -3015,10 +3020,10 @@ It replaces this card’s layout, setpoint control and styling. Your device chip
       let a = C(t, `effects.${i}`, n === "none" && i !== "card" ? void 0 : n);
       i === "card" && (a = C(a, "card.glow", void 0), n === "glow" && (a = C(a, "effects.card", void 0))), this._emit(a);
     };
-    return l`
+    return p`
       ${this._hint("Make parts of the card glow or pulse in the heat color while heating and the cool color while cooling.")}
-      ${this._sub("fx-parts", "Parts", () => l`${Qe.map((i) => this._selectRow(yi[i], to(t, i), e, (n) => o(i, n)))}`)}
-      ${this._sub("fx-when", "When", () => l`
+      ${this._sub("fx-parts", "Parts", () => p`${Qe.map((i) => this._selectRow(yi[i], to(t, i), e, (n) => o(i, n)))}`)}
+      ${this._sub("fx-when", "When", () => p`
       ${this._select(
       "effects.when",
       "Active",
@@ -3026,7 +3031,7 @@ It replaces this card’s layout, setpoint control and styling. Your device chip
       yt.when
     )}
       ${this._hint("“Only while heating or cooling” follows what the system is doing right now; the other also lights up while it waits at the setpoint.")}`)}
-      ${this._sub("fx-look", "Look", () => l`
+      ${this._sub("fx-look", "Look", () => p`
       ${this._slider("effects.size", "Glow size", 2, 60, 1, yt.size)}
       ${this._slider("effects.speed", "Pulse speed", 0.6, 8, 0.2, yt.speed, (i) => `${i.toFixed(1)}s`)}
       ${this._color("effects.heat_color", "Heating color", "Theme heat", "#ff8100")}
@@ -3034,20 +3039,20 @@ It replaces this card’s layout, setpoint control and styling. Your device chip
     `;
   }
   _backgroundBody() {
-    const t = this._config, e = t.background ?? {}, o = e.fill ?? "color", i = e.style ?? "none", n = (c, d, p) => this._put(`background.${c}`, d, p), a = (c) => {
-      let d = C(t, "card.background", void 0);
-      d = C(d, "background.color", c), this._emit(d);
+    const t = this._config, e = t.background ?? {}, o = e.fill ?? "color", i = e.style ?? "none", n = (c, l, d) => this._put(`background.${c}`, l, d), a = (c) => {
+      let l = C(t, "card.background", void 0);
+      l = C(l, "background.color", c), this._emit(l);
     }, s = (c) => `${c}%`;
-    return l`
+    return p`
       ${this._hint("The card’s surface. A moving background follows what the thermostat is doing: heat rises, cold sinks, a fan swirls, idle barely drifts.")}
-      ${this._sub("bg-base", "Base fill", () => l`
+      ${this._sub("bg-base", "Base fill", () => p`
       ${this._selectRow("Fill", o, [["color", "Color"], ["gradient", "Gradient"], ["image", "Image"]], (c) => n("fill", c, "color"))}
       ${o === "color" ? this._colorRow("background.color", "Color", e.color ?? t.card?.background, "Theme card", "#1c1c1c", a, { transparent: !0 }) : u}
       ${o === "gradient" ? this._gradientEditor() : u}
       ${o === "image" ? this._imageEditor() : u}`)}
-      ${this._sub("bg-move", "Moving background", () => l`
-      ${this._selectRow("Style", i, xe.map(([c, d]) => [c, d]), (c) => n("style", c, "none"))}
-      ${i !== "none" ? l`
+      ${this._sub("bg-move", "Moving background", () => p`
+      ${this._selectRow("Style", i, xe.map(([c, l]) => [c, l]), (c) => n("style", c, "none"))}
+      ${i !== "none" ? p`
             ${this._hint(xe.find(([c]) => c === i)?.[2] ?? "")}
             ${this._group("Motion")}
             ${this._slider("background.strength", "Strength", 0, 100, 5, P.strength, s)}
@@ -3062,11 +3067,11 @@ It replaces this card’s layout, setpoint control and styling. Your device chip
             ${this._select("background.quality", "Quality", [["smooth", "Smooth"], ["light", "Light (older tablets)"]], P.quality)}
             ${this._group("Sync to Air Movement")}
             ${this._selector("Entity", { entity: {} }, e.air_entity ?? e.fan_entity, (c) => {
-      let d = C(t, "background.fan_entity", void 0);
-      d = C(d, "background.air_entity", c || void 0), this._emit(d);
+      let l = C(t, "background.fan_entity", void 0);
+      l = C(l, "background.air_entity", c || void 0), this._emit(l);
     })}
             ${this._hint("Optional. Any entity that says how much air is moving: a fan (%), speed levels, on/off, low / medium / high, or an airflow sensor. While it shows air moving, the background swirls at that speed. Without one, Fan Only mode uses the thermostat’s own fan speed.")}
-            ${e.air_entity || e.fan_entity ? l`<div class="etce-row">
+            ${e.air_entity || e.fan_entity ? p`<div class="etce-row">
                     <label class="lbl">Full Speed at</label>
                     <input
                       type="number"
@@ -3075,15 +3080,15 @@ It replaces this card’s layout, setpoint control and styling. Your device chip
                       placeholder="Automatic"
                       .value=${e.air_max !== void 0 ? String(e.air_max) : ""}
                       @change=${(c) => {
-      const d = c.target.value;
-      n("air_max", d === "" ? void 0 : Number(d));
+      const l = c.target.value;
+      n("air_max", l === "" ? void 0 : Number(l));
     }}
                     />
                   </div>
                   ${this._hint("For raw numbers only, e.g. 1200 for a 1200 CFM airflow sensor. Leave empty and percentages, number entities and speed names work on their own.")}` : u}
           ` : u}`)}
       ${i !== "none" ? this._sub("bg-colors", "Colors by state", () => this._bgColors()) : u}
-      ${this._sub("bg-finish", "Finish", () => l`
+      ${this._sub("bg-finish", "Finish", () => p`
       ${this._slider("background.scrim", "Lighten / darken", -60, 60, 5, 0, (c) => c > 0 ? `Darken ${c}%` : c < 0 ? `Lighten ${-c}%` : "None")}
       ${this._slider("background.vignette", "Vignette", 0, 100, 5, 0, s)}
       ${this._slider("background.grain", "Grain", 0, 100, 5, 0, s)}`)}
@@ -3091,23 +3096,23 @@ It replaces this card’s layout, setpoint control and styling. Your device chip
   }
   _gradientEditor() {
     const t = this._config.background?.gradient ?? {}, e = t.stops?.length ? [...t.stops] : ["#1c2a3a", "#3a1c2a"], o = (i) => this._put("background.gradient.stops", i);
-    return l`
+    return p`
       ${this._selectRow("Type", t.type ?? "linear", [["linear", "Linear"], ["radial", "Radial"]], (i) => this._put("background.gradient.type", i, "linear"))}
       ${(t.type ?? "linear") === "linear" ? this._slider("background.gradient.angle", "Angle", 0, 360, 5, 135, (i) => `${i}°`) : u}
       ${e.map(
-      (i, n) => l`${this._colorRow(`bg-stop-${n}`, `Color ${n + 1}`, i, "Card color", "#1c2a3a", (a) => {
+      (i, n) => p`${this._colorRow(`bg-stop-${n}`, `Color ${n + 1}`, i, "Card color", "#1c2a3a", (a) => {
         const s = [...e];
         s[n] = a ?? "var(--card-background-color)", o(s);
       }, { transparent: !0 })}
-          ${e.length > 2 ? l`<div class="etce-row"><button class="etce-act del" title="Remove color" @click=${() => o(e.filter((a, s) => s !== n))}>
+          ${e.length > 2 ? p`<div class="etce-row"><button class="etce-act del" title="Remove color" @click=${() => o(e.filter((a, s) => s !== n))}>
                 <ha-icon icon="mdi:trash-can-outline"></ha-icon></button></div>` : u}`
     )}
-      ${e.length < 4 ? l`<div class="etce-addbar"><button class="etce-add" @click=${() => o([...e, "#000000"])}>+ Color</button></div>` : u}
+      ${e.length < 4 ? p`<div class="etce-addbar"><button class="etce-add" @click=${() => o([...e, "#000000"])}>+ Color</button></div>` : u}
     `;
   }
   _imageEditor() {
     const t = this._config.background?.image ?? {};
-    return l`
+    return p`
       <div class="etce-row">
         <label class="lbl">Image</label>
         <input
@@ -3125,23 +3130,23 @@ It replaces this card’s layout, setpoint control and styling. Your device chip
   }
   _bgColors() {
     const t = this._config.background?.colors ?? {};
-    return l`${this._hint("Two colors per state. Unset follows your theme’s heat, cool and fan colors.")}
+    return p`${this._hint("Two colors per state. Unset follows your theme’s heat, cool and fan colors.")}
       ${Zo.map(
-      ([e, o], i) => l`<div class="etce-group ${i === 0 ? "first" : ""}">${O(o)}</div>
+      ([e, o], i) => p`<div class="etce-group ${i === 0 ? "first" : ""}">${O(o)}</div>
           ${this._colorRow(
         `bg-${e}-main`,
         "Main",
         t[e]?.main,
         "Automatic",
-        /^#/.test(wt[e].main) ? wt[e].main : e.includes("cool") ? "#2b9af9" : e === "fan" ? "#00bfa5" : "#ff8100",
+        /^#/.test($t[e].main) ? $t[e].main : e.includes("cool") ? "#2b9af9" : e === "fan" ? "#00bfa5" : "#ff8100",
         (n) => this._put(`background.colors.${e}.main`, n),
         { transparent: !0 }
       )}
-          ${this._colorRow(`bg-${e}-second`, "Second", t[e]?.second, "Automatic", wt[e].second, (n) => this._put(`background.colors.${e}.second`, n), { transparent: !0 })}`
+          ${this._colorRow(`bg-${e}-second`, "Second", t[e]?.second, "Automatic", $t[e].second, (n) => this._put(`background.colors.${e}.second`, n), { transparent: !0 })}`
     )}`;
   }
   _cardBody() {
-    return l`
+    return p`
       ${this._hint("The card’s border, corners and padding. Its fill and moving background are under Background.")}
       ${this._color("card.border_color", "Border", "Theme", "#444444", { transparent: !0, transparentLabel: "None" })}
       ${this._slider("card.border_width", "Border width", 0, 8, 1, 1)}
@@ -3151,25 +3156,25 @@ It replaces this card’s layout, setpoint control and styling. Your device chip
   }
 };
 ne.styles = [
-  Be(di),
+  Be(pi),
   Xt`
       :host { display: block; }
     `
 ];
 let W = ne;
-ut([
+ft([
   ee({ attribute: !1 })
 ], W.prototype, "hass");
-ut([
+ft([
   M()
 ], W.prototype, "_config");
-ut([
+ft([
   M()
 ], W.prototype, "_open");
-ut([
+ft([
   M()
 ], W.prototype, "_set");
-ut([
+ft([
   M()
 ], W.prototype, "_chip");
 customElements.get(Ut) || customElements.define(Ut, W);
@@ -3265,7 +3270,7 @@ function G(r, t, e, o) {
   let i = o > 0 ? so(Math.round(r / o) * o) : r;
   return t !== null && i < t && (i = t), e !== null && i > e && (i = e), i;
 }
-function bt(r, t, e, o, i) {
+function vt(r, t, e, o, i) {
   return { setpoint: r, value: G(t, e, o, i), min: e, max: o, step: i };
 }
 function Dt(r, t, e) {
@@ -3275,19 +3280,19 @@ function Vi(r, t) {
   const e = r.config?.unit_system?.temperature ?? "°", o = r.states[t.entity], i = o ? Ye(o.state) : "unknown";
   if (!o || i !== "heat" && i !== "cool" && i !== "heat_cool")
     return Dt(e, i, "heat");
-  const n = o.attributes, a = ji(e), s = qi(e, t), c = A(n.min_temp), d = A(n.max_temp);
+  const n = o.attributes, a = ji(e), s = qi(e, t), c = A(n.min_temp), l = A(n.max_temp);
   if (i === "heat_cool") {
     const h = A(n.target_temp_low), f = A(n.target_temp_high);
     if (h === null && f === null) return Dt(e, i, "cool");
-    const g = h !== null ? bt("heat", h, c, d, a) : null, m = f !== null ? bt("cool", f, c, d, a) : null;
+    const g = h !== null ? vt("heat", h, c, l, a) : null, m = f !== null ? vt("cool", f, c, l, a) : null;
     return { available: !0, unit: e, mode: i, heat: g, cool: m, active: m ? "cool" : "heat", minGap: s };
   }
-  const p = A(n.temperature);
-  return p === null ? Dt(e, i, i === "heat" ? "heat" : "cool") : i === "heat" ? {
+  const d = A(n.temperature);
+  return d === null ? Dt(e, i, i === "heat" ? "heat" : "cool") : i === "heat" ? {
     available: !0,
     unit: e,
     mode: i,
-    heat: bt("heat", p, c, d, a),
+    heat: vt("heat", d, c, l, a),
     cool: null,
     active: "heat",
     minGap: s
@@ -3296,7 +3301,7 @@ function Vi(r, t) {
     unit: e,
     mode: i,
     heat: null,
-    cool: bt("cool", p, c, d, a),
+    cool: vt("cool", d, c, l, a),
     active: "cool",
     minGap: s
   };
@@ -4236,10 +4241,10 @@ const or = Xt`
   d: 3 + t * 7 % 5,
   dl: -(t * 1.3 % 5)
 })), co = (r) => ((r * 0.618034 + 0.31) % 1 * 2 - 1).toFixed(2);
-function vt(r, t, e) {
-  return l`<div class="lay">
+function _t(r, t, e) {
+  return p`<div class="lay">
     ${Xe(r.style, t).map(
-    (o, i) => l`<i
+    (o, i) => p`<i
           class="col"
           style=${S({ "--x": `${o.x}%`, "--sz": `${o.s}${e}`, "--d": `${o.d}s`, "--dl": `${o.dl}s`, "--hv": co(i) })}
           ><b></b
@@ -4250,54 +4255,54 @@ function vt(r, t, e) {
 function Oe(r, t) {
   switch (r.style) {
     case "plasma":
-      return vt(r, t, "%");
+      return _t(r, t, "%");
     case "lava":
-      return l`<svg class="defs" width="0" height="0" aria-hidden="true">
+      return p`<svg class="defs" width="0" height="0" aria-hidden="true">
           <filter id="etc-goo" x="-20%" y="-20%" width="140%" height="140%">
             <feGaussianBlur in="SourceGraphic" stdDeviation="12" result="b" />
             <feColorMatrix in="b" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 22 -9" />
           </filter>
         </svg>
-        ${vt(r, t, "%")}`;
+        ${_t(r, t, "%")}`;
     case "shimmer":
-      return l`${vt(r, t, "%")}
+      return p`${_t(r, t, "%")}
         <div class="spark">
           ${ir.map(
-        (e) => l`<i style=${S({ left: `${e.x}%`, top: `${e.y}%`, "--d": `${e.d}s`, "--dl": `${e.dl}s` })}></i>`
+        (e) => p`<i style=${S({ left: `${e.x}%`, top: `${e.y}%`, "--d": `${e.d}s`, "--dl": `${e.dl}s` })}></i>`
       )}
         </div>`;
     case "particles":
-      return vt(r, t, "px");
+      return _t(r, t, "px");
     case "aurora":
-      return l`${Xe("aurora", t).map(
-        (e, o) => l`<i
+      return p`${Xe("aurora", t).map(
+        (e, o) => p`<i
             class="rib"
             style=${S({ "--y": `${e.y}%`, "--h": `${e.s}%`, "--d": `${e.d}s`, "--dl": `${e.dl}s`, "--hv": co(o) })}
           ></i>`
       )}`;
     case "flow":
-      return l`<i class="band b1"></i><i class="band b2"></i>`;
+      return p`<i class="band b1"></i><i class="band b2"></i>`;
     case "core":
-      return l`<i class="c1"></i><i class="c2"></i>`;
+      return p`<i class="c1"></i><i class="c2"></i>`;
     case "mesh":
-      return l`<div class="lay">
+      return p`<div class="lay">
         <i class="m m1"><b></b></i><i class="m m2"><b></b></i><i class="m m3"><b></b></i><i class="m m4"><b></b></i>
       </div>`;
     case "beam":
-      return l`<div class="beam"><i class="r1"></i><i class="r2"></i><i class="r3"></i></div>`;
+      return p`<div class="beam"><i class="r1"></i><i class="r2"></i><i class="r3"></i></div>`;
   }
 }
 function rr(r, t) {
-  const e = r.background ?? {}, o = e.quality ?? P.quality, i = e.fill === "image" && e.image?.url ? l`<div class="bg-base" aria-hidden="true">
+  const e = r.background ?? {}, o = e.quality ?? P.quality, i = e.fill === "image" && e.image?.url ? p`<div class="bg-base" aria-hidden="true">
           <div class="bg-img fit-${e.image.fit ?? "cover"}"></div>
-          ${e.image.darken ? l`<div class="bg-dark"></div>` : u}
-        </div>` : u, n = t ? l`<div class="bg s-${t.style} st-${t.state} dir-${t.dir} q-${o} ${e.variation ? "vary" : ""}" aria-hidden="true">
-        ${e.angle ? l`<div class="bg-rot">${Oe(t, o)}</div>` : Oe(t, o)}${t.blades ? l`<i class="blades"></i>` : u}
-      </div>` : u, a = e.scrim || e.vignette || e.grain ? l`<div class="bg-finish" aria-hidden="true">
-          ${e.scrim ? l`<i class="scrim"></i>` : u} ${e.vignette ? l`<i class="vig"></i>` : u}
-          ${e.grain ? l`<i class="grain"></i>` : u}
+          ${e.image.darken ? p`<div class="bg-dark"></div>` : u}
+        </div>` : u, n = t ? p`<div class="bg s-${t.style} st-${t.state} dir-${t.dir} q-${o} ${e.variation ? "vary" : ""}" aria-hidden="true">
+        ${e.angle ? p`<div class="bg-rot">${Oe(t, o)}</div>` : Oe(t, o)}${t.blades ? p`<i class="blades"></i>` : u}
+      </div>` : u, a = e.scrim || e.vignette || e.grain ? p`<div class="bg-finish" aria-hidden="true">
+          ${e.scrim ? p`<i class="scrim"></i>` : u} ${e.vignette ? p`<i class="vig"></i>` : u}
+          ${e.grain ? p`<i class="grain"></i>` : u}
         </div>` : u;
-  return l`${i}${n}${a}`;
+  return p`${i}${n}${a}`;
 }
 const nr = globalThis.CSS;
 for (const [r, t, e] of [
@@ -4631,7 +4636,7 @@ function lr(r, t) {
   const o = (t.heat ?? t.cool).step / 2, i = t.heat?.value, n = t.cool?.value;
   return i !== void 0 && n !== void 0 ? e >= i - o && e <= n + o : i !== void 0 ? e >= i - o : n !== void 0 ? e <= n + o : !1;
 }
-const dr = 500, ae = class ae extends ot {
+const pr = 500, ae = class ae extends ot {
   constructor() {
     super(...arguments), this._open = /* @__PURE__ */ new Set(), this._tick = 0, this._popupOpen = !1, this._popup = null, this._popupMissing = null, this._popupAnchor = null, this._popupTimer = null, this._menuTimer = null, this._menu = null, this._revealed = !1, this._bgPaused = !1, this._cycle = 0, this._cycleTimer = null, this._onScreen = !0, this._revealTimer = null, this._sp = new Ji(
       () => this._config?.entity ?? "",
@@ -4800,7 +4805,7 @@ const dr = 500, ae = class ae extends ot {
       ...ki(t, n),
       frosted: Ke(t),
       "bg-paused": !!s && this._bgPaused
-    }, d = { ...li(t), ...ci(t.text), ...this._barVars(), ...Si(t), ...ai(t, s) }, p = { top: [], bottom: [], left: [], right: [] }, h = a.filter((b) => b.display === "toggle"), f = (b) => b.display !== "toggle" || this._open.has(b.key), g = new Map(a.filter((b) => b.config.id).map((b) => [b.config.id, b])), m = (b) => {
+    }, l = { ...li(t), ...ci(t.text), ...this._barVars(), ...Si(t), ...ai(t, s) }, d = { top: [], bottom: [], left: [], right: [] }, h = a.filter((b) => b.display === "toggle"), f = (b) => b.display !== "toggle" || this._open.has(b.key), g = new Map(a.filter((b) => b.config.id).map((b) => [b.config.id, b])), m = (b) => {
       let _ = b;
       const k = /* @__PURE__ */ new Set([b]);
       for (; _.config.row_with; ) {
@@ -4821,27 +4826,27 @@ const dr = 500, ae = class ae extends ot {
       const _ = w.get(b);
       if (_) {
         if (_.length === 1 && b.display === "menu") {
-          $[b.zone][0] === b && p[b.zone].push(this._renderMenuRow($[b.zone], b.zone));
+          $[b.zone][0] === b && d[b.zone].push(this._renderMenuRow($[b.zone], b.zone));
           continue;
         }
         if (_.length === 1) {
-          p[b.zone].push(this._renderSet(b));
+          d[b.zone].push(this._renderSet(b));
           continue;
         }
-        p[b.zone].push(l`<div class="row-group">
+        d[b.zone].push(p`<div class="row-group">
         ${_.map((k) => k.display === "menu" ? this._renderMenuRow([k], b.zone) : this._renderSet(k))}
       </div>`);
       }
     }
     const x = t.toggles_zone ?? v.toggles_zone;
-    return h.length && p[x].push(this._renderToggles(h)), l`
-      <ha-card class=${It(c)} style=${S(d)}>
+    return h.length && d[x].push(this._renderToggles(h)), p`
+      <ha-card class=${It(c)} style=${S(l)}>
         ${rr(t, s)}
-        ${o ? l`<div class="test-badge" title="Test mode switches off when the editor closes">TEST · ${Mi[o]}</div>` : u}
-        <div class=${It({ grid: !0, centered: t.zones?.centered ?? !0, "has-sides": !!(p.left.length || p.right.length) })} style=${S(this._zoneVars())}>
-          ${["top", "left"].map((b) => this._zone(b, p[b]))}
+        ${o ? p`<div class="test-badge" title="Test mode switches off when the editor closes">TEST · ${Mi[o]}</div>` : u}
+        <div class=${It({ grid: !0, centered: t.zones?.centered ?? !0, "has-sides": !!(d.left.length || d.right.length) })} style=${S(this._zoneVars())}>
+          ${["top", "left"].map((b) => this._zone(b, d[b]))}
           ${this._renderCore(i)}
-          ${["right", "bottom"].map((b) => this._zone(b, p[b]))}
+          ${["right", "bottom"].map((b) => this._zone(b, d[b]))}
         </div>
         ${this._renderPopup()}
       </ha-card>
@@ -4880,14 +4885,14 @@ const dr = 500, ae = class ae extends ot {
       const i = Math.ceil(
         Math.max(
           ...e.map((a) => {
-            const s = getComputedStyle(a), c = [...a.children].map((h) => h.getBoundingClientRect().width), d = parseFloat(s.columnGap) || 0;
-            return (s.flexDirection === "row" ? c.reduce((h, f) => h + f, 0) + d * Math.max(0, c.length - 1) : Math.max(0, ...c)) + parseFloat(s.marginLeft) + parseFloat(s.marginRight);
+            const s = getComputedStyle(a), c = [...a.children].map((h) => h.getBoundingClientRect().width), l = parseFloat(s.columnGap) || 0;
+            return (s.flexDirection === "row" ? c.reduce((h, f) => h + f, 0) + l * Math.max(0, c.length - 1) : Math.max(0, ...c)) + parseFloat(s.marginLeft) + parseFloat(s.marginRight);
           })
         )
       );
       t.style.getPropertyValue("--side-w") !== `${i}px` && t.style.setProperty("--side-w", `${i}px`), e.some((a) => {
         const s = getComputedStyle(a);
-        return a.getBoundingClientRect().width + parseFloat(s.marginLeft) + parseFloat(s.marginRight) + 1 < i && [...a.children].reduce((c, d) => c + d.getBoundingClientRect().width, 0) > a.getBoundingClientRect().width + 1;
+        return a.getBoundingClientRect().width + parseFloat(s.marginLeft) + parseFloat(s.marginRight) + 1 < i && [...a.children].reduce((c, l) => c + l.getBoundingClientRect().width, 0) > a.getBoundingClientRect().width + 1;
       }) && t.classList.add("no-center");
     };
     this._sideRO ??= new ResizeObserver(() => o());
@@ -4895,7 +4900,7 @@ const dr = 500, ae = class ae extends ot {
     o();
   }
   _zone(t, e) {
-    return e.length ? l`<div class="zone ${t}">${e}</div>` : u;
+    return e.length ? p`<div class="zone ${t}">${e}</div>` : u;
   }
   _barVars() {
     const t = this._config?.setpoint?.bar ?? {}, e = {};
@@ -4923,42 +4928,42 @@ const dr = 500, ae = class ae extends ot {
     }, t * 1e3));
   }
   _renderCore(t) {
-    const e = this._config, o = e.setpoint ?? {}, i = o.control ?? v.control, n = o.position ?? v.position, a = e.core_align ?? v.core_align, s = this._sp.edit, c = !!s?.available && i !== "none", d = o.bar?.position ?? v.bar.position, p = d === "above", h = d === "left" || d === "right", f = t.equipment ? `eq-${t.equipment}` : "", g = c && this._tapMode(), m = !g || this._revealed, w = o.reveal_from ?? v.reveal_from, $ = g && (w === "both" || w === "current"), x = g && (w === "both" || w === "pills"), b = g && m && (o.open_in ?? v.open_in) === "current", _ = g && !m && !!o.hide_at_target && lr(t, s), k = $ || _, y = c ? i === "bar" ? this._renderBar(s, t) : this._renderControl(s, i) : null;
+    const e = this._config, o = e.setpoint ?? {}, i = o.control ?? v.control, n = o.position ?? v.position, a = e.core_align ?? v.core_align, s = this._sp.edit, c = !!s?.available && i !== "none", l = o.bar?.position ?? v.bar.position, d = l === "above", h = l === "left" || l === "right", f = t.equipment ? `eq-${t.equipment}` : "", g = c && this._tapMode(), m = !g || this._revealed, w = o.reveal_from ?? v.reveal_from, $ = g && (w === "both" || w === "current"), x = g && (w === "both" || w === "pills"), b = g && m && (o.open_in ?? v.open_in) === "current", _ = g && !m && !!o.hide_at_target && lr(t, s), k = $ || _, y = c ? i === "bar" ? this._renderBar(s, t) : this._renderControl(s, i) : null;
     let z = null;
     c && (g ? m ? z = b ? null : y : !_ && (o.collapsed ?? v.collapsed) === "visual" && (z = this._renderCollapsed(s, t, i)) : z = y);
     const I = i !== "bar" ? z : null, B = i === "bar" ? z : null;
     if (!t.available)
-      return l`<div class="core al-${a}">
+      return p`<div class="core al-${a}">
         <div class="main">
-          ${e.show_name ?? v.show_name ? l`<div class="name">${t.name}</div>` : u}
+          ${e.show_name ?? v.show_name ? p`<div class="name">${t.name}</div>` : u}
           <div class="unavailable-msg">Unavailable</div>
         </div>
       </div>`;
-    const se = l`${U(t.currentTemp, t.unit)}<span class="unit">${t.unit}</span>`, ft = e.status_position ?? v.status_position, gt = (e.show_status ?? v.show_status) && t.equipment ? l`<div class="status ${f} sp-${ft}">
+    const se = p`${U(t.currentTemp, t.unit)}<span class="unit">${t.unit}</span>`, gt = e.status_position ?? v.status_position, mt = (e.show_status ?? v.show_status) && t.equipment ? p`<div class="status ${f} sp-${gt}">
             <ha-icon icon=${zt[t.state] ?? "mdi:thermostat"}></ha-icon>${Xo[t.equipment]}
-          </div>` : u, ce = b ? l`<div class="in-current">${y}</div>` : e.show_current ?? v.show_current ? k ? l`<button
+          </div>` : u, ce = b ? p`<div class="in-current">${y}</div>` : e.show_current ?? v.show_current ? k ? p`<button
               class="current tappable ${f}"
               aria-expanded=${m}
               aria-label="Show temperature controls"
               @click=${() => this._setRevealed(!this._revealed)}
             >
               ${se}
-            </button>` : l`<div class="current ${f}">${se}</div>` : u, lo = l`<div class="main">
-      ${e.show_name ?? v.show_name ? l`<div class="name">${t.name}</div>` : u}
-      ${ft === "above" ? gt : u}
-      ${(e.show_humidity ?? v.show_humidity) && t.humidity !== null ? l`<div class="humidity"><ha-icon icon="mdi:water-outline"></ha-icon>${Math.round(t.humidity)}%</div>` : u}
-      ${ft === "beside" && gt !== u ? l`<div class="cur-row">${ce}${gt}</div>` : ce}
-      ${ft === "below" ? gt : u}
+            </button>` : p`<div class="current ${f}">${se}</div>` : u, lo = p`<div class="main">
+      ${e.show_name ?? v.show_name ? p`<div class="name">${t.name}</div>` : u}
+      ${gt === "above" ? mt : u}
+      ${(e.show_humidity ?? v.show_humidity) && t.humidity !== null ? p`<div class="humidity"><ha-icon icon="mdi:water-outline"></ha-icon>${Math.round(t.humidity)}%</div>` : u}
+      ${gt === "beside" && mt !== u ? p`<div class="cur-row">${ce}${mt}</div>` : ce}
+      ${gt === "below" ? mt : u}
       ${(e.show_pills ?? v.show_pills) && s?.available && !_ && !(g && m && o.hide_pills_open) ? this._renderPills(s, x, m) : u}
     </div>`;
-    return l`<div class="core al-${a} pos-${n}">
-      ${B && p ? B : u}
+    return p`<div class="core al-${a} pos-${n}">
+      ${B && d ? B : u}
       <div class="core-row">
-        ${B && d === "left" ? B : u} ${I && n === "left" ? I : u} ${lo}
-        ${I && n === "right" ? I : u} ${B && d === "right" ? B : u}
+        ${B && l === "left" ? B : u} ${I && n === "left" ? I : u} ${lo}
+        ${I && n === "right" ? I : u} ${B && l === "right" ? B : u}
       </div>
-      ${I && n === "center" ? l`<div class="ctl-center">${I}</div>` : u}
-      ${B && !p && !h ? B : u}
+      ${I && n === "center" ? p`<div class="ctl-center">${I}</div>` : u}
+      ${B && !d && !h ? B : u}
     </div>`;
   }
   /** The control's own value while it is folded away; tap to open. */
@@ -4967,7 +4972,7 @@ const dr = 500, ae = class ae extends ot {
     if (!i) return u;
     const n = () => this._setRevealed(!0);
     if (o === "bar")
-      return l`<div
+      return p`<div
         class="collapsed bar-c"
         role="button"
         tabindex="0"
@@ -4980,8 +4985,8 @@ const dr = 500, ae = class ae extends ot {
         ${this._renderBar(t, e, !0)}
       </div>`;
     const a = U(i.value, t.unit);
-    return l`<button class="collapsed" aria-label="Show temperature controls" @click=${n}>
-      ${o === "wheel" ? this._wheelCenter(t.active, a) : l`<span class="sv" style=${S({ "--c": t.active === "cool" ? "var(--etc-cool)" : "var(--etc-heat)" })}
+    return p`<button class="collapsed" aria-label="Show temperature controls" @click=${n}>
+      ${o === "wheel" ? this._wheelCenter(t.active, a) : p`<span class="sv" style=${S({ "--c": t.active === "cool" ? "var(--etc-cool)" : "var(--etc-heat)" })}
             >${a}</span
           >`}
     </button>`;
@@ -4992,12 +4997,12 @@ const dr = 500, ae = class ae extends ot {
     const i = !!(t.heat && t.cool), n = (a) => {
       const s = t[a];
       if (!s) return u;
-      const c = l`<ha-icon icon=${a === "heat" ? "mdi:fire" : "mdi:snowflake"}></ha-icon>${U(
+      const c = p`<ha-icon icon=${a === "heat" ? "mdi:fire" : "mdi:snowflake"}></ha-icon>${U(
         s.value,
         t.unit
-      )}`, d = i && t.active !== a && this._usesActive() && o;
-      return !i && !e ? l`<div class="pill ${a}">${c}</div>` : l`<button
-        class="pill ${a} ${d ? "dim" : ""} ${e ? "tappable" : ""}"
+      )}`, l = i && t.active !== a && this._usesActive() && o;
+      return !i && !e ? p`<div class="pill ${a}">${c}</div>` : p`<button
+        class="pill ${a} ${l ? "dim" : ""} ${e ? "tappable" : ""}"
         aria-pressed=${i ? String(t.active === a) : u}
         aria-expanded=${e ? String(o) : u}
         aria-label=${`${a === "heat" ? "Heat" : "Cool"} setpoint`}
@@ -5006,7 +5011,7 @@ const dr = 500, ae = class ae extends ot {
         ${c}
       </button>`;
     };
-    return l`<div class="pills">${n("heat")} ${n("cool")}</div>`;
+    return p`<div class="pills">${n("heat")} ${n("cool")}</div>`;
   }
   _pillTap(t, e, o, i, n) {
     o && this._sp.select(nt(t, e)), i && (n ? !o || t.active === e ? this._setRevealed(!1) : this._armReveal() : this._setRevealed(!0));
@@ -5019,23 +5024,23 @@ const dr = 500, ae = class ae extends ot {
   _renderControl(t, e) {
     const o = t[t.active];
     if (!o) return u;
-    const i = t.active, n = l`<button
+    const i = t.active, n = p`<button
       class="round ${i}"
       aria-label="Increase"
       ?disabled=${o.max !== null && o.value >= o.max}
       @click=${() => this._sp.commit(tt(t, 1))}
     >
       <ha-icon icon="mdi:plus"></ha-icon>
-    </button>`, a = l`<button
+    </button>`, a = p`<button
       class="round ${i}"
       aria-label="Decrease"
       ?disabled=${o.min !== null && o.value <= o.min}
       @click=${() => this._sp.commit(tt(t, -1))}
     >
       <ha-icon icon="mdi:minus"></ha-icon>
-    </button>`, c = ((this._config?.show_pills ?? v.show_pills) === !1 || this._tapMode() && this._revealed && !!this._config?.setpoint?.hide_pills_open) && t.heat && t.cool ? l`<div class="hc-switch" role="group" aria-label="Setpoint">
+    </button>`, c = ((this._config?.show_pills ?? v.show_pills) === !1 || this._tapMode() && this._revealed && !!this._config?.setpoint?.hide_pills_open) && t.heat && t.cool ? p`<div class="hc-switch" role="group" aria-label="Setpoint">
             ${["heat", "cool"].map(
-      (_) => l`<button
+      (_) => p`<button
                 class="hc ${_} ${t.active === _ ? "on" : ""}"
                 aria-pressed=${String(t.active === _)}
                 aria-label=${_ === "heat" ? "Edit heat setpoint" : "Edit cool setpoint"}
@@ -5046,13 +5051,13 @@ const dr = 500, ae = class ae extends ot {
                 <ha-icon icon=${_ === "heat" ? "mdi:fire" : "mdi:snowflake"}></ha-icon>${U(t[_].value, t.unit)}
               </button>`
     )}
-          </div>` : u, d = this._config?.setpoint?.nudge, p = d === "beside" ? "right" : d ?? (e === "stepper" ? "around" : "right"), h = (_, k) => {
-      const y = l`<div class="nudges">${n}${a}</div>`, z = l`<div class="nudges row">${a}${n}</div>`, I = p === "hidden" ? k : p === "left" ? l`${y}${k}` : p === "above" ? l`${z}${k}` : p === "below" ? l`${k}${z}` : p === "stacked" ? l`${n}${k}${a}` : p === "around" ? l`${a}${k}${n}` : l`${k}${y}`, B = l`<div class="${_} nud-${p}">${I}</div>`;
-      return c === u ? B : l`<div class="ctl-wrap">${c}${B}</div>`;
+          </div>` : u, l = this._config?.setpoint?.nudge, d = l === "beside" ? "right" : l ?? (e === "stepper" ? "around" : "right"), h = (_, k) => {
+      const y = p`<div class="nudges">${n}${a}</div>`, z = p`<div class="nudges row">${a}${n}</div>`, I = d === "hidden" ? k : d === "left" ? p`${y}${k}` : d === "above" ? p`${z}${k}` : d === "below" ? p`${k}${z}` : d === "stacked" ? p`${n}${k}${a}` : d === "around" ? p`${a}${k}${n}` : p`${k}${y}`, B = p`<div class="${_} nud-${d}">${I}</div>`;
+      return c === u ? B : p`<div class="ctl-wrap">${c}${B}</div>`;
     };
     if (e === "stepper")
-      return h(`stepper ${i}`, l`<span class="sv">${U(o.value, t.unit)}</span>`);
-    const g = (this._config?.setpoint ?? {}).neighbors ?? v.neighbors, m = Yi(o, g), w = m.filter((_) => _ > o.value).reverse(), $ = m.filter((_) => _ < o.value).reverse(), x = (_) => l`<div class="nb ${Math.abs(_ - o.value) > o.step * 1.5 ? "far" : ""}">${U(_, t.unit)}</div>`, b = l`<div
+      return h(`stepper ${i}`, p`<span class="sv">${U(o.value, t.unit)}</span>`);
+    const g = (this._config?.setpoint ?? {}).neighbors ?? v.neighbors, m = Yi(o, g), w = m.filter((_) => _ > o.value).reverse(), $ = m.filter((_) => _ < o.value).reverse(), x = (_) => p`<div class="nb ${Math.abs(_ - o.value) > o.step * 1.5 ? "far" : ""}">${U(_, t.unit)}</div>`, b = p`<div
       class="wheel-col"
       role="slider"
       tabindex="0"
@@ -5075,22 +5080,22 @@ const dr = 500, ae = class ae extends ot {
     return h("wheel", b);
   }
   _wheelCenter(t, e) {
-    return (this._config?.setpoint?.wheel_style ?? v.wheel_style) === "pill" ? l`<div class="pill wheel-pill ${t}">
+    return (this._config?.setpoint?.wheel_style ?? v.wheel_style) === "pill" ? p`<div class="pill wheel-pill ${t}">
         <ha-icon icon=${t === "heat" ? "mdi:fire" : "mdi:snowflake"}></ha-icon>${e}
-      </div>` : l`<div class="bubble ${t}">${e}</div>`;
+      </div>` : p`<div class="bubble ${t}">${e}</div>`;
   }
   // ---- bar ------------------------------------------------------------------
   _renderBar(t, e, o = !1) {
-    const i = { ...v.bar, ...this._config?.setpoint?.bar ?? {} }, n = Ht(t, i), a = (y) => `${(Mt(y, n) * 100).toFixed(3)}%`, s = i.position === "left" || i.position === "right", c = (y) => s ? { bottom: y } : { left: y }, d = s ? "height" : "width", p = s ? "top" : "right", h = t.heat, f = t.cool, g = tr(n, i.ticks ?? 0, i.labels ?? 0), m = [];
+    const i = { ...v.bar, ...this._config?.setpoint?.bar ?? {} }, n = Ht(t, i), a = (y) => `${(Mt(y, n) * 100).toFixed(3)}%`, s = i.position === "left" || i.position === "right", c = (y) => s ? { bottom: y } : { left: y }, l = s ? "height" : "width", d = s ? "top" : "right", h = t.heat, f = t.cool, g = tr(n, i.ticks ?? 0, i.labels ?? 0), m = [];
     if (i.look === "gradient") {
       const y = i.stops?.length ? i.stops : ["#2b9af9", "#7ccf8a", "#ff8100"];
-      m.push(l`<div class="seg full" style=${S({ background: `linear-gradient(to ${s ? "top" : "right"}, ${y.join(", ")})` })}></div>`);
+      m.push(p`<div class="seg full" style=${S({ background: `linear-gradient(to ${s ? "top" : "right"}, ${y.join(", ")})` })}></div>`);
     } else
-      h && m.push(l`<div class="seg heat" style=${S({ [d]: a(h.value) })}></div>`), f && m.push(l`<div class="seg cool" style=${S({ ...c(a(f.value)), [p]: "0" })}></div>`), h && f && m.push(l`<div class="seg comfort" style=${S({ ...c(a(h.value)), [p]: `calc(100% - ${a(f.value)})` })}></div>`);
+      h && m.push(p`<div class="seg heat" style=${S({ [l]: a(h.value) })}></div>`), f && m.push(p`<div class="seg cool" style=${S({ ...c(a(f.value)), [d]: "0" })}></div>`), h && f && m.push(p`<div class="seg comfort" style=${S({ ...c(a(h.value)), [d]: `calc(100% - ${a(f.value)})` })}></div>`);
     const w = (y) => {
       const z = t[y];
-      return z ? l`
-        ${i.flags ? l`<div class="flag ${y}" style=${S(c(a(z.value)))}>${U(z.value, t.unit)}°</div>` : u}
+      return z ? p`
+        ${i.flags ? p`<div class="flag ${y}" style=${S(c(a(z.value)))}>${U(z.value, t.unit)}°</div>` : u}
         <div
           class="handle ${y} s-${i.handle_shape ?? "round"} ${t.active === y && h && f ? "active" : ""}"
           style=${S(c(a(z.value)))}
@@ -5105,7 +5110,7 @@ const dr = 500, ae = class ae extends ot {
           @keydown=${(I) => this._barKey(I, y)}
         ></div>
       ` : u;
-    }, $ = e.currentTemp, x = i.show_current && $ !== null && $ >= n.min && $ <= n.max ? l`<div class="marker" style=${S(c(a($)))} title="Current"></div>` : u, b = o ? l`<div class="track ro">${m}${x}${w("heat")} ${w("cool")}</div>` : l`<div
+    }, $ = e.currentTemp, x = i.show_current && $ !== null && $ >= n.min && $ <= n.max ? p`<div class="marker" style=${S(c(a($)))} title="Current"></div>` : u, b = o ? p`<div class="track ro">${m}${x}${w("heat")} ${w("cool")}</div>` : p`<div
           class="track"
           @pointerdown=${this._barDown}
           @pointermove=${this._barMove}
@@ -5114,12 +5119,12 @@ const dr = 500, ae = class ae extends ot {
         >
           ${m}${x}${w("heat")} ${w("cool")}
         </div>`, _ = s ? i.flag_position === "right" ? "right" : "left" : i.flag_position === "below" ? "below" : "above", k = s ? i.tick_position === "left" ? "left" : "right" : i.tick_position === "above" ? "above" : "below";
-    return l`<div class="bar ${s ? `vertical side-${i.position}` : "horizontal"} ${i.flags ? `flags-${_}` : "no-flags"} ticks-${k}">
+    return p`<div class="bar ${s ? `vertical side-${i.position}` : "horizontal"} ${i.flags ? `flags-${_}` : "no-flags"} ticks-${k}">
       ${b}
-      ${g.length ? l`<div class="ticks">
+      ${g.length ? p`<div class="ticks">
             ${g.map(
-      (y) => l`<div class="tick ${y.label ? "lbl" : ""}" style=${S(c(`${y.fraction * 100}%`))}></div>
-                ${y.label ? l`<div class="tick-l" style=${S(c(`${y.fraction * 100}%`))}>${y.value}</div>` : u}`
+      (y) => p`<div class="tick ${y.label ? "lbl" : ""}" style=${S(c(`${y.fraction * 100}%`))}></div>
+                ${y.label ? p`<div class="tick-l" style=${S(c(`${y.fraction * 100}%`))}>${y.value}</div>` : u}`
     )}
           </div>` : u}
     </div>`;
@@ -5144,7 +5149,7 @@ const dr = 500, ae = class ae extends ot {
   }
   // ---- button sets ------------------------------------------------------------
   _renderSet(t) {
-    const e = $t(this._config?.buttons, t.config.style), o = e.look ?? (t.type === "chips" ? "chip" : "button"), i = o === "button" && t.orientation === "row" && t.align === "stretch", n = { ...Nt(e) };
+    const e = lt(this._config?.buttons, t.config.style), o = e.look ?? (t.type === "chips" ? "chip" : "button"), i = o === "button" && t.orientation === "row" && t.align === "stretch", n = { ...Nt(e) };
     i && (n["grid-template-columns"] = t.columns ? `repeat(${t.columns}, minmax(0, 1fr))` : "repeat(auto-fit, minmax(var(--etc-b-minw, 52px), 1fr))");
     const a = {
       set: !0,
@@ -5157,28 +5162,28 @@ const dr = 500, ae = class ae extends ot {
       [`ip-${e.icon_position}`]: !0,
       [`look-${o}`]: !0
     }, s = e.content !== "label", c = e.content !== "icon";
-    return l`<div class=${It(a)} style=${S(n)} role="group" aria-label=${t.title}>
-      ${t.tiles.map((d, p) => {
-      if (d.kind === "device") return this._renderChip(st(this.hass, d.chip, p), e.content, o);
-      const h = d.kind === "mode" ? d.option : { label: d.label, icon: d.icon, active: !1, color: "var(--primary-color)" }, f = d.kind === "popup" ? d.item : null, g = s && f?.show_icon !== !1, m = c && f?.show_name !== !1, w = d.kind === "popup" ? d.value : null;
-      return l`<button
-          class="btn ${h.active ? "active" : ""} ${d.kind === "action" || d.kind === "popup" ? "act" : ""} ${d.kind === "popup" ? "pop" : ""}"
+    return p`<div class=${It(a)} style=${S(n)} role="group" aria-label=${t.title}>
+      ${t.tiles.map((l, d) => {
+      if (l.kind === "device") return this._renderChip(st(this.hass, l.chip, d), e.content, o);
+      const h = l.kind === "mode" ? l.option : { label: l.label, icon: l.icon, active: !1, color: "var(--primary-color)" }, f = l.kind === "popup" ? l.item : null, g = f?.show_icon ?? s, m = f?.show_name ?? c, w = l.kind === "popup" ? l.value : null;
+      return p`<button
+          class="btn ${h.active ? "active" : ""} ${l.kind === "action" || l.kind === "popup" ? "act" : ""} ${l.kind === "popup" ? "pop" : ""}"
           style=${S({ "--c": h.color })}
-          aria-pressed=${d.kind === "mode" ? String(h.active) : u}
-          aria-haspopup=${d.kind === "popup" ? "dialog" : u}
+          aria-pressed=${l.kind === "mode" ? String(h.active) : u}
+          aria-haspopup=${l.kind === "popup" ? "dialog" : u}
           title=${h.label}
-          @click=${($) => this._tileTap(d, $.currentTarget)}
+          @click=${($) => this._tileTap(l, $.currentTarget)}
         >
-          ${g ? l`<ha-icon icon=${h.icon}></ha-icon>` : u}
-          ${m || w ? l`<span class="lbl dev-row">${m ? l`<span>${h.label}</span>` : u}${w ? l`<span class="badge">${w}</span>` : u}</span>` : u}
+          ${g ? p`<ha-icon icon=${h.icon}></ha-icon>` : u}
+          ${m || w ? p`<span class="lbl dev-row">${m ? p`<span>${h.label}</span>` : u}${w ? p`<span class="badge">${w}</span>` : u}</span>` : u}
         </button>`;
     })}
     </div>`;
   }
   // ---- expandable menus -------------------------------------------------------
   _renderMenuRow(t, e) {
-    const o = $t(this._config?.buttons, t[0]?.config.style), i = Nt(o), n = {};
-    return i["--etc-b-gap"] && (n["--etc-b-gap"] = i["--etc-b-gap"]), i["--etc-b-scale"] && (n["--etc-b-scale"] = i["--etc-b-scale"]), l`<div class="menus z-${e}" style=${S(n)}>${t.map((a) => this._renderMenu(a))}</div>`;
+    const o = lt(this._config?.buttons, t[0]?.config.style), i = Nt(o), n = {};
+    return i["--etc-b-gap"] && (n["--etc-b-gap"] = i["--etc-b-gap"]), i["--etc-b-scale"] && (n["--etc-b-scale"] = i["--etc-b-scale"]), p`<div class="menus z-${e}" style=${S(n)}>${t.map((a) => this._renderMenu(a))}</div>`;
   }
   /** Tap on a mode or action button (device buttons have their own gestures). */
   _tileTap(t, e) {
@@ -5190,8 +5195,8 @@ const dr = 500, ae = class ae extends ot {
     o && this._call(o), this._fire("haptic", "light");
   }
   _renderMenu(t) {
-    const e = $t(this._config?.buttons, t.config.style), o = t.tiles.find((h) => h.kind === "device"), i = o ? st(this.hass, o.chip, 0) : null, a = t.options.find((h) => h.active) ?? (t.options.length === 0 && i ? { label: i.state, icon: i.icon, color: "var(--primary-color)" } : void 0), s = e.content !== "label", c = this._menu === t.key, d = typeof HTMLElement < "u" && "showPopover" in HTMLElement.prototype, p = e.look ?? "button";
-    return l`<div class="menu t-${t.type} look-${p} ${c ? "open" : ""} d-${t.menuDirection} v-${e.variant}" style=${S(Nt(e))}>
+    const e = lt(this._config?.buttons, t.config.style), o = t.tiles.find((h) => h.kind === "device"), i = o ? st(this.hass, o.chip, 0) : null, a = t.options.find((h) => h.active) ?? (t.options.length === 0 && i ? { label: i.state, icon: i.icon, color: "var(--primary-color)" } : void 0), s = e.content !== "label", c = this._menu === t.key, l = typeof HTMLElement < "u" && "showPopover" in HTMLElement.prototype, d = e.look ?? "button";
+    return p`<div class="menu t-${t.type} look-${d} ${c ? "open" : ""} d-${t.menuDirection} v-${e.variant}" style=${S(Nt(e))}>
       <button
         class="mt ${a ? "has-active" : ""}"
         style=${S({ "--c": a?.color ?? "var(--primary-color)" })}
@@ -5200,9 +5205,9 @@ const dr = 500, ae = class ae extends ot {
         aria-label=${`${t.title}: ${a?.label ?? ""}`}
         @click=${(h) => this._toggleMenu(t, h.currentTarget)}
       >
-        ${s ? l`<ha-icon icon=${a?.icon ?? t.toggleIcon}></ha-icon>` : u}
+        ${s ? p`<ha-icon icon=${a?.icon ?? t.toggleIcon}></ha-icon>` : u}
         <span class="mt-text">
-          ${t.menuShowName ? l`<span class="mt-name">${t.title}</span>` : u}
+          ${t.menuShowName ? p`<span class="mt-name">${t.title}</span>` : u}
           <span class="mt-value">${a?.label ?? "—"}</span>
         </span>
       </button>
@@ -5211,7 +5216,7 @@ const dr = 500, ae = class ae extends ot {
         role="listbox"
         aria-label=${t.title}
         data-key=${t.key}
-        popover=${d ? "auto" : u}
+        popover=${l ? "auto" : u}
         @toggle=${(h) => this._menuToggled(t, h)}
         @keydown=${(h) => {
       this._armMenuTimer(), this._menuKey(h);
@@ -5221,26 +5226,26 @@ const dr = 500, ae = class ae extends ot {
         ${t.tiles.map((h, f) => {
       if (h.kind === "device") {
         const m = st(this.hass, h.chip, f);
-        return l`<button class="mi dev ${m.on ? "on" : ""}" role="option" @click=${() => {
+        return p`<button class="mi dev ${m.on ? "on" : ""}" role="option" @click=${() => {
           this._chipTap(m), this._closeMenus();
         }}>
-              ${s ? l`<ha-icon icon=${m.icon}></ha-icon>` : u}<span>${m.name}</span><span class="mi-val">${m.state}</span>
+              ${s ? p`<ha-icon icon=${m.icon}></ha-icon>` : u}<span>${m.name}</span><span class="mi-val">${m.state}</span>
             </button>`;
       }
       const g = h.kind === "mode" ? h.option : { label: h.label, icon: h.icon, active: !1, color: "var(--primary-color)" };
-      return h.kind === "popup" ? l`<button class="mi" role="option" @click=${(m) => {
+      return h.kind === "popup" ? p`<button class="mi" role="option" @click=${(m) => {
         const w = m.currentTarget.closest(".menu")?.querySelector(".mt") ?? null;
         this._closeMenus(), this._openPopup(h.popup, w);
       }}>
-              ${s && h.item.show_icon !== !1 ? l`<ha-icon icon=${g.icon}></ha-icon>` : u}<span>${g.label}</span>${h.value ? l`<span class="mi-val">${h.value}</span>` : u}
-            </button>` : l`<button
+              ${h.item.show_icon ?? s ? p`<ha-icon icon=${g.icon}></ha-icon>` : u}<span>${g.label}</span>${h.value ? p`<span class="mi-val">${h.value}</span>` : u}
+            </button>` : p`<button
             class="mi ${g.active ? "active" : ""}"
             role="option"
             aria-selected=${g.active}
             style=${S({ "--c": g.color })}
             @click=${() => this._pickMenu(h)}
           >
-            ${s ? l`<ha-icon icon=${g.icon}></ha-icon>` : u}<span>${g.label}</span>
+            ${s ? p`<ha-icon icon=${g.icon}></ha-icon>` : u}<span>${g.label}</span>
           </button>`;
     })}
       </div>
@@ -5268,8 +5273,8 @@ const dr = 500, ae = class ae extends ot {
     const i = e.getBoundingClientRect(), n = 6, a = window.innerWidth, s = window.innerHeight;
     t.style.minWidth = o === "up" || o === "down" ? `${Math.round(i.width)}px` : "";
     const c = t.getBoundingClientRect();
-    let d = o === "right" ? i.right + n : o === "left" ? i.left - n - c.width : i.left, p = o === "down" ? i.bottom + n : o === "up" ? i.top - n - c.height : i.top;
-    o === "down" && p + c.height > s && (p = i.top - n - c.height), o === "up" && p < 0 && (p = i.bottom + n), o === "right" && d + c.width > a && (d = i.left - n - c.width), o === "left" && d < 0 && (d = i.right + n), d = Math.max(4, Math.min(d, a - c.width - 4)), p = Math.max(4, Math.min(p, s - c.height - 4)), t.style.left = `${Math.round(d)}px`, t.style.top = `${Math.round(p)}px`;
+    let l = o === "right" ? i.right + n : o === "left" ? i.left - n - c.width : i.left, d = o === "down" ? i.bottom + n : o === "up" ? i.top - n - c.height : i.top;
+    o === "down" && d + c.height > s && (d = i.top - n - c.height), o === "up" && d < 0 && (d = i.bottom + n), o === "right" && l + c.width > a && (l = i.left - n - c.width), o === "left" && l < 0 && (l = i.right + n), l = Math.max(4, Math.min(l, a - c.width - 4)), d = Math.max(4, Math.min(d, s - c.height - 4)), t.style.left = `${Math.round(l)}px`, t.style.top = `${Math.round(d)}px`;
   }
   _menuToggled(t, e) {
     !(e.newState === "open") && this._menu === t.key && (this._menu = null);
@@ -5284,10 +5289,10 @@ const dr = 500, ae = class ae extends ot {
     this._tileTap(t), this._closeMenus();
   }
   _renderToggles(t) {
-    return l`<div class="toggles">
+    return p`<div class="toggles">
       ${t.map((e) => {
       const o = this._open.has(e.key);
-      return l`<button class="tgl ${o ? "open" : ""}" aria-expanded=${o} @click=${() => this._toggleSet(e.key)}>
+      return p`<button class="tgl ${o ? "open" : ""}" aria-expanded=${o} @click=${() => this._toggleSet(e.key)}>
           <ha-icon icon=${e.toggleIcon}></ha-icon><span>${e.title}</span>
           <ha-icon class="chev" icon="mdi:chevron-down"></ha-icon>
         </button>`;
@@ -5296,12 +5301,12 @@ const dr = 500, ae = class ae extends ot {
   }
   // ---- chips --------------------------------------------------------------------
   _renderChip(t, e, o = "chip") {
-    const i = t.config.show_name ?? e !== "icon", n = t.config.show_state ?? !0, a = t.type === "rf_fan", s = o === "button", c = !s || e !== "label", d = s ? `btn dev ${t.on ? "active" : ""}` : `chip ${t.on ? "on" : ""}`, p = a && t.natural ? l`<span class="badge natural" title=${t.naturalLevel !== null ? `Breeze ${t.naturalLevel}` : "Breeze"}
+    const i = t.config.show_name ?? e !== "icon", n = t.config.show_state ?? !0, a = t.type === "rf_fan", s = o === "button", c = !s || e !== "label", l = s ? `btn dev ${t.on ? "active" : ""}` : `chip ${t.on ? "on" : ""}`, d = a && t.natural ? p`<span class="badge natural" title=${t.naturalLevel !== null ? `Breeze ${t.naturalLevel}` : "Breeze"}
           ><ha-icon icon="mdi:leaf"></ha-icon>${n && t.naturalLevel !== null ? t.naturalLevel : u}</span
-        >` : n && (!a || t.speed !== null || !t.on) ? l`<span class="badge">${t.state}</span>` : u, h = l`${a && t.lightOn ? l`<span class="extra light"><ha-icon icon="mdi:lightbulb"></ha-icon></span>` : u}
-      ${a && t.timerEnds ? l`<span class="extra"><ha-icon icon="mdi:timer-outline"></ha-icon>${ze(t.timerEnds)}</span>` : u}`;
-    return s ? l`<button
-        class="${d} ${t.available ? "" : "unavailable"} ${t.direction === "reverse" ? "rev" : ""}"
+        >` : n && (!a || t.speed !== null || !t.on) ? p`<span class="badge">${t.state}</span>` : u, h = p`${a && t.lightOn ? p`<span class="extra light"><ha-icon icon="mdi:lightbulb"></ha-icon></span>` : u}
+      ${a && t.timerEnds ? p`<span class="extra"><ha-icon icon="mdi:timer-outline"></ha-icon>${ze(t.timerEnds)}</span>` : u}`;
+    return s ? p`<button
+        class="${l} ${t.available ? "" : "unavailable"} ${t.direction === "reverse" ? "rev" : ""}"
         aria-label=${`${t.name}: ${t.state}`}
         title=${`${t.name}: ${t.state}`}
         @pointerdown=${(f) => this._chipDown(f, t)}
@@ -5311,10 +5316,10 @@ const dr = 500, ae = class ae extends ot {
         @click=${() => this._chipTap(t)}
         @contextmenu=${(f) => f.preventDefault()}
       >
-        ${c ? l`<ha-icon class=${t.spin ? "spin" : ""} style=${S(t.spin ? { "--spin": `${t.spin}s` } : {})} icon=${t.icon}></ha-icon>` : u}
-        <span class="lbl dev-row">${i ? l`<span>${t.name}</span>` : u}${p}${h}</span>
-      </button>` : l`<button
-      class="${d} ${t.available ? "" : "unavailable"} ${t.direction === "reverse" ? "rev" : ""}"
+        ${c ? p`<ha-icon class=${t.spin ? "spin" : ""} style=${S(t.spin ? { "--spin": `${t.spin}s` } : {})} icon=${t.icon}></ha-icon>` : u}
+        <span class="lbl dev-row">${i ? p`<span>${t.name}</span>` : u}${d}${h}</span>
+      </button>` : p`<button
+      class="${l} ${t.available ? "" : "unavailable"} ${t.direction === "reverse" ? "rev" : ""}"
       aria-label=${`${t.name}: ${t.state}`}
       title=${`${t.name}: ${t.state}`}
       @pointerdown=${(f) => this._chipDown(f, t)}
@@ -5325,19 +5330,19 @@ const dr = 500, ae = class ae extends ot {
       @contextmenu=${(f) => f.preventDefault()}
     >
       <ha-icon class=${t.spin ? "spin" : ""} style=${S(t.spin ? { "--spin": `${t.spin}s` } : {})} icon=${t.icon}></ha-icon>
-      ${i ? l`<span>${t.name}</span>` : u}
-      ${a && t.natural ? l`<span class="badge natural" title=${t.naturalLevel !== null ? `Breeze ${t.naturalLevel}` : "Breeze"}
+      ${i ? p`<span>${t.name}</span>` : u}
+      ${a && t.natural ? p`<span class="badge natural" title=${t.naturalLevel !== null ? `Breeze ${t.naturalLevel}` : "Breeze"}
             ><ha-icon icon="mdi:leaf"></ha-icon>${n && t.naturalLevel !== null ? t.naturalLevel : u}</span
-          >` : n && (!a || t.speed !== null || !t.on) ? l`<span class="badge">${t.state}</span>` : u}
-      ${a && t.lightOn ? l`<span class="extra light"><ha-icon icon="mdi:lightbulb"></ha-icon></span>` : u}
-      ${a && t.timerEnds ? l`<span class="extra"><ha-icon icon="mdi:timer-outline"></ha-icon>${ze(t.timerEnds)}</span>` : u}
+          >` : n && (!a || t.speed !== null || !t.on) ? p`<span class="badge">${t.state}</span>` : u}
+      ${a && t.lightOn ? p`<span class="extra light"><ha-icon icon="mdi:lightbulb"></ha-icon></span>` : u}
+      ${a && t.timerEnds ? p`<span class="extra"><ha-icon icon="mdi:timer-outline"></ha-icon>${ze(t.timerEnds)}</span>` : u}
     </button>`;
   }
   _chipDown(t, e) {
     if (t.pointerType === "mouse" && t.button !== 0 || (this._chipCancelHold(), e.hold === "none")) return;
     const o = { fired: !1, timer: setTimeout(() => {
       o.fired = !0, this._chipAction(e, e.hold), this._fire("haptic", "medium");
-    }, dr) };
+    }, pr) };
     this._hold = o;
   }
   _chipTap(t) {
@@ -5427,14 +5432,14 @@ const dr = 500, ae = class ae extends ot {
     }
     requestAnimationFrame(() => {
       const o = this._popupAnchor.getBoundingClientRect(), i = t.getBoundingClientRect(), n = this._popup?.direction ?? (o.top > window.innerHeight / 2 ? "up" : "down"), a = 6, s = window.innerWidth, c = window.innerHeight;
-      let d = n === "right" ? o.right + a : n === "left" ? o.left - a - i.width : o.left + o.width / 2 - i.width / 2, p = n === "down" ? o.bottom + a : n === "up" ? o.top - a - i.height : o.top + o.height / 2 - i.height / 2;
-      n === "down" && p + i.height > c && (p = o.top - a - i.height), n === "up" && p < 0 && (p = o.bottom + a), n === "right" && d + i.width > s && (d = o.left - a - i.width), n === "left" && d < 0 && (d = o.right + a), t.style.left = `${Math.round(Math.max(4, Math.min(d, s - i.width - 4)))}px`, t.style.top = `${Math.round(Math.max(4, Math.min(p, c - i.height - 4)))}px`;
+      let l = n === "right" ? o.right + a : n === "left" ? o.left - a - i.width : o.left + o.width / 2 - i.width / 2, d = n === "down" ? o.bottom + a : n === "up" ? o.top - a - i.height : o.top + o.height / 2 - i.height / 2;
+      n === "down" && d + i.height > c && (d = o.top - a - i.height), n === "up" && d < 0 && (d = o.bottom + a), n === "right" && l + i.width > s && (l = o.left - a - i.width), n === "left" && l < 0 && (l = o.right + a), t.style.left = `${Math.round(Math.max(4, Math.min(l, s - i.width - 4)))}px`, t.style.top = `${Math.round(Math.max(4, Math.min(d, c - i.height - 4)))}px`;
     });
   }
   _renderPopup() {
     if (!this._popupOpen) return u;
     const t = this._popup, e = t?.size ?? "medium", o = t ? t.title !== !1 : !1, i = {};
-    return t?.width && (i["--pop-w"] = `${t.width}px`), t?.height && (i["--pop-h"] = `${t.height}px`), t?.dim !== void 0 && (i["--pop-dim"] = String(t.dim / 100)), t?.blur !== void 0 && (i["--pop-blur"] = `${t.blur}px`), l`<dialog
+    return t?.width && (i["--pop-w"] = `${t.width}px`), t?.height && (i["--pop-h"] = `${t.height}px`), t?.dim !== void 0 && (i["--pop-dim"] = String(t.dim / 100)), t?.blur !== void 0 && (i["--pop-blur"] = `${t.blur}px`), p`<dialog
       class="popup size-${e} ${o ? "has-title" : ""}"
       style=${S(i)}
       aria-label=${t?.name ?? "Pop-up"}
@@ -5448,11 +5453,11 @@ const dr = 500, ae = class ae extends ot {
     }}
     >
       <div class="popup-inner">
-        ${o ? l`<div class="popup-title">
-              ${t?.icon ? l`<ha-icon icon=${t.icon}></ha-icon>` : u}<span>${t?.name ?? ""}</span>
+        ${o ? p`<div class="popup-title">
+              ${t?.icon ? p`<ha-icon icon=${t.icon}></ha-icon>` : u}<span>${t?.name ?? ""}</span>
               <button class="popup-x" aria-label="Close" @click=${this._closePopup}><ha-icon icon="mdi:close"></ha-icon></button>
-            </div>` : l`<button class="popup-close" aria-label="Close" @click=${this._closePopup}><ha-icon icon="mdi:close"></ha-icon></button>`}
-        ${this._popupMissing ? l`<div class="popup-missing">${this._popupMissing}</div>` : u}
+            </div>` : p`<button class="popup-close" aria-label="Close" @click=${this._closePopup}><ha-icon icon="mdi:close"></ha-icon></button>`}
+        ${this._popupMissing ? p`<div class="popup-missing">${this._popupMissing}</div>` : u}
         <div class="popup-body"></div>
       </div>
     </dialog>`;

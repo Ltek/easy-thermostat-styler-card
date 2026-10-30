@@ -959,8 +959,9 @@ export class EasyThermostatStylerCard extends LitElement {
         if (t.kind === 'device') return this._renderChip(toChipView(this.hass!, t.chip, i), style.content, look);
         const o = t.kind === 'mode' ? t.option : { label: t.label, icon: t.icon, active: false, color: 'var(--primary-color)' };
         const pi = t.kind === 'popup' ? t.item : null;
-        const icon = showIcon && pi?.show_icon !== false;
-        const label = showLabel && pi?.show_name !== false;
+        // A button's own Show Icon / Show Label wins over the set's Content.
+        const icon = pi?.show_icon ?? showIcon;
+        const label = pi?.show_name ?? showLabel;
         const value = t.kind === 'popup' ? t.value : null;
         return html`<button
           class="btn ${o.active ? 'active' : ''} ${t.kind === 'action' || t.kind === 'popup' ? 'act' : ''} ${t.kind === 'popup' ? 'pop' : ''}"
@@ -1060,7 +1061,7 @@ export class EasyThermostatStylerCard extends LitElement {
                 this._closeMenus();
                 this._openPopup(t.popup, trig);
               }}>
-              ${showIcon && t.item.show_icon !== false ? html`<ha-icon icon=${o.icon}></ha-icon>` : nothing}<span>${o.label}</span>${t.value ? html`<span class="mi-val">${t.value}</span>` : nothing}
+              ${t.item.show_icon ?? showIcon ? html`<ha-icon icon=${o.icon}></ha-icon>` : nothing}<span>${o.label}</span>${t.value ? html`<span class="mi-val">${t.value}</span>` : nothing}
             </button>`;
           }
           return html`<button
